@@ -2,7 +2,7 @@
 import { decode, encode } from "fast-png";
 import { TavernCard, TavernCardV1, TavernCardV2 } from "./types";
 import { validate, validationErrors } from "../../lib/types";
-import { computedAsync } from "@vueuse/core";
+import { computedAsync, useEventListener } from "@vueuse/core";
 import {
   computed,
   onMounted,
@@ -35,7 +35,8 @@ const title = computed(() =>
 );
 
 const newDescriptionEl = ref<HTMLDivElement | undefined>(undefined);
-const fullscreenPreview = ref(false);
+const processorListVisible = ref(false);
+const fullscreenPreviewVisible = ref(false);
 
 const imageUrl = ref<string | undefined>(undefined);
 onMounted(() => {
@@ -168,14 +169,16 @@ const download = () => {
       v-if="imageUrl"
       class="image transition-bg darken-on-hover"
       :src="imageUrl"
-      @click="fullscreenPreview = true"
+      @click="fullscreenPreviewVisible = true"
     />
     <div>
       <button @click.stop="download">Download Fixed Card</button>
     </div>
-    <details>
-      <summary>Line Processors</summary>
-      <div class="processors">
+    <div>
+      <button @click="processorListVisible = !processorListVisible">
+        ⚙ Processors
+      </button>
+      <div class="processors" :class="{ visible: processorListVisible }">
         <label v-for="processor in ALL_LINE_PROCESSORS" type="checkbox">
           <input
             type="checkbox"
@@ -185,7 +188,7 @@ const download = () => {
           {{ processor }}
         </label>
       </div>
-    </details>
+    </div>
     <div class="diff-view">
       <span>Current</span>
       <span>Processed (edits will be saved on download)</span>
@@ -205,10 +208,10 @@ const download = () => {
       </div>
     </div>
   </div>
-  <Teleport v-if="fullscreenPreview && imageUrl" to="body">
+  <Teleport v-if="fullscreenPreviewVisible && imageUrl" to="body">
     <div
       class="fullscreen-preview transition-bg"
-      @click="fullscreenPreview = false"
+      @click="fullscreenPreviewVisible = false"
     >
       <img :src="imageUrl" @click.stop />
     </div>
@@ -260,8 +263,17 @@ const download = () => {
 }
 
 .processors {
-  display: flex;
+  position: absolute;
+  display: none;
   flex-flow: column;
+  padding: 1em;
+  background: var(--bg-secondary-opaque);
+  border-radius: 0.5em;
+  margin-top: 0.5em;
+}
+
+.processors.visible {
+  display: flex;
 }
 
 .close-button {

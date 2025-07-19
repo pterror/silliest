@@ -6,40 +6,11 @@ interface Entry {
   readonly values: readonly string[];
 }
 
-interface Format {
-  readonly name: string;
-  readonly regex: RegExp;
-  readonly processMatch: (match: RegExpMatchArray) => Entry;
-}
-
 interface ProcessResult {
   readonly formatName: string;
   readonly original: string;
   readonly replaced: string;
 }
-
-type InputFormatName = (typeof lineInputFormats)[number]["name"];
-const lineInputFormats: readonly Format[] = [
-  {
-    name: "W++",
-    regex: /^\s*([^:\[\]()]+?)\s*:?\s*\(([^\)]*?)[\)\s.,;]*$/,
-    processMatch: ([, name = "", rest = ""]) => ({
-      name,
-      values: rest
-        .split("+")
-        .map((word) => word.replace(/^\s*"?\s*|\s*"?\s*$/g, "")),
-    }),
-  },
-] as const;
-
-type OutputFormatName = (typeof lineOutputFormats)[number]["name"];
-const lineOutputFormats = [
-  {
-    name: "Standard",
-    formatEntry: ({ name, values }: Entry): string =>
-      `${name}: ${values.join(", ")}`,
-  },
-] as const;
 
 interface LineProcessorContext {
   readonly name?: string;
@@ -52,7 +23,18 @@ type LineProcessorFunction = (
 
 type LineProcessorName = keyof typeof LINE_PROCESSOR_FUNCTIONS;
 const LINE_PROCESSOR_FUNCTIONS = {
-  "Strip Character Field Prefix": (line) =>
+  "Remove W++": (line) => {
+    const match = line.match(
+      /^\s*([^:\[\]()]+?)\s*:?\s*\(([^\)]*?)[\)\s.,;]*$/
+    );
+    if (!match) return line;
+    const [, name = "", rest = ""] = match;
+    const values = rest
+      .split("+")
+      .map((word) => word.replace(/^\s*"?\s*|\s*"?\s*$/g, ""));
+    return `${name}: ${values.join(", ")}`;
+  },
+  "Strip {{char}} Field Prefix": (line) =>
     line.replace(
       /^\s*{{char}}'?s?\s*(.+)\s*:/,
       (_m, fieldName: string) =>
@@ -60,7 +42,6 @@ const LINE_PROCESSOR_FUNCTIONS = {
     ),
   "Use Sentence Case": (line): string =>
     line.replace(/^.|(?<=^[\w\s]*:\s*).|[.]\s+(.)/g, (c) => c.toUpperCase()),
-  "Strip Empty Lines": (line) => (line === "" ? undefined : line),
   "Remove Preset Instructions": (line) => {
     if (line === "") return line;
     line = line.replace(/\s*\[.*?\bnever speak\b.*?\]\s*/gi, "");
@@ -81,15 +62,16 @@ const LINE_PROCESSOR_FUNCTIONS = {
       /^\s*([^:\[\]()]+?)\s*:/,
       (_m, fieldName: string) => `${fieldName.replace(/_+/g, " ")}:`
     ),
-  "Remove Horizontal Rules": (line) =>
-    /^\s*---+\s*$/.test(line) ? undefined : line,
-  "Replace Name With Char": (line, { name }) =>
+  "Replace Name With {{char}}": (line, { name }) =>
     name === undefined
       ? line
       : line.replace(
           new RegExp("\\b" + regexEscape(name) + "\\b", "gi"),
           "{{char}}"
         ),
+  "Strip Empty Lines": (line) => (line === "" ? undefined : line),
+  "Remove Horizontal Rules": (line) =>
+    /^\s*---+\s*$/.test(line) ? undefined : line,
 } satisfies Record<string, LineProcessorFunction>;
 
 export const ALL_LINE_PROCESSORS = unsafeKeys(LINE_PROCESSOR_FUNCTIONS);
@@ -97,6 +79,7 @@ export const ALL_LINE_PROCESSORS = unsafeKeys(LINE_PROCESSOR_FUNCTIONS);
 export type LineProcessorsConfiguration = Record<LineProcessorName, boolean>;
 
 const DEFAULT_LINE_PROCESSORS_ARRAY: readonly LineProcessorName[] = [
+  "Remove W++",
   "Use Sentence Case",
   "Remove Preset Instructions",
   "Remove Narration Instructions",
@@ -104,8 +87,8 @@ const DEFAULT_LINE_PROCESSORS_ARRAY: readonly LineProcessorName[] = [
   "Basic Spell Check",
   "Replace Character Field Name With Name",
   "Human Readable Field Name",
-  "Strip Character Field Prefix",
-  "Replace Name With Char",
+  "Strip {{char}} Field Prefix",
+  "Replace Name With {{char}}",
 ];
 
 export const DEFAULT_LINE_PROCESSORS: LineProcessorsConfiguration =
@@ -119,8 +102,6 @@ type LineProcessor = keyof typeof LINE_PROCESSOR_FUNCTIONS;
 
 interface DesloppifyOptions {
   readonly name?: string;
-  /** @default "Standard" */
-  readonly outputFormat?: OutputFormatName;
   readonly lineProcessors?: readonly LineProcessor[];
   /** @default true */
   readonly stripSurroundingWhitespace?: boolean;
@@ -134,16 +115,7 @@ export const desloppify = (
   definitions: string,
   {
     name,
-    outputFormat = "Standard",
-    lineProcessors = [
-      "Use Sentence Case",
-      "Remove Preset Instructions",
-      "Remove Narration Instructions",
-      "Strip Trailing Semicolon",
-      "Basic Spell Check",
-      "Replace Character Field Name With Name",
-      "Human Readable Field Name",
-    ],
+    lineProcessors = DEFAULT_LINE_PROCESSORS_ARRAY,
     stripSurroundingWhitespace = true,
     injectNewlinesBetweenFields = true,
     collapseAdjacentNewlines = false,
@@ -152,9 +124,6 @@ export const desloppify = (
   const context: LineProcessorContext = {
     ...(name !== undefined ? { name } : {}),
   };
-  const { formatEntry } =
-    lineOutputFormats.find(({ name }) => name === outputFormat) ?? {};
-  if (!formatEntry) return definitions;
   if (injectNewlinesBetweenFields) {
     definitions = definitions.replace(
       /(?<=[)]) (Name|Personality|Description|Body|Clothes|Clothing|Outfit|Likes|Dislikes|Way|Sexuality)/gi,
@@ -162,38 +131,19 @@ export const desloppify = (
     );
   }
   const lines = definitions.split("\n");
-  const processedLines = lines
-    .map((line): ProcessResult => {
-      if (/^\s+$/.test(line)) {
-        return { formatName: "Blank", original: line, replaced: "" };
-      }
-      for (const { name, regex, processMatch } of lineInputFormats) {
-        const match = line.match(regex);
-        if (!match) {
-          continue;
-        }
-        const entry = processMatch(match);
-        return {
-          formatName: name,
-          original: line,
-          replaced: formatEntry(entry),
-        };
-      }
-      return { formatName: "Unknown", original: line, replaced: line };
-    })
-    .flatMap<ProcessResult>((result) => {
-      let finalLine = result.replaced;
-      for (const processorName of lineProcessors) {
-        const processor: LineProcessorFunction =
-          LINE_PROCESSOR_FUNCTIONS[processorName];
-        if (!processor) continue;
-        const newLine = processor(finalLine, context);
-        if (newLine === undefined) return [];
-        finalLine = newLine;
-      }
-      return [{ ...result, replaced: finalLine }];
-    });
-  let result = processedLines.map((line) => line.replaced).join("\n");
+  const processedLines = lines.flatMap((line) => {
+    let finalLine = line;
+    for (const processorName of lineProcessors) {
+      const processor: LineProcessorFunction =
+        LINE_PROCESSOR_FUNCTIONS[processorName];
+      if (!processor) continue;
+      const newLine = processor(finalLine, context);
+      if (newLine === undefined) return [];
+      finalLine = newLine;
+    }
+    return [finalLine];
+  });
+  let result = processedLines.join("\n");
   if (stripSurroundingWhitespace) {
     result = result.replace(/^\s+|\s+$/g, "");
   }

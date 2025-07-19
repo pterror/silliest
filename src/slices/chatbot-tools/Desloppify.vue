@@ -14,7 +14,7 @@ const onFileInput = (event: Event) => {
   <div class="Desloppify">
     <input type="file" multiple @input="onFileInput" />
     <div class="tab-container">
-      <template class="tab-container" v-for="file in files">
+      <template v-for="file in files" :key="file.name" class="tab-container">
         <DesloppifyTab
           :file="file"
           :default-checked="file === files[0]"
@@ -30,8 +30,7 @@ const onFileInput = (event: Event) => {
   display: flex;
   flex-flow: column;
   gap: 1em;
-  width: 100%;
-  height: 100%;
+  flex: 1 0 0;
 }
 
 .tab-container {
