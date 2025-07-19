@@ -1,4 +1,5 @@
 import { unsafeKeys, unsafeMapEntries } from "../../lib/object";
+import { regexEscape } from "../../lib/regex";
 
 interface Entry {
   readonly name: string;
@@ -40,11 +41,20 @@ const lineOutputFormats = [
   },
 ] as const;
 
+interface LineProcessorContext {
+  readonly name?: string;
+}
+
+type LineProcessorFunction = (
+  line: string,
+  context: LineProcessorContext
+) => string | undefined;
+
 type LineProcessorName = keyof typeof LINE_PROCESSOR_FUNCTIONS;
 const LINE_PROCESSOR_FUNCTIONS = {
   "Strip Character Field Prefix": (line) =>
     line.replace(
-      /^\s*{{char}}\s*(.+)\s*:/,
+      /^\s*{{char}}'?s?\s*(.+)\s*:/,
       (_m, fieldName: string) =>
         `${fieldName.replace(/^./, (m) => m.toUpperCase())}:`
     ),
@@ -65,7 +75,7 @@ const LINE_PROCESSOR_FUNCTIONS = {
     line.replace(/\b(manga|otaku|anime)s\b/gi, "$1"),
   "Strip Trailing Semicolon": (line) => line.replace(/\s*;\s*$/, ""),
   "Replace Character Field Name With Name": (line) =>
-    line.replace(/^\s*{{char}}\s*:/, "Name:"),
+    line.replace(/^\s*{{char}}'?s?\s*:/, "Name:"),
   "Human Readable Field Name": (line) =>
     line.replace(
       /^\s*([^:\[\]()]+?)\s*:/,
@@ -73,7 +83,14 @@ const LINE_PROCESSOR_FUNCTIONS = {
     ),
   "Remove Horizontal Rules": (line) =>
     /^\s*---+\s*$/.test(line) ? undefined : line,
-} satisfies Record<string, (line: string) => string | undefined>;
+  "Replace Name With Char": (line, { name }) =>
+    name === undefined
+      ? line
+      : line.replace(
+          new RegExp("\\b" + regexEscape(name) + "\\b", "gi"),
+          "{{char}}"
+        ),
+} satisfies Record<string, LineProcessorFunction>;
 
 export const ALL_LINE_PROCESSORS = unsafeKeys(LINE_PROCESSOR_FUNCTIONS);
 
@@ -88,6 +105,7 @@ const DEFAULT_LINE_PROCESSORS_ARRAY: readonly LineProcessorName[] = [
   "Replace Character Field Name With Name",
   "Human Readable Field Name",
   "Strip Character Field Prefix",
+  "Replace Name With Char",
 ];
 
 export const DEFAULT_LINE_PROCESSORS: LineProcessorsConfiguration =
@@ -100,6 +118,7 @@ export const DEFAULT_LINE_PROCESSORS: LineProcessorsConfiguration =
 type LineProcessor = keyof typeof LINE_PROCESSOR_FUNCTIONS;
 
 interface DesloppifyOptions {
+  readonly name?: string;
   /** @default "Standard" */
   readonly outputFormat?: OutputFormatName;
   readonly lineProcessors?: readonly LineProcessor[];
@@ -114,6 +133,7 @@ interface DesloppifyOptions {
 export const desloppify = (
   definitions: string,
   {
+    name,
     outputFormat = "Standard",
     lineProcessors = [
       "Use Sentence Case",
@@ -123,13 +143,15 @@ export const desloppify = (
       "Basic Spell Check",
       "Replace Character Field Name With Name",
       "Human Readable Field Name",
-      "Strip Character Field Prefix",
     ],
     stripSurroundingWhitespace = true,
     injectNewlinesBetweenFields = true,
     collapseAdjacentNewlines = false,
   }: DesloppifyOptions = {}
 ): string => {
+  const context: LineProcessorContext = {
+    ...(name !== undefined ? { name } : {}),
+  };
   const { formatEntry } =
     lineOutputFormats.find(({ name }) => name === outputFormat) ?? {};
   if (!formatEntry) return definitions;
@@ -162,9 +184,10 @@ export const desloppify = (
     .flatMap<ProcessResult>((result) => {
       let finalLine = result.replaced;
       for (const processorName of lineProcessors) {
-        const processor = LINE_PROCESSOR_FUNCTIONS[processorName];
+        const processor: LineProcessorFunction =
+          LINE_PROCESSOR_FUNCTIONS[processorName];
         if (!processor) continue;
-        const newLine = processor(finalLine);
+        const newLine = processor(finalLine, context);
         if (newLine === undefined) return [];
         finalLine = newLine;
       }

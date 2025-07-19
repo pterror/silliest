@@ -1,8 +1,27 @@
 :root {
   font-family: sans-serif;
   color-scheme: light dark;
+  --bg-secondary: light-dark(#22222222, #ffffff22);
+  --bg-tertiary: light-dark(#22222244, #ffffff44);
+  --bg-darken: #00000066;
+  --bg-darken-darker: #00000088;
 }
 
 html {
   height: 100%;
+}
+
+summary {
+  cursor: pointer;
+}
+
+.transition-bg {
+  transition-property: background-color;
+  transition-duration: 150ms;
+}
+
+.darken-on-hover:hover {
+  filter: brightness(0.8);
+  transition-property: filter;
+  transition-duration: 150ms;
 }

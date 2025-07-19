@@ -3,7 +3,15 @@ import { decode, encode } from "fast-png";
 import { TavernCard, TavernCardV1, TavernCardV2 } from "./types";
 import { validate, validationErrors } from "../../lib/types";
 import { computedAsync } from "@vueuse/core";
-import { computed, ref, toRaw, watchEffect } from "vue";
+import {
+  computed,
+  onMounted,
+  onUnmounted,
+  ref,
+  Teleport,
+  toRaw,
+  watchEffect,
+} from "vue";
 import {
   ALL_LINE_PROCESSORS,
   DEFAULT_LINE_PROCESSORS,
@@ -11,7 +19,13 @@ import {
 } from "./desloppify";
 import { unsafeEntries } from "../../lib/object";
 
-const props = defineProps<{ file: File }>();
+const props = defineProps<{
+  readonly file: File;
+  readonly defaultChecked: boolean;
+}>();
+const emit = defineEmits<{
+  close: [];
+}>();
 
 const title = computed(() =>
   props.file.name.replace(
@@ -19,6 +33,19 @@ const title = computed(() =>
     ""
   )
 );
+
+const newDescriptionEl = ref<HTMLDivElement | undefined>(undefined);
+const fullscreenPreview = ref(false);
+
+const imageUrl = ref<string | undefined>(undefined);
+onMounted(() => {
+  imageUrl.value = URL.createObjectURL(props.file);
+});
+onUnmounted(() => {
+  if (imageUrl.value) {
+    URL.revokeObjectURL(imageUrl.value);
+  }
+});
 
 const png = computedAsync(() =>
   props.file.arrayBuffer().then((buffer) => decode(buffer))
@@ -56,7 +83,7 @@ watchEffect(() => {
   } catch {}
 });
 
-const beforeDescription = computed(() =>
+const currentDescription = computed(() =>
   !metadata.value
     ? undefined
     : "data" in metadata.value
@@ -64,31 +91,50 @@ const beforeDescription = computed(() =>
     : metadata.value.description
 );
 
-const afterDescription = computed(() =>
-  beforeDescription.value != null
-    ? desloppify(beforeDescription.value, {
+const newDescription = computed(() => {
+  const name =
+    metadata.value && "data" in metadata.value
+      ? metadata.value.data.name
+      : metadata.value?.name;
+  return currentDescription.value != null
+    ? desloppify(currentDescription.value, {
+        ...(name !== undefined ? { name } : {}),
         lineProcessors: unsafeEntries(lineProcessors.value).flatMap(([k, v]) =>
           v ? [k] : []
         ),
       })
-    : undefined
-);
+    : undefined;
+});
 
 const download = () => {
   if (!png.value || !metadata.value) return;
   const newPngValue = structuredClone(toRaw(png.value));
   const newMetadata = structuredClone(toRaw(metadata.value));
-  if (afterDescription.value !== undefined) {
+  const newDescription = newDescriptionEl.value?.innerText;
+  if (newDescription !== undefined) {
     if ("data" in newMetadata) {
-      newMetadata.data.description = afterDescription.value;
+      newMetadata.data.description = newDescription;
     } else {
-      newMetadata.description = afterDescription.value;
+      newMetadata.description = newDescription;
     }
     newPngValue.text["chara"] = btoa(
       String.fromCharCode(
         ...new TextEncoder().encode(JSON.stringify(newMetadata))
       )
     );
+  }
+  if ("data" in newMetadata) {
+    const characterBook = newMetadata.data.character_book;
+    if (characterBook) {
+      for (const entry of characterBook.entries) {
+        // SillyTavern <-> chub.ai interoperability
+        if ("comment" in entry && !("name" in entry)) {
+          entry.name = entry.comment;
+        } else if ("name" in entry && !("comment" in entry)) {
+          entry.comment = entry.name;
+        }
+      }
+    }
   }
   const newBuffer = encode(newPngValue);
   const url = URL.createObjectURL(new Blob([newBuffer]));
@@ -105,8 +151,25 @@ const download = () => {
 </script>
 
 <template>
-  <div v-if="metadata" class="DesloppifyTab">
-    <div>{{ title }}</div>
+  <label class="DesloppifyTabTitle">
+    <input
+      type="radio"
+      name="desloppify-tab"
+      class="invisible-radio"
+      :checked="defaultChecked"
+    />
+    {{ title }}
+    <button class="close-button transition-bg" @click="emit('close')">
+      &times;
+    </button>
+  </label>
+  <div v-if="metadata" class="DesloppifyTabContents">
+    <img
+      v-if="imageUrl"
+      class="image transition-bg darken-on-hover"
+      :src="imageUrl"
+      @click="fullscreenPreview = true"
+    />
     <div>
       <button @click.stop="download">Download Fixed Card</button>
     </div>
@@ -124,26 +187,69 @@ const download = () => {
       </div>
     </details>
     <div class="diff-view">
-      <div class="text-view diff-view-before" contenteditable="true">
-        {{ beforeDescription }}
+      <span>Current</span>
+      <span>Processed (edits will be saved on download)</span>
+      <div class="text-view-container">
+        <div class="text-view diff-view-before">
+          {{ currentDescription }}
+        </div>
       </div>
-      <div class="text-view diff-view-after" contenteditable="true">
-        {{ afterDescription }}
+      <div class="text-view-container">
+        <div
+          ref="newDescriptionEl"
+          class="text-view diff-view-after"
+          contenteditable="true"
+        >
+          {{ newDescription }}
+        </div>
       </div>
     </div>
   </div>
+  <Teleport v-if="fullscreenPreview && imageUrl" to="body">
+    <div
+      class="fullscreen-preview transition-bg"
+      @click="fullscreenPreview = false"
+    >
+      <img :src="imageUrl" @click.stop />
+    </div>
+  </Teleport>
 </template>
 
 <style scoped>
-.DesloppifyTab {
-  display: flex;
+.DesloppifyTabTitle {
+  cursor: pointer;
+  border-radius: 0.25em;
+  padding: 0.25em 0.5em;
+}
+
+.DesloppifyTabTitle:has(:checked) {
+  background: var(--bg-secondary);
+}
+
+.DesloppifyTabContents {
+  width: 100%;
+  display: none;
   flex-flow: column;
   gap: 1em;
+  margin-top: 1em;
+}
+
+.DesloppifyTabTitle:has(:checked) + .DesloppifyTabContents {
+  display: flex;
+  order: 1;
 }
 
 .diff-view {
-  display: flex;
+  display: grid;
   gap: 1em;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, auto);
+}
+
+.text-view-container {
+  display: flex;
+  flex-flow: column;
+  gap: 0.5em;
 }
 
 .text-view {
@@ -156,5 +262,51 @@ const download = () => {
 .processors {
   display: flex;
   flex-flow: column;
+}
+
+.close-button {
+  background-color: var(--bg-secondary);
+  border-radius: 0.5em;
+  border: none;
+}
+
+.close-button:hover {
+  background-color: var(--bg-tertiary);
+}
+
+.image {
+  height: 256px;
+  margin: 0 auto;
+  cursor: pointer;
+  border-radius: 0.25em;
+}
+
+.invisible-radio {
+  clip: rect(1px, 1px, 1px, 1px);
+  overflow: hidden;
+  position: absolute;
+  padding: 0;
+}
+
+.fullscreen-preview {
+  background: var(--bg-darken);
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  top: 0;
+  left: 0;
+  display: grid;
+  place-items: center;
+}
+
+.fullscreen-preview:hover:not(:has(> *:hover)) {
+  cursor: pointer;
+  background: var(--bg-darken-darker);
+}
+
+.fullscreen-preview img {
+  max-height: 95vh;
+  max-width: 95vw;
+  border-radius: 0.25em;
 }
 </style>
