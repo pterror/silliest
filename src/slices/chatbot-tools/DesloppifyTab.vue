@@ -35,8 +35,26 @@ const title = computed(() =>
 );
 
 const newDescriptionEl = ref<HTMLDivElement | undefined>(undefined);
+const tags = ref<string[]>([]);
+const newTag = ref("");
 const processorListVisible = ref(false);
 const fullscreenPreviewVisible = ref(false);
+
+const cannotSubmitTag = computed(
+  () =>
+    !newTag.value ||
+    tags.value.some(
+      (tag) =>
+        tag.localeCompare(newTag.value, undefined, {
+          sensitivity: "base",
+        }) === 0
+    )
+);
+const addTag = () => {
+  if (!newTag.value) return;
+  tags.value.push(newTag.value);
+  newTag.value = "";
+};
 
 const imageUrl = ref<string | undefined>(undefined);
 onMounted(() => {
@@ -56,6 +74,11 @@ const lineProcessors = ref(structuredClone(DEFAULT_LINE_PROCESSORS));
 
 const metadata = ref<TavernCard | undefined>(undefined);
 
+const setMetadata = (value: TavernCard) => {
+  metadata.value = value;
+  tags.value = "data" in value ? value.data.tags : [];
+};
+
 watchEffect(() => {
   try {
     const text = png.value?.text;
@@ -66,11 +89,11 @@ watchEffect(() => {
     // const metadataV3Text = png.text["ccv3"];
     const rawPayload: unknown = JSON.parse(atob(metadataV2Text));
     if (validate(TavernCardV1, rawPayload)) {
-      metadata.value = rawPayload;
+      setMetadata(rawPayload);
       return;
     }
     if (validate(TavernCardV2, rawPayload)) {
-      metadata.value = rawPayload;
+      setMetadata(rawPayload);
       return;
     }
     const errors = validationErrors(TavernCardV2, rawPayload);
@@ -82,6 +105,15 @@ watchEffect(() => {
       rawPayload
     );
   } catch {}
+});
+
+const chubUrl = computed(() => {
+  if (!metadata.value || !("data" in metadata.value)) return;
+  const path =
+    metadata.value.data.extensions.chub?.full_path ??
+    metadata.value.data.extensions.chub?.id;
+  if (path == null) return;
+  return `https://chub.ai/characters/${path}`;
 });
 
 const currentDescription = computed(() =>
@@ -97,21 +129,27 @@ const newDescription = computed(() => {
     metadata.value && "data" in metadata.value
       ? metadata.value.data.name
       : metadata.value?.name;
-  return currentDescription.value != null
-    ? desloppify(currentDescription.value, {
-        ...(name !== undefined ? { name } : {}),
-        lineProcessors: unsafeEntries(lineProcessors.value).flatMap(([k, v]) =>
-          v ? [k] : []
-        ),
-      })
-    : undefined;
+  if (currentDescription.value == null) return;
+  return desloppify(currentDescription.value, {
+    ...(name !== undefined ? { name } : {}),
+    lineProcessors: unsafeEntries(lineProcessors.value).flatMap(([k, v]) =>
+      v ? [k] : []
+    ),
+  });
 });
+
+const openInNewTab = (url: string) => {
+  window.open(url, "_blank");
+};
 
 const download = () => {
   if (!png.value || !metadata.value) return;
   const newPngValue = structuredClone(toRaw(png.value));
   const newMetadata = structuredClone(toRaw(metadata.value));
   const newDescription = newDescriptionEl.value?.innerText;
+  if ("data" in newMetadata) {
+    newMetadata.data.tags = tags.value;
+  }
   if (newDescription !== undefined) {
     if ("data" in newMetadata) {
       newMetadata.data.description = newDescription;
@@ -160,9 +198,7 @@ const download = () => {
       :checked="defaultChecked"
     />
     {{ title }}
-    <button class="close-button transition-bg" @click="emit('close')">
-      &times;
-    </button>
+    <button class="button transition-bg" @click="emit('close')">&times;</button>
   </label>
   <div v-if="metadata" class="DesloppifyTabContents">
     <img
@@ -171,8 +207,11 @@ const download = () => {
       :src="imageUrl"
       @click="fullscreenPreviewVisible = true"
     />
-    <div>
+    <div class="buttons">
       <button @click.stop="download">Download Fixed Card</button>
+      <button v-if="chubUrl != null" @click.stop="openInNewTab(chubUrl)">
+        Open in Chub
+      </button>
     </div>
     <div>
       <button @click="processorListVisible = !processorListVisible">
@@ -187,6 +226,34 @@ const download = () => {
           />
           {{ processor }}
         </label>
+      </div>
+    </div>
+    <div>
+      <span>Tags</span>
+      <div class="buttons tags-buttons">
+        <div v-for="tag in tags">
+          {{ tag }}
+          <button class="button" @click="tags.splice(tags.indexOf(tag), 1)">
+            &times;
+          </button>
+        </div>
+        <form>
+          <input
+            class="new-tag-input"
+            type="text"
+            size="1"
+            placeholder="Add new tag..."
+            v-model="newTag"
+          />
+          <button
+            type="submit"
+            class="button"
+            :disabled="cannotSubmitTag"
+            @click.prevent="addTag"
+          >
+            +
+          </button>
+        </form>
       </div>
     </div>
     <div class="diff-view">
@@ -276,13 +343,21 @@ const download = () => {
   display: flex;
 }
 
-.close-button {
+.tags-buttons > * {
+  background-color: var(--bg-secondary);
+  padding: 0.25em;
+  border-radius: 0.25em;
+  display: flex;
+  gap: 0.25em;
+}
+
+.button {
   background-color: var(--bg-secondary);
   border-radius: 0.5em;
   border: none;
 }
 
-.close-button:hover {
+.button:not(:disabled):hover {
   background-color: var(--bg-tertiary);
 }
 
@@ -320,5 +395,9 @@ const download = () => {
   max-height: 95vh;
   max-width: 95vw;
   border-radius: 0.25em;
+}
+
+.new-tag-input {
+  width: 12em;
 }
 </style>

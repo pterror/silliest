@@ -1,5 +1,6 @@
 // See https://github.com/malfoyslastname/character-card-spec-v2/blob/main/spec_v2.md
 import {
+  AllOf,
   AnyOf,
   Array,
   boolean,
@@ -12,6 +13,25 @@ import {
   unknown,
   type Static,
 } from "../../lib/types";
+
+export type TavernCardExtensionDepthPrompt = Static<
+  typeof TavernCardExtensionDepthPrompt
+>;
+export const TavernCardExtensionDepthPrompt = Object({
+  depth: number,
+  prompt: string,
+});
+
+export type TavernCardExtensionChub = Static<typeof TavernCardExtensionChub>;
+export const TavernCardExtensionChub = Object({
+  background_image: string,
+  expressions: unknown,
+  extensions: Array(unknown),
+  full_path: string,
+  id: number,
+  preset: unknown,
+  related_lorebooks: Array(unknown),
+});
 
 export type TavernCardV1 = Static<typeof TavernCardV1>;
 export const TavernCardV1 = Object({
@@ -57,6 +77,14 @@ export const CharacterBook = Object({
   ),
 });
 
+export const TavernCardV2Extensions = AllOf(
+  Object({
+    depth_prompt: Optional(TavernCardExtensionDepthPrompt),
+    chub: Optional(TavernCardExtensionChub),
+  }),
+  Record(string, unknown)
+);
+
 export type TavernCardV2 = Static<typeof TavernCardV2>;
 export const TavernCardV2 = Object({
   spec: Literal("chara_card_v2"),
@@ -80,7 +108,7 @@ export const TavernCardV2 = Object({
     tags: Array(string),
     creator: string,
     character_version: string,
-    extensions: Record(string, unknown),
+    extensions: TavernCardV2Extensions,
   }),
 });
 

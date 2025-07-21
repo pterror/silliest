@@ -28,3 +28,13 @@ summary {
   transition-property: filter;
   transition-duration: 150ms;
 }
+
+.buttons {
+  display: flex;
+  flex-flow: row wrap;
+  gap: 0.5em;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
