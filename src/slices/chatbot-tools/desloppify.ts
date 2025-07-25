@@ -21,6 +21,19 @@ type LineProcessorFunction = (
   context: LineProcessorContext
 ) => string | undefined;
 
+const SMART_QUOTE_REPLACEMENTS: Record<string, string> = {
+  "‘": "'",
+  "’": "'",
+  "“": '"',
+  "”": '"',
+  "«": '"',
+  "»": '"',
+};
+
+const HYPHEN_REPLACEMENTS: Record<string, string> = {
+  "–—−―‑‒⁃": "-",
+};
+
 type LineProcessorName = keyof typeof LINE_PROCESSOR_FUNCTIONS;
 const LINE_PROCESSOR_FUNCTIONS = {
   "Remove W++": (line) => {
@@ -54,9 +67,16 @@ const LINE_PROCESSOR_FUNCTIONS = {
   },
   "Basic Spell Check": (line) =>
     line.replace(/\b(manga|otaku|anime)s\b/gi, "$1"),
+  "Strip Leading Whitespace": (line) => line.replace(/^\s*/, ""),
+  "Strip Trailing Whitespace": (line) => line.replace(/\s*$/, ""),
   "Strip Trailing Semicolon": (line) => line.replace(/\s*;\s*$/, ""),
+  "Remove Bold and Italics Around Dialogue": (line) =>
+    line.replace(/([*]+)"(.+?)"\1$/, '"$2"'),
   "Replace Character Field Name With Name": (line) =>
     line.replace(/^\s*{{char}}'?s?\s*:/, "Name:"),
+  "Replace Smart Quotes": (line) =>
+    line.replace(/[’]g/, (match) => SMART_QUOTE_REPLACEMENTS[match] ?? match),
+  "Replace Hyphens": (line) => line.replace(/[–—−―‑‒⁃]/g, "-"),
   "Human Readable Field Name": (line) =>
     line.replace(
       /^\s*([^:\[\]()]+?)\s*:/,
@@ -83,7 +103,12 @@ const DEFAULT_LINE_PROCESSORS_ARRAY: readonly LineProcessorName[] = [
   "Use Sentence Case",
   "Remove Preset Instructions",
   "Remove Narration Instructions",
+  "Strip Leading Whitespace",
+  "Strip Trailing Whitespace",
   "Strip Trailing Semicolon",
+  "Remove Bold and Italics Around Dialogue",
+  "Replace Smart Quotes",
+  "Replace Hyphens",
   "Basic Spell Check",
   "Replace Character Field Name With Name",
   "Human Readable Field Name",
