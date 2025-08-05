@@ -2,7 +2,7 @@
 import { decode, encode } from "fast-png";
 import { TavernCard, TavernCardV1, TavernCardV2 } from "./types";
 import { validate, validationErrors } from "../../lib/types";
-import { computedAsync, useEventListener } from "@vueuse/core";
+import { computedAsync } from "@vueuse/core";
 import {
   computed,
   onMounted,
@@ -35,10 +35,13 @@ const title = computed(() =>
 );
 
 const newDescriptionEl = ref<HTMLDivElement | undefined>(undefined);
-const tags = ref<string[]>([]);
 const newTag = ref("");
 const processorListVisible = ref(false);
 const fullscreenPreviewVisible = ref(false);
+
+const metadata = ref<TavernCard | undefined>(undefined);
+const tags = ref<string[]>([]);
+const name = ref("");
 
 const cannotSubmitTag = computed(
   () =>
@@ -72,11 +75,10 @@ const png = computedAsync(() =>
 
 const lineProcessors = ref(structuredClone(DEFAULT_LINE_PROCESSORS));
 
-const metadata = ref<TavernCard | undefined>(undefined);
-
 const setMetadata = (value: TavernCard) => {
   metadata.value = value;
   tags.value = "data" in value ? value.data.tags : [];
+  name.value = "data" in value ? value.data.name : value.name;
 };
 
 watchEffect(() => {
@@ -149,6 +151,9 @@ const download = () => {
   const newDescription = newDescriptionEl.value?.innerText;
   if ("data" in newMetadata) {
     newMetadata.data.tags = tags.value;
+    newMetadata.data.name = name.value;
+  } else {
+    newMetadata.name = name.value;
   }
   if (newDescription !== undefined) {
     if ("data" in newMetadata) {
@@ -207,6 +212,7 @@ const download = () => {
       :src="imageUrl"
       @click="fullscreenPreviewVisible = true"
     />
+    <input class="name-input" v-model="name" type="text" placeholder="Name" />
     <div class="buttons">
       <button @click.stop="download">Download Fixed Card</button>
       <button v-if="chubUrl != null" @click.stop="openInNewTab(chubUrl)">
@@ -307,6 +313,11 @@ const download = () => {
 .DesloppifyTabTitle:has(:checked) + .DesloppifyTabContents {
   display: flex;
   order: 1;
+}
+
+.name-input {
+  font-size: 1.25em;
+  align-self: center;
 }
 
 .diff-view {

@@ -6,7 +6,10 @@ const files = ref<File[]>([]);
 
 const onFileInput = (event: Event) => {
   if (!(event.currentTarget instanceof HTMLInputElement)) return;
-  files.value = Array.from(event.currentTarget.files ?? []);
+  files.value = [
+    ...files.value,
+    ...Array.from(event.currentTarget.files ?? []),
+  ];
 };
 </script>
 

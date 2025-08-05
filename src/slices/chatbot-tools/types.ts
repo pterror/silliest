@@ -5,6 +5,7 @@ import {
   Array,
   boolean,
   Literal,
+  null_,
   number,
   Object,
   Optional,
@@ -24,7 +25,7 @@ export const TavernCardExtensionDepthPrompt = Object({
 
 export type TavernCardExtensionChub = Static<typeof TavernCardExtensionChub>;
 export const TavernCardExtensionChub = Object({
-  background_image: string,
+  background_image: AnyOf(string, null_),
   expressions: unknown,
   extensions: Array(unknown),
   full_path: string,
