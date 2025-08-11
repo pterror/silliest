@@ -1,0 +1,30 @@
+---
+import ChubComponent from "../../../slices/chatbot-tools/Chub.vue";
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/png" href="/3c.png" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta content="ai chatbot desloppifier" property="og:site_name" />
+    <meta
+      content="makes chatbot definitions consistent for you"
+      property="og:description"
+    />
+    <link rel="shortcut icon" href="/3c.png" />
+    <title>chub</title>
+    <link rel="stylesheet" href="/style.css" />
+    <style is:global>
+      body {
+        display: flex;
+        flex: 1 0 0;
+        padding: 1em;
+      }
+    </style>
+  </head>
+  <body>
+    <ChubComponent client:load />
+  </body>
+</html>
