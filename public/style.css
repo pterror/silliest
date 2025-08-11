@@ -7,6 +7,7 @@
   --bg-tertiary: light-dark(#22222244, #eeeeee44);
   --bg-darken: #00000066;
   --bg-darken-darker: #00000088;
+  --blur-small: blur(8px);
   --blur-default: blur(32px);
 }
 
@@ -135,5 +136,5 @@ button:not(:disabled):hover {
 }
 
 .hidden {
-  display: none;
+  display: none !important;
 }

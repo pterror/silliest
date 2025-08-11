@@ -73,6 +73,14 @@ const infoHidden = ref(false);
     >
       👁
     </button>
+    <a
+      v-if="item.url"
+      :href="item.url"
+      target="_blank"
+      class="open-original-button"
+    >
+      Open Original
+    </a>
     <button class="close-button" @click="emit('close')">&times;</button>
   </div>
 </template>
@@ -93,6 +101,12 @@ const infoHidden = ref(false);
 
 .media {
   position: absolute;
+  object-fit: contain;
+  max-width: 100%;
+  max-height: 100%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .gallery-item-full-info {
@@ -100,6 +114,20 @@ const infoHidden = ref(false);
   padding: 1em;
   padding-top: 3em;
   background-color: var(--bg-darken);
+  backdrop-filter: var(--blur-small);
+  width: 100%;
+  display: flex;
+  flex-flow: column nowrap;
+}
+
+.item-title,
+.item-subtitle {
+  text-align: center;
+}
+
+.item-description {
+  margin: 0 auto;
+  max-width: 70ch;
 }
 
 .toggle-visibility-button {
@@ -111,6 +139,13 @@ const infoHidden = ref(false);
   font-size: 1.5em;
   border-radius: 50%;
   cursor: pointer;
+}
+
+.open-original-button {
+  position: absolute;
+  top: 10px;
+  left: 40px;
+  padding: 0.5em 1em;
 }
 
 .close-button {
