@@ -16,15 +16,8 @@ import ChubComponent from "../../../slices/chatbot-tools/Chub.vue";
     <link rel="shortcut icon" href="/3c.png" />
     <title>chub</title>
     <link rel="stylesheet" href="/style.css" />
-    <style is:global>
-      body {
-        display: flex;
-        flex: 1 0 0;
-        padding: 1em;
-      }
-    </style>
   </head>
-  <body>
-    <ChubComponent client:load />
+  <body class="fullscreen">
+    <ChubComponent client:only />
   </body>
 </html>

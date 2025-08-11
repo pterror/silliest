@@ -1,21 +1,47 @@
 :root {
   font-family: sans-serif;
   color-scheme: light dark;
-  --bg-secondary-opaque: light-dark(#222222, #444444);
+  --bg-primary: light-dark(#ffffff, #222222);
+  --bg-secondary-opaque: light-dark(#eeeeee, #333333);
   --bg-secondary: light-dark(#22222222, #ffffff22);
-  --bg-tertiary: light-dark(#22222244, #ffffff44);
+  --bg-tertiary: light-dark(#22222244, #eeeeee44);
   --bg-darken: #00000066;
   --bg-darken-darker: #00000088;
+  --blur-default: blur(32px);
 }
 
 html {
   height: 100%;
   display: flex;
   flex-flow: column;
+  background-color: var(--bg-primary);
+}
+
+body {
+  margin: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin-bottom: 0;
 }
 
 summary {
   cursor: pointer;
+}
+
+.has-tooltip {
+  cursor: help;
+}
+
+.fullscreen {
+  display: flex;
+  flex: 1 0 0;
+  padding: 1em;
 }
 
 .transition-bg {
@@ -35,6 +61,79 @@ summary {
   gap: 0.5em;
 }
 
+.tab-container {
+  display: flex;
+  flex-flow: row wrap;
+}
+
+.navbar {
+  position: sticky;
+  top: 0;
+  background-color: var(--bg-primary);
+  display: flex;
+  flex-flow: row wrap;
+  gap: 0.5em;
+}
+
+body.fullscreen .navbar {
+  margin: -1em -1em 0 -1em;
+  padding: 1em;
+}
+
 button:disabled {
   cursor: not-allowed;
+}
+
+button {
+  background-color: var(--bg-secondary);
+  border-radius: 0.5em;
+  border: none;
+}
+
+button:not(:disabled):hover {
+  background-color: var(--bg-tertiary);
+}
+
+.invisible-radio {
+  clip: rect(1px, 1px, 1px, 1px);
+  overflow: hidden;
+  position: absolute;
+  padding: 0;
+}
+
+.faded {
+  opacity: 0.75;
+}
+
+.tab-title {
+  cursor: pointer;
+  border-radius: 0.25em;
+  padding: 0.25em 0.5em;
+}
+
+.tab-title:has(:checked) {
+  background: var(--bg-secondary);
+}
+
+.tab-contents {
+  width: 100%;
+  display: none;
+  flex-flow: column;
+  gap: 1em;
+  margin-top: 1em;
+}
+
+.tab-title:has(:checked) + .tab-contents {
+  display: flex;
+  order: 1;
+}
+
+.boxed {
+  border: 1px solid currentColor;
+  border-radius: 0.5em;
+  padding: 1em;
+}
+
+.hidden {
+  display: none;
 }

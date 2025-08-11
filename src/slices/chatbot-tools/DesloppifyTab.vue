@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { decode, encode } from "fast-png";
-import { TavernCard, TavernCardV1, TavernCardV2 } from "./types";
-import { validate, validationErrors } from "../../lib/types";
+import { TavernCard } from "./types";
 import { computedAsync } from "@vueuse/core";
 import {
   computed,
@@ -18,6 +17,7 @@ import {
   desloppify,
 } from "./desloppify";
 import { unsafeEntries } from "../../lib/object";
+import { formatError } from "zod";
 
 const props = defineProps<{
   readonly file: File;
@@ -48,9 +48,8 @@ const cannotSubmitTag = computed(
     !newTag.value ||
     tags.value.some(
       (tag) =>
-        tag.localeCompare(newTag.value, undefined, {
-          sensitivity: "base",
-        }) === 0
+        tag.localeCompare(newTag.value, undefined, { sensitivity: "base" }) ===
+        0
     )
 );
 const addTag = () => {
@@ -60,17 +59,27 @@ const addTag = () => {
 };
 
 const imageUrl = ref<string | undefined>(undefined);
+
 onMounted(() => {
   imageUrl.value = URL.createObjectURL(props.file);
 });
+
 onUnmounted(() => {
-  if (imageUrl.value) {
-    URL.revokeObjectURL(imageUrl.value);
-  }
+  if (!imageUrl.value) return;
+  URL.revokeObjectURL(imageUrl.value);
 });
 
 const png = computedAsync(() =>
-  props.file.arrayBuffer().then((buffer) => decode(buffer))
+  props.file
+    .arrayBuffer()
+    .then((buffer) => decode(buffer))
+    .catch((error) => {
+      console.error(
+        `Could not decode PNG file '${props.file.name}'`,
+        "Error:",
+        error
+      );
+    })
 );
 
 const lineProcessors = ref(structuredClone(DEFAULT_LINE_PROCESSORS));
@@ -90,23 +99,25 @@ watchEffect(() => {
     // https://github.com/kwaroran/character-card-spec-v3/blob/main/SPEC_V3.md
     // const metadataV3Text = png.text["ccv3"];
     const rawPayload: unknown = JSON.parse(atob(metadataV2Text));
-    if (validate(TavernCardV1, rawPayload)) {
-      setMetadata(rawPayload);
+    const metadata = TavernCard.safeParse(rawPayload);
+    if (metadata.success) {
+      setMetadata(metadata.data);
       return;
     }
-    if (validate(TavernCardV2, rawPayload)) {
-      setMetadata(rawPayload);
-      return;
-    }
-    const errors = validationErrors(TavernCardV2, rawPayload);
     console.error(
       `Could not read metadata of card '${props.file.name}'`,
       "Errors:",
-      [...errors],
+      formatError(metadata.error),
       "Value:",
       rawPayload
     );
-  } catch {}
+  } catch (error) {
+    console.error(
+      `Could not read metadata of card '${props.file.name}'`,
+      "Error:",
+      error
+    );
+  }
 });
 
 const chubUrl = computed(() => {
@@ -195,7 +206,7 @@ const download = () => {
 </script>
 
 <template>
-  <label class="DesloppifyTabTitle">
+  <label class="DesloppifyTabTitle tab-title">
     <input
       type="radio"
       name="desloppify-tab"
@@ -203,9 +214,9 @@ const download = () => {
       :checked="defaultChecked"
     />
     {{ title }}
-    <button class="button transition-bg" @click="emit('close')">&times;</button>
+    <button class="transition-bg" @click="emit('close')">&times;</button>
   </label>
-  <div v-if="metadata" class="DesloppifyTabContents">
+  <div v-if="metadata" class="DesloppifyTabContents tab-contents">
     <img
       v-if="imageUrl"
       class="image transition-bg darken-on-hover"
@@ -239,9 +250,7 @@ const download = () => {
       <div class="buttons tags-buttons">
         <div v-for="tag in tags">
           {{ tag }}
-          <button class="button" @click="tags.splice(tags.indexOf(tag), 1)">
-            &times;
-          </button>
+          <button @click="tags.splice(tags.indexOf(tag), 1)">&times;</button>
         </div>
         <form>
           <input
@@ -253,7 +262,6 @@ const download = () => {
           />
           <button
             type="submit"
-            class="button"
             :disabled="cannotSubmitTag"
             @click.prevent="addTag"
           >
@@ -266,14 +274,14 @@ const download = () => {
       <span>Current</span>
       <span>Processed (edits will be saved on download)</span>
       <div class="text-view-container">
-        <div class="text-view diff-view-before">
+        <div class="text-view boxed diff-view-before">
           {{ currentDescription }}
         </div>
       </div>
       <div class="text-view-container">
         <div
           ref="newDescriptionEl"
-          class="text-view diff-view-after"
+          class="text-view boxed diff-view-after"
           contenteditable="true"
         >
           {{ newDescription }}
@@ -292,29 +300,6 @@ const download = () => {
 </template>
 
 <style scoped>
-.DesloppifyTabTitle {
-  cursor: pointer;
-  border-radius: 0.25em;
-  padding: 0.25em 0.5em;
-}
-
-.DesloppifyTabTitle:has(:checked) {
-  background: var(--bg-secondary);
-}
-
-.DesloppifyTabContents {
-  width: 100%;
-  display: none;
-  flex-flow: column;
-  gap: 1em;
-  margin-top: 1em;
-}
-
-.DesloppifyTabTitle:has(:checked) + .DesloppifyTabContents {
-  display: flex;
-  order: 1;
-}
-
 .name-input {
   font-size: 1.25em;
   align-self: center;
@@ -334,9 +319,6 @@ const download = () => {
 }
 
 .text-view {
-  border: 1px solid currentColor;
-  border-radius: 0.5em;
-  padding: 1em;
   white-space: pre-line;
 }
 
@@ -362,28 +344,11 @@ const download = () => {
   gap: 0.25em;
 }
 
-.button {
-  background-color: var(--bg-secondary);
-  border-radius: 0.5em;
-  border: none;
-}
-
-.button:not(:disabled):hover {
-  background-color: var(--bg-tertiary);
-}
-
 .image {
   height: 256px;
   margin: 0 auto;
   cursor: pointer;
   border-radius: 0.25em;
-}
-
-.invisible-radio {
-  clip: rect(1px, 1px, 1px, 1px);
-  overflow: hidden;
-  position: absolute;
-  padding: 0;
 }
 
 .fullscreen-preview {

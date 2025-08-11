@@ -35,9 +35,4 @@ const onFileInput = (event: Event) => {
   gap: 1em;
   flex: 1 0 0;
 }
-
-.tab-container {
-  display: flex;
-  flex-flow: row wrap;
-}
 </style>

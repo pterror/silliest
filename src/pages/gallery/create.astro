@@ -1,5 +1,5 @@
 ---
-import DesloppifyComponent from "../../../slices/chatbot-tools/Desloppify.vue";
+import CreateGalleryComponent from "../../slices/gallery/CreateGallery.vue";
 ---
 
 <html lang="en">
@@ -8,16 +8,13 @@ import DesloppifyComponent from "../../../slices/chatbot-tools/Desloppify.vue";
     <link rel="icon" type="image/png" href="/3c.png" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
-    <meta content="ai chatbot desloppifier" property="og:site_name" />
-    <meta
-      content="makes chatbot definitions consistent for you"
-      property="og:description"
-    />
+    <meta content="create media gallery" property="og:site_name" />
+    <meta content="creates a media gallery!" property="og:description" />
     <link rel="shortcut icon" href="/3c.png" />
-    <title>desloppify</title>
+    <title>create gallery</title>
     <link rel="stylesheet" href="/style.css" />
   </head>
   <body class="fullscreen">
-    <DesloppifyComponent client:only />
+    <CreateGalleryComponent client:only />
   </body>
 </html>
