@@ -164,7 +164,13 @@ watchEffect(() => {
 }
 
 textarea {
-  width: 64ch;
+  width: min(calc(100vw - 4em), 64ch);
   height: 24ch;
+}
+
+@media screen and (max-width: 640px) {
+  .metadata-editor {
+    grid-template-columns: repeat(1, auto);
+  }
 }
 </style>
