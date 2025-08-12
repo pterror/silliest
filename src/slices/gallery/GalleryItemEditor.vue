@@ -111,7 +111,11 @@ watchEffect(() => {
 
 textarea {
   width: min(calc(100vw - 4em), 64ch);
-  height: 24ch;
+  height: 6lh;
+}
+
+.custom-css-input {
+  height: 1lh;
 }
 
 @media screen and (max-width: 640px) {

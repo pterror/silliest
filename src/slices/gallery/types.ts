@@ -14,7 +14,6 @@ export const GalleryItem = z.object({
   authorName: z.string().optional(),
   authorUrl: z.string().optional(),
   authorImage: z.string().optional(),
-  customCss: z.string().optional(),
 });
 
 export type Gallery = z.infer<typeof Gallery>;
@@ -23,5 +22,4 @@ export const Gallery = z.object({
   subtitle: z.string().optional(),
   description: z.string().optional(),
   items: z.array(GalleryItem),
-  customCss: z.string().optional(),
 });

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { markdownToHtml } from "../../lib/markdown";
+import { markdownToHtmlUnsafe } from "../../lib/markdown";
 import type { GalleryItem } from "./types";
 
 const props = defineProps<{ item: GalleryItem }>();
@@ -34,9 +34,6 @@ const infoHidden = ref(false);
       @click.stop
     ></audio>
     <div class="gallery-item-full-info" :class="{ hidden: infoHidden }">
-      <component is="style" v-if="item.customCss">
-        {{ item.customCss }}
-      </component>
       <a
         v-if="item.authorName || item.authorImage"
         v-bind="item.authorUrl ? { href: item.authorUrl } : {}"
@@ -54,17 +51,17 @@ const infoHidden = ref(false);
       <h1
         v-if="item.title"
         class="item-title"
-        v-html="markdownToHtml(item.title)"
+        v-html="markdownToHtmlUnsafe(item.title)"
       ></h1>
       <h2
         v-if="item.subtitle"
         class="item-subtitle"
-        v-html="markdownToHtml(item.subtitle)"
+        v-html="markdownToHtmlUnsafe(item.subtitle)"
       ></h2>
       <span
         v-if="item.description"
         class="item-description"
-        v-html="markdownToHtml(item.description)"
+        v-html="markdownToHtmlUnsafe(item.description)"
       ></span>
     </div>
     <button

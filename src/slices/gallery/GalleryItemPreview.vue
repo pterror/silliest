@@ -2,7 +2,7 @@
 import { computed, ref } from "vue";
 import type { GalleryItem } from "./types";
 import GalleryItemFull from "./GalleryItemFull.vue";
-import { markdownToHtml } from "../../lib/markdown";
+import { markdownToHtmlUnsafe } from "../../lib/markdown";
 
 const props = defineProps<{ item: GalleryItem }>();
 const { item } = props;
@@ -38,7 +38,7 @@ const thumbnailUrl = computed(() => item.thumbnailUrl || item.url);
       <span
         v-if="item.title"
         class="gallery-item-preview-title"
-        v-html="markdownToHtml(item.title)"
+        v-html="markdownToHtmlUnsafe(item.title)"
       ></span>
       <a
         v-if="item.authorName || item.authorImage"
