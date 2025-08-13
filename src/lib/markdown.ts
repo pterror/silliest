@@ -12,10 +12,6 @@ const markdownToHtmlProcessor = unified()
   .use(remarkRehype)
   .use(rehypeStringify);
 
-export function markdownToHtml(markdown: string): string {
-  return markdownToHtmlProcessor.processSync(markdown).toString();
-}
-
 const markdownToHtmlUnsafeProcessor = unified()
   .use(remarkParse)
   .use(remarkRehype, { allowDangerousHtml: true } satisfies RemarkRehypeOptions)
@@ -25,6 +21,9 @@ const markdownToHtmlUnsafeProcessor = unified()
     allowParseErrors: true,
   } satisfies RehypeStringifyOptions);
 
-export function markdownToHtmlUnsafe(markdown: string): string {
-  return markdownToHtmlUnsafeProcessor.processSync(markdown).toString();
+export function markdownToHtml(
+  markdown: string,
+  { unsafe = false } = {}
+): string {
+  return (unsafe ? markdownToHtmlUnsafeProcessor : markdownToHtmlProcessor).processSync(markdown).toString();
 }

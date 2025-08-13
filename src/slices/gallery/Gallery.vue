@@ -3,7 +3,7 @@ import { computedAsync } from "@vueuse/core";
 import { parseGalleryFromBase64 } from "./format";
 import { computed, ref, watchEffect } from "vue";
 import GalleryItemPreview from "./GalleryItemPreview.vue";
-import { markdownToHtmlUnsafe } from "../../lib/markdown";
+import { markdownToHtml } from "../../lib/markdown";
 import { getMessageOrToString } from "../../lib/error";
 
 const error = ref<string>();
@@ -40,17 +40,17 @@ function goToEditPage() {
       <h1
         v-if="gallery.title"
         class="gallery-title"
-        v-html="markdownToHtmlUnsafe(gallery.title)"
+        v-html="markdownToHtml(gallery.title, { unsafe: true })"
       ></h1>
       <h2
         v-if="gallery.subtitle"
         class="gallery-subtitle"
-        v-html="markdownToHtmlUnsafe(gallery.subtitle)"
+        v-html="markdownToHtml(gallery.subtitle, { unsafe: true })"
       ></h2>
       <span
         v-if="gallery.description"
         class="gallery-description"
-        v-html="markdownToHtmlUnsafe(gallery.description)"
+        v-html="markdownToHtml(gallery.description, { unsafe: true })"
       ></span>
     </div>
     <button v-if="showEditButton" class="edit-button" @click="goToEditPage">

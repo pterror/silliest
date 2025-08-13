@@ -6,7 +6,7 @@ export function unsafeKeys<T extends object>(
 }
 
 /** Safe only when `T` is an exact type, i.e. value has no extra keys. */
-export function unsafeEntries<T extends object, V>(
+export function unsafeEntries<T extends object>(
   object: T
 ): readonly {
   readonly [K in keyof T]: readonly [K, T[K]];

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { markdownToHtmlUnsafe } from "../../lib/markdown";
+import { markdownToHtml } from "../../lib/markdown";
 import type { GalleryItem } from "./types";
 
 const props = defineProps<{ item: GalleryItem }>();
@@ -51,17 +51,17 @@ const infoHidden = ref(false);
       <h1
         v-if="item.title"
         class="item-title"
-        v-html="markdownToHtmlUnsafe(item.title)"
+        v-html="markdownToHtml(item.title, { unsafe: true })"
       ></h1>
       <h2
         v-if="item.subtitle"
         class="item-subtitle"
-        v-html="markdownToHtmlUnsafe(item.subtitle)"
+        v-html="markdownToHtml(item.subtitle, { unsafe: true })"
       ></h2>
       <span
         v-if="item.description"
         class="item-description"
-        v-html="markdownToHtmlUnsafe(item.description)"
+        v-html="markdownToHtml(item.description, { unsafe: true })"
       ></span>
     </div>
     <button

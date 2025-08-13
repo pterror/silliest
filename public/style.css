@@ -85,13 +85,15 @@ button:disabled {
   cursor: not-allowed;
 }
 
-button {
+button,
+.button {
   background-color: var(--bg-secondary);
   border-radius: 0.5em;
   border: none;
 }
 
-button:not(:disabled):hover {
+button:not(:disabled):hover,
+.button:hover {
   background-color: var(--bg-tertiary);
 }
 
@@ -137,4 +139,12 @@ button:not(:disabled):hover {
 
 .hidden {
   display: none !important;
+}
+
+.blurred-small {
+  filter: var(--blur-small);
+}
+
+.blurred {
+  filter: var(--blur-default);
 }
