@@ -55,16 +55,22 @@ const LINE_PROCESSOR_FUNCTIONS = {
   },
   "Strip {{char}} Field Prefix": (line) =>
     line.replace(
-      /^\s*{{char}}'?s?\s*(.+)\s*:/,
+      /^\s*{{char}}'?s?_?\s*(.+)\s*:/,
       (_m, fieldName: string) =>
         `${fieldName.replace(/^./, (m) => m.toUpperCase())}:`
     ),
   "Strip 'Character' Field Prefix": (line) =>
     line.replace(
-      /^\s*character'?s?\s*(.+)\s*:/,
+      /^\s*character'?s?_?\s*(.+)\s*:/,
       (_m, fieldName: string) =>
         `${fieldName.replace(/^./, (m) => m.toUpperCase())}:`
     ),
+  "Capitalize Field Names": (line) => {
+    const match = line.match(/^\s*([^:]+?):\s*(.*)$/);
+    if (!match) return line;
+    const [, name = "", rest = ""] = match;
+    return `${name[0]?.toUpperCase() + name.slice(1)}: ${rest}`;
+  },
   "Use Sentence Case": (line): string =>
     line.replace(/^.|(?<=^[\w\s]*:\s*).|[.]\s+(.)/g, (c) => c.toUpperCase()),
   "Remove Narration Instructions": (line) => {
@@ -72,7 +78,6 @@ const LINE_PROCESSOR_FUNCTIONS = {
     line = line.replace(/\s*\[\s*narration\b.*?\]\s*/gi, "");
     return line === "" ? undefined : line;
   },
-
   "Strip Leading Whitespace": (line) => line.replace(/^\s*/, ""),
   "Strip Trailing Whitespace": (line) => line.replace(/\s*$/, ""),
   "Strip Trailing Semicolon": (line) => line.replace(/\s*;\s*$/, ""),
@@ -100,7 +105,7 @@ const LINE_PROCESSOR_FUNCTIONS = {
   "Remove Horizontal Rules": (line) =>
     /^\s*---+\s*$/.test(line) ? undefined : line,
   "Remove Species: Human": (line) =>
-    /^\s*species:\s*human\s*$/i.test(line) ? undefined : line,
+    /^\s*species:\s*human(?:[/\w]*)\s*$/i.test(line) ? undefined : line,
   // The following are no-ops because they do not operate on individual lines.
   // They are handled separately in the `desloppify` function.
   "Strip Surrounding Whitespace": (line) => line,
@@ -115,6 +120,11 @@ export type LineProcessorsConfiguration = Record<LineProcessorName, boolean>;
 const DEFAULT_LINE_PROCESSORS_ARRAY: readonly LineProcessorName[] = [
   "Remove W++",
   "Normalize Field Names",
+  "Replace Character Field Name With Name",
+  "Human Readable Field Name",
+  "Strip {{char}} Field Prefix",
+  "Strip 'Character' Field Prefix",
+  "Capitalize Field Names",
   "Use Sentence Case",
   "Remove Preset Instructions",
   "Remove Narration Instructions",
@@ -125,10 +135,6 @@ const DEFAULT_LINE_PROCESSORS_ARRAY: readonly LineProcessorName[] = [
   "Replace Smart Quotes",
   "Replace Hyphens",
   "Replace Bullet Points",
-  "Replace Character Field Name With Name",
-  "Human Readable Field Name",
-  "Strip {{char}} Field Prefix",
-  "Strip 'Character' Field Prefix",
   "Remove Species: Human",
   "Replace Name With {{char}}",
   "Strip Surrounding Whitespace",

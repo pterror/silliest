@@ -196,7 +196,7 @@ const download = () => {
   const link = document.createElement("a");
   link.href = url;
   link.download = props.file.name.replace(
-    /_?(?:desloppified)?(_?spec_v2)?(?: ?[(][\d\s]*[)])[.]png/,
+    /_?(?:desloppified)?(_?spec_v2)?(?: ?[(][\d\s]*[)])?[.]png/,
     "_desloppified$&"
   );
   document.body.appendChild(link);
