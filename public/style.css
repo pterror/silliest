@@ -9,6 +9,8 @@
   --bg-darken-darker: #00000088;
   --blur-small: blur(8px);
   --blur-default: blur(32px);
+  --radius-small: 0.25em;
+  --radius-default: 0.5em;
 }
 
 html {
@@ -39,14 +41,29 @@ summary {
   cursor: help;
 }
 
-.fullscreen {
+.fullscreen-body {
   display: flex;
   flex: 1 0 0;
   padding: 1em;
 }
 
+.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--bg-primary);
+  overflow: auto;
+}
+
 .transition-bg {
   transition-property: background-color;
+  transition-duration: 150ms;
+}
+
+.transition-filter {
+  transition-property: filter;
   transition-duration: 150ms;
 }
 
@@ -104,6 +121,13 @@ button:not(:disabled):hover,
   padding: 0;
 }
 
+.loading {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+}
+
 .faded {
   opacity: 0.75;
 }
@@ -147,4 +171,12 @@ button:not(:disabled):hover,
 
 .blurred {
   filter: var(--blur-default);
+}
+
+body:has(.fullscreen) {
+  overflow: hidden;
+}
+
+.show-newlines {
+  white-space: pre-line;
 }

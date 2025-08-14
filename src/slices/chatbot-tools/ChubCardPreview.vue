@@ -1,34 +1,82 @@
 <script setup lang="ts">
-import { computedAsync } from "@vueuse/core";
-import { chubFetchEntireConfig, type ChubCard as ChubCardType } from "./chub";
-import { computed, ref } from "vue";
+import type { ChubCard } from "./chub";
+import { computed } from "vue";
+import { useQuery } from "@tanstack/vue-query";
+import { chubQueryOptions } from "./chubQuery";
 
 const props = defineProps<{
-  card: ChubCardType;
+  card: ChubCard;
 }>();
 const emit = defineEmits<{
   openInFullscreen: [];
+  addTopic: [topic: string];
 }>();
 
-const config = computedAsync(() => chubFetchEntireConfig());
+const configQuery = useQuery(chubQueryOptions("chubFetchEntireConfig", []));
+const config = configQuery.data;
+
 const blurred = computed(
   () =>
     props.card.nsfw_image &&
-    (config.value?.configs.theme.Default?.blur_nsfw ?? true)
+    (config.value?.configs?.theme?.Default?.blur_nsfw ?? true)
 );
 </script>
 
 <template>
   <div class="ChubCardPreview">
-    <img :src="card.avatar_url" :class="{ blurred }" alt="Card Image" />
+    <img
+      :src="card.avatar_url"
+      class="chub-card-preview-image transition-filter"
+      :class="{ blurred }"
+      alt="Card Image"
+      @click="emit('openInFullscreen')"
+    />
     <h2>{{ card.name }}</h2>
+    <div class="topics">
+      <button
+        v-for="topic in card.topics"
+        class="topic"
+        @click="emit('addTopic', topic)"
+      >
+        {{ topic }}
+      </button>
+    </div>
     <a
       :href="`https://chub.ai/characters/${card.fullPath}`"
       class="open-in-chub-button button"
+      target="_blank"
     >
       Chub
     </a>
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.ChubCardPreview {
+  display: flex;
+  flex-flow: column nowrap;
+  align-items: center;
+}
+
+.chub-card-preview-image {
+  cursor: pointer;
+  border-radius: var(--radius-default);
+
+  &:hover {
+    filter: brightness(0.8);
+  }
+}
+
+.topics {
+  display: flex;
+  flex-flow: row wrap;
+  gap: 0.5em;
+}
+
+.topic {
+  cursor: pointer;
+  background-color: var(--bg-secondary);
+  padding: 0.2em 0.5em;
+  border-radius: 4px;
+}
+</style>

@@ -274,14 +274,14 @@ const download = () => {
       <span>Current</span>
       <span>Processed (edits will be saved on download)</span>
       <div class="text-view-container">
-        <div class="text-view boxed diff-view-before">
+        <div class="diff-view-before boxed show-newlines">
           {{ currentDescription }}
         </div>
       </div>
       <div class="text-view-container">
         <div
           ref="newDescriptionEl"
-          class="text-view boxed diff-view-after"
+          class="diff-view-after boxed show-newlines"
           contenteditable="true"
         >
           {{ newDescription }}
@@ -316,10 +316,6 @@ const download = () => {
   display: flex;
   flex-flow: column;
   gap: 0.5em;
-}
-
-.text-view {
-  white-space: pre-line;
 }
 
 .processors {

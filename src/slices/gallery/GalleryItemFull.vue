@@ -60,7 +60,7 @@ const infoHidden = ref(false);
       ></h2>
       <span
         v-if="item.description"
-        class="item-description"
+        class="item-description show-newlines"
         v-html="markdownToHtml(item.description, { unsafe: true })"
       ></span>
     </div>

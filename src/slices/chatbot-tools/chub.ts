@@ -1,5 +1,15 @@
+import { filterOutUndefined } from "../../lib/object";
+
 const BASE_URL = "https://gateway.chub.ai";
 const API_URL = `${BASE_URL}/api`;
+
+export type ChubPage<T> = {
+  readonly count: number;
+  readonly nodes: readonly T[];
+  readonly page: number;
+  readonly previous_cursor: null | string;
+  readonly cursor: null | string;
+};
 
 export type ChubUserId = number & {
   readonly __type: "ChubUserId";
@@ -26,6 +36,9 @@ export type ChubSelfUser = {
   readonly verified_age: boolean;
 };
 
+// TODO: Define the `ChubModel` type properly when more information is available.
+export type ChubModel = {};
+
 export type ChubUser = {
   readonly id: ChubUserId;
   readonly avatarUrl: string;
@@ -36,22 +49,12 @@ export type ChubUser = {
   readonly first_name: string;
   readonly last_name: string;
   readonly public_email: string | null;
-  readonly projects: {
-    readonly count: number;
-    readonly nodes: readonly ChubCardRaw[];
-    readonly page: number;
-    readonly previous_cursor: null | string;
-    readonly cursor: null | string;
-  };
+  readonly projects: ChubPage<ChubCardRaw>;
   readonly bio: string | null;
   readonly discord: string | null;
   readonly agnai_id: string | null;
   readonly avatar_url: string;
-  readonly models: {
-    readonly count: number;
-    readonly nodes: unknown[];
-    readonly page: number;
-  };
+  readonly models: ChubPage<ChubModel>;
   readonly n_followees: number;
   readonly n_followers: number;
   /** Whether the user follows you */
@@ -126,14 +129,6 @@ interface ChubCardRaw extends Omit<ChubCard, "lastActivityAt" | "createdAt"> {
   readonly createdAt: string;
 }
 
-interface ChubGetSimilarProjectsResponse {
-  readonly count: number;
-  readonly nodes: ChubCardRaw[];
-  readonly page: number;
-  readonly previous: null;
-  readonly cursor: null;
-}
-
 export function chubCardRawToChubCard(raw: ChubCardRaw): ChubCard {
   return {
     ...raw,
@@ -146,7 +141,7 @@ export async function chubListSimilarCards(
   id: number
 ): Promise<readonly ChubCard[]> {
   const response = await fetch(`${API_URL}/projects/similar/${id}/true/true`);
-  const data: ChubGetSimilarProjectsResponse = await response.json();
+  const data: ChubPage<ChubCardRaw> = await response.json();
   return data.nodes.map(chubCardRawToChubCard);
 }
 
@@ -193,16 +188,16 @@ export async function chubGetCard(
 }
 
 export type ChubSearchParams = {
-  readonly first?: number;
-  readonly namespace?: "characters" | "lorebooks";
-  readonly nsfw?: boolean;
-  readonly nsfl?: boolean;
-  readonly chub?: boolean;
-  readonly count?: boolean;
-  readonly topics?: string;
-  readonly exclude_mine?: boolean;
-  readonly include_forks?: boolean;
-  readonly sort?:
+  first?: number;
+  namespace?: "characters" | "lorebooks";
+  nsfw?: boolean;
+  nsfl?: boolean;
+  chub?: boolean;
+  count?: boolean;
+  topics?: string;
+  exclude_mine?: boolean;
+  include_forks?: boolean;
+  sort?:
     | "default"
     | "trending"
     | "ai_rating"
@@ -219,11 +214,11 @@ export type ChubSearchParams = {
     | "created_at"
     | "public_chats"
     | "download_count";
-  readonly search?: string;
-  readonly username?: string;
-  readonly my_favorites?: boolean;
-  readonly min_tokens?: number;
-  readonly page?: number;
+  search?: string;
+  username?: string;
+  my_favorites?: boolean;
+  min_tokens?: number;
+  page?: number;
 };
 
 export const CHUB_SORT_NAMES = [
@@ -271,24 +266,27 @@ export async function chubSearchCards(
     params as Record<string, string>
   ).toString();
   const response = await fetch(`${BASE_URL}/search?${query}`);
-  const data: ChubGetSimilarProjectsResponse = await response.json();
+  const data: ChubPage<ChubCardRaw> = await response.json();
   return data.nodes.map(chubCardRawToChubCard);
 }
 
 export type ChubTimelineParams = {
-  readonly page?: number;
-  readonly count?: boolean;
+  readonly cursor?: string | undefined;
+  readonly page?: number | undefined;
+  readonly count?: boolean | undefined;
 };
 
 export async function chubGetTimelinePage(
   params: ChubTimelineParams = {}
 ): Promise<readonly ChubCard[]> {
   const query = new URLSearchParams(
-    params as Record<string, string>
+    filterOutUndefined(params) as Record<string, string>
   ).toString();
   const response = await fetch(`${API_URL}/timeline/v1?${query}`);
-  const data: ChubGetSimilarProjectsResponse = await response.json();
-  return data.nodes.map(chubCardRawToChubCard);
+  const { data }: { readonly data: ChubPage<ChubCardRaw> } =
+    await response.json();
+  const result = data.nodes.map(chubCardRawToChubCard);
+  return result;
 }
 
 export async function chubGetSelfUser(): Promise<ChubSelfUser> {
@@ -302,22 +300,21 @@ export async function chubGetUserById(username: string): Promise<ChubUser> {
 }
 
 export type ChubCardQuery =
-  | { type: "timeline" }
-  | { type: "search"; params: ChubSearchParams }
-  | { type: "user"; username: string };
+  | { type: "timeline"; cursor?: string }
+  | { type: "search"; params: ChubSearchParams; cursor?: string };
 
 export async function chubGetCardsByQuery(
   query: ChubCardQuery
 ): Promise<readonly ChubCard[]> {
+  const widenedQuery = query;
   switch (query.type) {
     case "timeline":
-      return await chubGetTimelinePage();
+      return await chubGetTimelinePage({ cursor: query.cursor });
     case "search":
       return await chubSearchCards(query.params);
-    case "user": {
-      const user = await chubGetUserById(query.username);
-      return user.projects.nodes.map(chubCardRawToChubCard);
-    }
+    default:
+      query satisfies never; // Ensure all cases are handled
+      throw new Error(`Unsupported query type: ${widenedQuery.type}`);
   }
 }
 
@@ -459,7 +456,7 @@ export type ChubConfigFetchResponse<
 export async function chubFetchConfig(
   request: ChubConfigFetchRequest
 ): Promise<ChubConfigFetchResponse> {
-  const response = await fetch(`${API_URL}/config/fetch`, {
+  const response = await fetch(`${BASE_URL}/config/fetch`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(request),

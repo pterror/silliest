@@ -23,3 +23,20 @@ export function unsafeMapEntries<T extends object, V>(
     unsafeEntries(object).map((entry) => [entry[0], map(entry)])
   ) as { readonly [K in keyof T]: V };
 }
+
+export function filterOutUndefined<T extends object>(object: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(object).filter(([, value]) => value !== undefined)
+  ) as Partial<T>;
+}
+
+export type MethodNamesOf<
+  T,
+  ParameterListConstraint extends readonly any[] = never,
+  ReturnTypeConstraint = any,
+  K extends keyof T = keyof T
+> = K extends K
+  ? T[K] extends (...args: ParameterListConstraint) => ReturnTypeConstraint
+    ? K
+    : never
+  : never;
