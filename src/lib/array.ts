@@ -2,5 +2,10 @@
 export function unwrapPossibleSingleton<T>(
   value: T | readonly T[]
 ): T | undefined {
-  return Array.isArray(value) ? value[0] : (value as T);
+  return Array.isArray(value) ? value[0] : value;
+}
+
+/** Warning: Unsafe when `T` is itself an array type. */
+export function wrapPossibleSingleton<T>(value: T | T[] | undefined): T[] {
+  return Array.isArray(value) ? value : value === undefined ? [] : [value];
 }

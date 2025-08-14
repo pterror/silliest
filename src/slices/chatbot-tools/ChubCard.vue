@@ -5,6 +5,7 @@ import type { ChubCard } from "./chub";
 import { useQuery } from "@tanstack/vue-query";
 import { chubQueryOptions } from "./chubQuery";
 import { useEventListener } from "@vueuse/core";
+import { chubMarkdownToHtml } from "./chubMarkdown";
 
 const props = defineProps<{
   card: ChubCard;
@@ -66,7 +67,7 @@ useEventListener("keydown", (event) => {
       alt="Card Image"
     />
     <p
-      v-html="markdownToHtml(card.description, { unsafe: showCustomCss })"
+      v-html="chubMarkdownToHtml(card.description, { unsafe: showCustomCss })"
       class="chub-card-description show-newlines"
     ></p>
   </div>
@@ -74,7 +75,11 @@ useEventListener("keydown", (event) => {
 
 <style scoped>
 .ChubCard {
+  display: flex;
+  flex-flow: column nowrap;
   padding: 1em;
+  gap: 1em;
+  align-items: center;
 }
 
 .top-right-buttons {
@@ -94,8 +99,15 @@ useEventListener("keydown", (event) => {
 }
 
 .open-in-chub-button {
-  align-self: center;
   padding: 0.2em 0.5em;
+}
+
+.chub-card-image {
+  align-self: center;
+}
+
+.chub-card-description {
+  max-width: 70ch;
 }
 
 .topics {

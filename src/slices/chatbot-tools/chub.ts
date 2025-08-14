@@ -266,8 +266,8 @@ export async function chubSearchCards(
     params as Record<string, string>
   ).toString();
   const response = await fetch(`${BASE_URL}/search?${query}`);
-  const data: ChubPage<ChubCardRaw> = await response.json();
-  return data.nodes.map(chubCardRawToChubCard);
+  const data: { readonly data: ChubPage<ChubCardRaw> } = await response.json();
+  return data.data.nodes.map(chubCardRawToChubCard);
 }
 
 export type ChubTimelineParams = {

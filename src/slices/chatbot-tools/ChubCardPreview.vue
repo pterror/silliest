@@ -61,6 +61,8 @@ const blurred = computed(
 .chub-card-preview-image {
   cursor: pointer;
   border-radius: var(--radius-default);
+  height: 200px;
+  width: 200px;
 
   &:hover {
     filter: brightness(0.8);
@@ -70,6 +72,7 @@ const blurred = computed(
 .topics {
   display: flex;
   flex-flow: row wrap;
+  justify-content: center;
   gap: 0.5em;
 }
 

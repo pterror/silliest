@@ -28,7 +28,6 @@ export function markdownToHtml(
   markdown: string,
   { unsafe = false } = {}
 ): string {
-  console.log(":)", unsafe, markdown);
   return (unsafe ? markdownToHtmlUnsafeProcessor : markdownToHtmlProcessor)
     .processSync(markdown)
     .toString();

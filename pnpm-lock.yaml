@@ -26,6 +26,12 @@ importers:
       fflate:
         specifier: ^0.8.2
         version: 0.8.2
+      rehype:
+        specifier: ^13.0.2
+        version: 13.0.2
+      rehype-raw:
+        specifier: ^7.0.0
+        version: 7.0.0
       rehype-stringify:
         specifier: ^10.0.1
         version: 10.0.1
@@ -41,6 +47,9 @@ importers:
       unified:
         specifier: ^11.0.5
         version: 11.0.5
+      unist-util-visit:
+        specifier: ^5.0.0
+        version: 5.0.0
       vue:
         specifier: ^3.5.17
         version: 3.5.17(typescript@5.8.3)

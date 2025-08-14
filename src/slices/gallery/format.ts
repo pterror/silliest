@@ -1,4 +1,4 @@
-import { parseFromBase64, serializeToBase64 } from "../../lib/packing";
+import { parseFromBase64, serializeToBase64 } from "../../lib/deflate";
 import { Gallery, type GalleryItem } from "./types";
 
 export function newEmptyGallery(): Gallery {
