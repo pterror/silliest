@@ -202,7 +202,22 @@
             `Press 'upload' again to re-try ${failures} failed uploads (${successes}/${total} succeeded)`
           );
         }
+        return { successes, failures, total, failedFiles };
       }
+
+      const dropTarget = document.getElementById(
+        "dropTarget"
+      ) as HTMLDivElement;
+      function handleFilesDrag(event: DragEvent) {
+        event.preventDefault();
+      }
+      function handleFilesDrop(event: DragEvent) {
+        if (event.dataTransfer?.files.length) {
+          setFiles([...event.dataTransfer.files]);
+        }
+      }
+      dropTarget.addEventListener("dragover", handleFilesDrag);
+      dropTarget.addEventListener("drop", handleFilesDrop);
 
       async function uploadSelectedFiles() {
         return await uploadFiles(files);
