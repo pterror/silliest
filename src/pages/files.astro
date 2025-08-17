@@ -106,7 +106,7 @@
       const filesInput = document.getElementById(
         "filesInput"
       ) as HTMLInputElement;
-      function onFileInput(event: Event) {
+      function onFileInput() {
         if (filesInput.files?.length) {
           setFiles([...filesInput.files]);
         }
@@ -115,6 +115,9 @@
 
       function getKey() {
         return localStorage.getItem("files-key");
+      }
+      function setKey(key: string) {
+        localStorage.setItem("files-key", key);
       }
       function hasKey() {
         return Boolean(getKey());
@@ -144,7 +147,7 @@
       const keyForm = document.getElementById("keyForm") as HTMLFormElement;
       function onKeyFormSubmit(event: SubmitEvent) {
         event.preventDefault();
-        localStorage.setItem("files-key", keyInput.value);
+        setKey(keyInput.value);
         keyInput.value = "";
         updateKeyInputPlaceholder();
       }
@@ -164,7 +167,8 @@
 
       async function uploadFiles(files: readonly File[]) {
         if (!hasKey()) {
-          throw new Error();
+          showFailure("You need a key to use this uploader");
+          return;
         }
         const total = files.length;
         let successes = 0;
