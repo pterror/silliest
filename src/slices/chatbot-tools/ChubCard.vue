@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { markdownToHtml } from "../../lib/markdown";
 import type { ChubCard } from "./chub";
 import { useQuery } from "@tanstack/vue-query";
 import { chubQueryOptions } from "./chubQuery";

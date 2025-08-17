@@ -3,6 +3,10 @@ import { filterOutUndefined } from "../../lib/object";
 const BASE_URL = "https://gateway.chub.ai";
 const API_URL = `${BASE_URL}/api`;
 
+export type UUID = string & {
+  readonly __type: "UUID";
+};
+
 export type ChubPage<T> = {
   readonly count: number;
   readonly nodes: readonly T[];
@@ -586,4 +590,162 @@ export type ChubApiConfig = {
 export async function chubGetAccount(): Promise<ChubAccount> {
   const response = await fetch(`${API_URL}/account`);
   return await response.json();
+}
+
+type ChubChatParams = {
+  readonly nocache?: number | undefined;
+  readonly include_messages?: boolean | undefined;
+  readonly include_config?: boolean | undefined;
+  readonly include_meta?: boolean | undefined;
+};
+
+type ChubChatId = number & {
+  readonly __type: "ChubChatId";
+};
+
+type ChubChatMessageId = number & {
+  readonly __type: "ChubChatMessageId";
+};
+
+type IsoDateString = string & {
+  readonly __type: "IsoDateString";
+};
+
+type ChubChatMessage = {
+  readonly id: ChubChatMessageId;
+  // TODO: is this correct?
+  readonly speaker_id: ChubCardId | ChubUserId;
+  readonly message: string;
+  readonly parent_id: null | ChubChatMessageId;
+  readonly extensions: Record<string, unknown>;
+  readonly chat_id: number; // ChubChatId
+  readonly created_at: IsoDateString;
+  readonly is_bot: boolean;
+  readonly is_main: boolean;
+  readonly child_ids: readonly ChubChatMessageId[];
+  readonly color: string; // Hex color code
+  readonly model_id: null | string; // Model identifier
+  readonly originator: null | string; // Originator identifier
+};
+
+type ChubChatResponse = {
+  readonly chat: null | unknown;
+  readonly roots: readonly ChubChatMessageId[];
+  readonly starts: readonly ChubChatMessageId[];
+  readonly leaves: readonly ChubChatMessageId[];
+  readonly chatMessages: Record<ChubChatMessageId, ChubChatMessage>;
+  readonly config: null | unknown;
+};
+
+export async function chubGetChat(
+  chatId: ChubChatId,
+  params: ChubChatParams = {}
+): Promise<ChubChatResponse> {
+  const query = new URLSearchParams(
+    filterOutUndefined({
+      nocache: Math.random().toString(),
+      ...params,
+    }) as unknown as Record<string, string>
+  ).toString();
+  const response = await fetch(`${API_URL}/core/chats/v2/${chatId}?${query}`);
+  return await response.json();
+}
+
+type ChubModelId = number & {
+  readonly __type: "ChubModelId";
+};
+
+// TODO: test
+type ChubChatMessageRequestCreate = {};
+// TODO: test
+type ChubChatMessageRequestDelete = {};
+/** Optional fields are typically visible on a model message update. */
+type ChubChatMessageRequestUpdate = {
+  readonly id: ChubChatMessageId; // ID of the message to update
+  readonly message: string; // New message content
+  readonly color?: string; // Hex color code for the message
+  readonly is_main?: boolean; // Whether to set this message as main
+  readonly model_id?: ChubModelId; // Model identifier for the message
+  readonly extensions?: Record<string, unknown>; // Optional extensions for the message
+};
+
+type ChubChatMessageRequest = {
+  readonly create_ids: readonly ChubChatMessageRequestCreate[];
+  readonly delete_ids: readonly ChubChatMessageRequestDelete[];
+  readonly main_ids?: readonly ChubChatMessageId[]; // IDs to set as main messages
+  readonly unmain_ids?: readonly ChubChatMessageId[]; // IDs to unset as main messages
+  readonly update_ids?: readonly ChubChatMessageRequestUpdate[]; // Updates to existing messages
+};
+
+/** Optional fields are typically visible on a model message update. */
+type ChubChatMessageResponseUpdate = {
+  readonly short_id: UUID;
+  readonly id: ChubChatMessageId;
+  readonly message: string;
+  readonly color?: string; // Hex color code
+  readonly is_main: boolean;
+  readonly model_id?: ChubModelId; // Model identifier
+  readonly extensions?: Record<string, unknown>;
+};
+
+type ChubChatMessageResponseCreate = {
+  readonly model: string; // Model identifier
+  readonly message_uuid: null | UUID; // UUID for the message
+  readonly api: "mercury" | "mars"; // API type
+  readonly id: ChubChatMessageId;
+  readonly is_bot: boolean;
+  readonly extensions: Record<string, unknown>;
+  readonly is_main: boolean;
+  readonly message: string;
+  readonly speaker_id: ChubCardId | ChubUserId; // Speaker identifier
+  readonly parent_id: null | ChubChatMessageId; // Parent message ID
+};
+
+// TODO: test deleting a message
+type ChubChatMessageResponseDelete = {};
+
+type ChubChatAtomicMessageResponse = {
+  readonly short_id: UUID;
+  readonly create_ids: readonly ChubChatMessageResponseCreate[];
+  readonly update_ids: readonly ChubChatMessageResponseUpdate[];
+  readonly delete_ids: readonly ChubChatMessageResponseDelete[];
+};
+
+export async function chubPostAtomicMessage(
+  chatId: ChubChatId,
+  message: ChubChatMessageRequest
+): Promise<ChubChatAtomicMessageResponse> {
+  const response = await fetch(
+    `${API_URL}/core/chats/v2/${chatId}/messages/atomic`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(message),
+    }
+  );
+  return await response.json();
+}
+
+export type ChubPrompt = {
+  readonly template: string;
+  readonly frequency_penalty: number;
+  readonly max_tokens: number;
+  readonly min_tokens: number;
+  readonly model: string;
+  readonly n_tokens: number;
+  readonly presence_penalty: number;
+  readonly token_repetition_penalty: number;
+  readonly stop: readonly string[];
+  readonly stream: boolean;
+  readonly temperature: number;
+  readonly top_p: number;
+  readonly top_k: number;
+};
+
+export async function chubSetPrompt(prompt: ChubPrompt): Promise<void> {
+  await fetch(`${API_URL}/prompt`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(prompt),
+  });
 }

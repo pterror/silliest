@@ -1,0 +1,216 @@
+---
+
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/png" href="/3c.png" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta content="media gallery" property="og:site_name" />
+    <meta
+      content="go to /gallery/create to make your own"
+      property="og:description"
+    />
+    <link rel="shortcut icon" href="/3c.png" />
+    <title>gallery</title>
+    <link rel="stylesheet" href="/style.css" />
+    <style is:global>
+      :root {
+        --fg-lightness: 30%;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --fg-lightness: 70%;
+        }
+      }
+
+      body {
+        display: flex;
+        flex-flow: column nowrap;
+        gap: 0.5em;
+      }
+
+      #keyInput {
+        width: 30ch;
+      }
+
+      #dropTarget {
+        display: grid;
+        place-items: center;
+        flex: 1 0 auto;
+        background-color: var(--bg-secondary);
+        border-radius: var(--radius-default);
+        transition-property: background-color;
+        transition-duration: 150ms;
+
+        &:hover {
+          background-color: var(--bg-tertiary);
+        }
+      }
+
+      .status-success {
+        color: oklch(var(--fg-lightness) 0.15 160);
+      }
+
+      .status-failure {
+        color: oklch(var(--fg-lightness) 0.15 360);
+      }
+
+      .status-info {
+        color: oklch(var(--fg-lightness) 0.15 230);
+      }
+    </style>
+  </head>
+  <body class="fullscreen-body">
+    <form id="keyForm">
+      <label>
+        Key
+        <input
+          id="keyInput"
+          size="1"
+          placeholder="Enter key here to save and use"
+        />
+        <button id="saveButton" type="submit">Save</button>
+      </label>
+    </form>
+    <div>
+      <button id="uploadButton">Upload All!</button>
+    </div>
+    <input id="filesInput" type="file" multiple />
+    <div id="statusDisplay"></div>
+    <div id="fileCountDisplay"></div>
+    <div id="urlsDisplay" class="show-newlines">No URLs yet!</div>
+    <div id="dropTarget">Drop files here</div>
+    <script>
+      let files: File[] = [];
+      let urls: string[] = [];
+      const fileCountDisplay = document.getElementById(
+        "fileCountDisplay"
+      ) as HTMLDivElement;
+      const urlsDisplay = document.getElementById(
+        "urlsDisplay"
+      ) as HTMLDivElement;
+      function updateFileCount() {
+        fileCountDisplay.innerText = `${files.length} file(s) to be uploaded`;
+      }
+      function setFiles(newFiles: File[]) {
+        files = newFiles;
+        updateFileCount();
+      }
+      setFiles([]);
+      function pushUrl(url: string) {
+        urls.push(url);
+        urlsDisplay.innerText = urls.join("\n");
+      }
+
+      const filesInput = document.getElementById(
+        "filesInput"
+      ) as HTMLInputElement;
+      function onFileInput(event: Event) {
+        if (filesInput.files?.length) {
+          setFiles([...filesInput.files]);
+        }
+      }
+      filesInput.addEventListener("input", onFileInput);
+
+      function getKey() {
+        return localStorage.getItem("files-key");
+      }
+      function hasKey() {
+        return Boolean(getKey());
+      }
+      const statusDisplay = document.getElementById(
+        "statusDisplay"
+      ) as HTMLDivElement;
+      function makeShowFunction(className: string) {
+        return (message: string) => {
+          statusDisplay.innerText = message;
+          statusDisplay.className = className;
+        };
+      }
+      const showSuccess = makeShowFunction("status-success");
+      const showFailure = makeShowFunction("status-failure");
+      const showInfo = makeShowFunction("status-info");
+      showSuccess("Ready to upload!");
+
+      const keyInput = document.getElementById("keyInput") as HTMLInputElement;
+      function updateKeyInputPlaceholder() {
+        keyInput.placeholder = hasKey()
+          ? "Key found! You're all set!"
+          : "Enter key here to save and use";
+      }
+      updateKeyInputPlaceholder();
+
+      const keyForm = document.getElementById("keyForm") as HTMLFormElement;
+      function onKeyFormSubmit(event: SubmitEvent) {
+        event.preventDefault();
+        localStorage.setItem("files-key", keyInput.value);
+        keyInput.value = "";
+        updateKeyInputPlaceholder();
+      }
+      keyForm.addEventListener("submit", onKeyFormSubmit);
+
+      async function uploadFile(file: File) {
+        const response = await fetch("https://api.sillie.st/files", {
+          method: "PUT",
+          body: file,
+          headers: [["authorization", `Bearer ${getKey()}`]],
+        });
+        if (!response.ok) {
+          throw new Error(await response.text());
+        }
+        return { url: await response.text() };
+      }
+
+      async function uploadFiles(files: readonly File[]) {
+        if (!hasKey()) {
+          throw new Error();
+        }
+        const total = files.length;
+        let successes = 0;
+        let failures = 0;
+        const failedFiles: File[] = [];
+        await Promise.allSettled(
+          files.map((file) =>
+            uploadFile(file)
+              .then(
+                (result) => {
+                  successes += 1;
+                  pushUrl(result.url);
+                },
+                () => {
+                  failures += 1;
+                  failedFiles.push(file);
+                }
+              )
+              .finally(() => {
+                showInfo(
+                  `${successes} succeeded/${failures} failed/${total} total`
+                );
+              })
+          )
+        );
+        setFiles(failedFiles);
+        if (failures === 0) {
+          showSuccess(`${successes} files uploaded`);
+        } else {
+          showFailure(
+            `Press 'upload' again to re-try ${failures} failed uploads (${successes}/${total} succeeded)`
+          );
+        }
+      }
+
+      async function uploadSelectedFiles() {
+        return await uploadFiles(files);
+      }
+
+      const uploadButton = document.getElementById(
+        "uploadButton"
+      ) as HTMLButtonElement;
+      uploadButton.addEventListener("click", uploadSelectedFiles);
+    </script>
+  </body>
+</html>

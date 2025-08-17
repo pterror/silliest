@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, Teleport, watchEffect } from "vue";
+import { computed, ref, Teleport, watchEffect } from "vue";
 import {
   chubGetCard,
   type ChubCard as ChubCardType,
