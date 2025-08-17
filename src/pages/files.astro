@@ -212,6 +212,7 @@
         event.preventDefault();
       }
       function handleFilesDrop(event: DragEvent) {
+        event.preventDefault();
         if (event.dataTransfer?.files.length) {
           setFiles([...event.dataTransfer.files]);
         }
