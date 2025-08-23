@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, Teleport, watchEffect } from "vue";
+import { computed, provide, ref, Teleport, watchEffect } from "vue";
 import {
   chubGetCard,
   type ChubCard as ChubCardType,
@@ -7,7 +7,7 @@ import {
   type ChubCardId,
   type ChubCardQuery,
 } from "./chub";
-import { computedAsync } from "@vueuse/core";
+import { computedAsync, useLocalStorage } from "@vueuse/core";
 import ChubCardPreview from "./ChubCardPreview.vue";
 import {
   unwrapPossibleSingleton,
@@ -17,18 +17,36 @@ import { useQuery } from "@tanstack/vue-query";
 import { chubQueryOptions } from "./chubQuery";
 import ChubCard from "./ChubCard.vue";
 import { useUrlSearchParams } from "../../lib/composables/url";
+import { chubProviderKey } from "./chubProvider";
 
 // TODO: local-only list of topics to hide (e.g. spammy topics like SillyTavern and TAVERN and V2 Alternate greetings)
 
 const searchParams = useUrlSearchParams(undefined, { writeMode: "push" });
 
-const fullscreenCardId = computed(() => {
-  const possibleCardId = unwrapPossibleSingleton(searchParams["card_id"]);
-  return possibleCardId != null
-    ? /^\d+$/.test(possibleCardId)
-      ? (Number(possibleCardId) as ChubCardId)
-      : (possibleCardId as ChubCardFullPath)
-    : undefined;
+const blurNsfw = useLocalStorage("chub-blur-nsfw", true);
+const showCustomCss = useLocalStorage("chub-show-custom-css", true);
+
+provide(chubProviderKey, {
+  blurNsfw,
+  showCustomCss,
+});
+
+const fullscreenCardId = computed({
+  get() {
+    const possibleCardId = unwrapPossibleSingleton(searchParams["card_id"]);
+    return possibleCardId != null
+      ? /^\d+$/.test(possibleCardId)
+        ? (Number(possibleCardId) as ChubCardId)
+        : (possibleCardId as ChubCardFullPath)
+      : undefined;
+  },
+  set(value) {
+    if (value) {
+      searchParams["card_id"] = String(value);
+    } else {
+      delete searchParams["card_id"];
+    }
+  },
 });
 
 const search = computed({
@@ -60,31 +78,47 @@ const author = computed({
 const searchValue = ref(search.value);
 const authorValue = ref(author.value);
 
-const excludeMine = computed({
+function computedBooleanSearchParameter(name: string, fallback = true) {
+  return computed({
+    get() {
+      return (searchParams[name] ?? String(fallback)) === "true";
+    },
+    set(value) {
+      if (value === fallback) {
+        delete searchParams[name];
+      } else {
+        searchParams[name] = String(value);
+      }
+    },
+  });
+}
+
+const queryType = computed({
   get() {
-    return (searchParams["exclude_mine"] ?? "true") === "true";
+    return searchParams["query_type"] ?? "search";
   },
   set(value) {
-    if (value) {
-      delete searchParams["exclude_mine"];
+    if (value === "search") {
+      delete searchParams["query_type"];
     } else {
-      searchParams["exclude_mine"] = String(value);
+      searchParams["query_type"] = value;
     }
   },
 });
 
-const includeForks = computed({
+const isTimeline = computed({
   get() {
-    return (searchParams["include_forks"] ?? "true") === "true";
+    return queryType.value === "timeline";
   },
   set(value) {
-    if (value) {
-      delete searchParams["include_forks"];
-    } else {
-      searchParams["include_forks"] = String(value);
-    }
+    queryType.value = value ? "timeline" : "search";
   },
 });
+
+const excludeMine = computedBooleanSearchParameter("exclude_mine");
+const includeForks = computedBooleanSearchParameter("include_forks");
+const nsfw = computedBooleanSearchParameter("nsfw", false);
+const nsfl = computedBooleanSearchParameter("nsfl", false);
 
 const topics = computed({
   get() {
@@ -95,13 +129,18 @@ const topics = computed({
   },
 });
 
-const query = computed<ChubCardQuery>(() =>
-  topics.value.length > 0 ||
-  search.value ||
-  author.value ||
-  excludeMine.value ||
-  !includeForks.value
-    ? {
+const query = computed<ChubCardQuery>(() => {
+  switch (queryType.value) {
+    case "timeline":
+      return { type: "timeline" };
+    case "search":
+    default:
+      if (queryType.value !== "search") {
+        console.warn(
+          `Unexpected query type: ${queryType.value}. Defaulting to 'search'.`,
+        );
+      }
+      return {
         type: "search",
         params: {
           ...(topics.value.length > 0 && { topics: topics.value.join(",") }),
@@ -109,10 +148,12 @@ const query = computed<ChubCardQuery>(() =>
           ...(author.value && { username: author.value }),
           ...(!excludeMine.value && { exclude_mine: excludeMine.value }),
           ...(!includeForks.value && { include_forks: includeForks.value }),
+          ...(nsfw.value && { nsfw: nsfw.value }),
+          ...(nsfl.value && { nsfl: nsfl.value }),
         },
-      }
-    : { type: "timeline" }
-);
+      };
+  }
+});
 
 const title = computed(() => {
   if (query.value.type === "search") {
@@ -160,16 +201,8 @@ const fullscreenCard = computedAsync(() =>
   fullscreenCardId.value
     ? cards.value?.find((card) => card.id === fullscreenCardId.value) ??
       chubGetCard(fullscreenCardId.value)
-    : undefined
+    : undefined,
 );
-
-function setFullscreenCardId(id: ChubCardId | ChubCardFullPath | undefined) {
-  if (id) {
-    searchParams["card_id"] = String(id);
-  } else {
-    delete searchParams["card_id"];
-  }
-}
 
 const newTopic = ref("");
 
@@ -220,12 +253,32 @@ function removeTopic(topic: string) {
       </div>
       <div class="chub-checkboxes">
         <label>
+          <input type="checkbox" v-model="isTimeline" />
+          <span>Show timeline instead of search</span>
+        </label>
+        <label>
           <input type="checkbox" v-model="excludeMine" />
           <span>Exclude my cards</span>
         </label>
         <label>
           <input type="checkbox" v-model="includeForks" />
           <span>Include forks</span>
+        </label>
+        <label v-if="nsfw || nsfl">
+          <input type="checkbox" v-model="nsfw" />
+          <span>Show NSFW</span>
+        </label>
+        <label v-if="nsfl">
+          <input type="checkbox" v-model="nsfl" />
+          <span>Show NSFL</span>
+        </label>
+        <label v-if="nsfw || nsfl">
+          <input type="checkbox" v-model="blurNsfw" />
+          <span>Blur NSFW</span>
+        </label>
+        <label>
+          <input type="checkbox" v-model="showCustomCss" />
+          <span>Show custom CSS</span>
         </label>
       </div>
       <div class="chub-topics">
@@ -253,8 +306,9 @@ function removeTopic(topic: string) {
           :key="card.id"
           :card="card"
           :focused="card.id === fullscreenCardId"
-          @openInFullscreen="setFullscreenCardId(card.fullPath)"
+          @openInFullscreen="fullscreenCardId = card.fullPath"
           @addTopic="addTopic"
+          @searchByAuthor="author = card.fullPath.split('/')[0] ?? ''"
         />
       </div>
     </div>
@@ -263,7 +317,11 @@ function removeTopic(topic: string) {
     <div class="fullscreen">
       <ChubCard
         :card="fullscreenCard"
-        @close="setFullscreenCardId(undefined)"
+        @close="fullscreenCardId = undefined"
+        @searchByAuthor="
+          (fullscreenCardId = undefined),
+            (author = fullscreenCard.fullPath.split('/')[0] ?? '')
+        "
       />
     </div>
   </Teleport>

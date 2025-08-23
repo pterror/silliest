@@ -1,24 +1,28 @@
 <script setup lang="ts">
 import type { ChubCard } from "./chub";
-import { computed } from "vue";
+import { computed, inject } from "vue";
 import { useQuery } from "@tanstack/vue-query";
 import { chubQueryOptions } from "./chubQuery";
+import { chubProviderKey } from "./chubProvider";
 
 const props = defineProps<{
   card: ChubCard;
 }>();
 const emit = defineEmits<{
   openInFullscreen: [];
+  searchByAuthor: [];
   addTopic: [topic: string];
 }>();
 
 const configQuery = useQuery(chubQueryOptions("chubFetchEntireConfig", []));
 const config = configQuery.data;
+const { blurNsfw } = inject(chubProviderKey)!;
+const author = computed(() => props.card.fullPath.split("/")[0]);
 
 const blurred = computed(
   () =>
     props.card.nsfw_image &&
-    (config.value?.configs?.theme?.Default?.blur_nsfw ?? true)
+    (config.value?.configs?.theme?.Default?.blur_nsfw ?? blurNsfw.value),
 );
 </script>
 
@@ -41,13 +45,16 @@ const blurred = computed(
         {{ topic }}
       </button>
     </div>
-    <a
-      :href="`https://chub.ai/characters/${card.fullPath}`"
-      class="open-in-chub-button button"
-      target="_blank"
-    >
-      Chub
-    </a>
+    <div>
+      <a
+        :href="`https://chub.ai/characters/${card.fullPath}`"
+        class="open-in-chub-button button"
+        target="_blank"
+      >
+        Chub
+      </a>
+      <button @click="emit('searchByAuthor')">{{ author }}</button>
+    </div>
   </div>
 </template>
 

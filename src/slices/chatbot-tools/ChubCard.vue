@@ -1,30 +1,37 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, inject } from "vue";
 import type { ChubCard } from "./chub";
 import { useQuery } from "@tanstack/vue-query";
 import { chubQueryOptions } from "./chubQuery";
 import { useEventListener } from "@vueuse/core";
 import { chubMarkdownToHtml } from "./chubMarkdown";
+import { chubProviderKey } from "./chubProvider";
 
 const props = defineProps<{
   card: ChubCard;
 }>();
 const emit = defineEmits<{
   close: [];
+  searchByAuthor: [];
   addTopic: [topic: string];
 }>();
 
 const configQuery = useQuery(chubQueryOptions("chubFetchEntireConfig", []));
 const config = configQuery.data;
+const { blurNsfw, showCustomCss } = inject(chubProviderKey)!;
+
+const author = computed(() => props.card.fullPath.split("/")[0]);
 
 const blurred = computed(
   () =>
     props.card.nsfw_image &&
-    (config.value?.configs?.theme?.Default?.blur_nsfw ?? true)
+    (config.value?.configs?.theme?.Default?.blur_nsfw ?? blurNsfw.value),
 );
 
-const showCustomCss = computed(
-  () => config.value?.configs?.theme?.Default?.show_custom_css ?? true
+const shouldShowCustomCss = computed(
+  () =>
+    config.value?.configs?.theme?.Default?.show_custom_css ??
+    showCustomCss.value,
 );
 
 useEventListener("keydown", (event) => {
@@ -59,6 +66,7 @@ useEventListener("keydown", (event) => {
         {{ topic }}
       </button>
     </div>
+    <button @click="emit('searchByAuthor')">by {{ author }}</button>
     <img
       :src="card.avatar_url"
       class="chub-card-image"
@@ -66,7 +74,9 @@ useEventListener("keydown", (event) => {
       alt="Card Image"
     />
     <p
-      v-html="chubMarkdownToHtml(card.description, { unsafe: showCustomCss })"
+      v-html="
+        chubMarkdownToHtml(card.description, { unsafe: shouldShowCustomCss })
+      "
       class="chub-card-description show-newlines"
     ></p>
   </div>
