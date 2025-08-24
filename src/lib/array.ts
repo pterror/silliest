@@ -1,6 +1,6 @@
 /** Warning: Unsafe when `T` is itself an array type. */
 export function unwrapPossibleSingleton<T>(
-  value: T | readonly T[]
+  value: T | readonly T[],
 ): T | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
@@ -8,4 +8,12 @@ export function unwrapPossibleSingleton<T>(
 /** Warning: Unsafe when `T` is itself an array type. */
 export function wrapPossibleSingleton<T>(value: T | T[] | undefined): T[] {
   return Array.isArray(value) ? value : value === undefined ? [] : [value];
+}
+
+export function narrowingIncludes<T>(
+  array: readonly T[],
+  item: unknown,
+): item is T {
+  const widenedArray: readonly unknown[] = array;
+  return widenedArray.includes(item);
 }

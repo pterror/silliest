@@ -6,10 +6,14 @@ import {
   type ChubCardFullPath,
   type ChubCardId,
   type ChubCardQuery,
+  CHUB_SORT_NAMES,
+  CHUB_SORT_TYPES,
+  CHUB_CARD_QUERY_TYPES,
 } from "./chub";
 import { computedAsync, useLocalStorage } from "@vueuse/core";
 import ChubCardPreview from "./ChubCardPreview.vue";
 import {
+  narrowingIncludes,
   unwrapPossibleSingleton,
   wrapPossibleSingleton,
 } from "../../lib/array";
@@ -18,6 +22,12 @@ import { chubQueryOptions } from "./chubQuery";
 import ChubCard from "./ChubCard.vue";
 import { useUrlSearchParams } from "../../lib/composables/url";
 import { chubProviderKey } from "./chubProvider";
+import ChubSortDropdown from "./ChubSortDropdown.vue";
+import {
+  computedArraySearchParameter,
+  computedBooleanSearchParameter,
+  computedSearchParameter,
+} from "../../lib/composables/vueUse";
 
 // TODO: local-only list of topics to hide (e.g. spammy topics like SillyTavern and TAVERN and V2 Alternate greetings)
 
@@ -31,78 +41,58 @@ provide(chubProviderKey, {
   showCustomCss,
 });
 
-const fullscreenCardId = computed({
-  get() {
-    const possibleCardId = unwrapPossibleSingleton(searchParams["card_id"]);
+const fullscreenCardId = computedSearchParameter({
+  searchParams,
+  name: "card_id",
+  defaultValue: undefined,
+  sanitize: (value) => {
+    const possibleCardId = unwrapPossibleSingleton(value);
     return possibleCardId != null
       ? /^\d+$/.test(possibleCardId)
         ? (Number(possibleCardId) as ChubCardId)
         : (possibleCardId as ChubCardFullPath)
       : undefined;
   },
-  set(value) {
-    if (value) {
-      searchParams["card_id"] = String(value);
-    } else {
-      delete searchParams["card_id"];
-    }
+});
+
+const page = computedSearchParameter({
+  searchParams,
+  name: "page",
+  defaultValue: 1,
+  sanitize: (value) => Number(unwrapPossibleSingleton(value)) || 1,
+});
+
+const search = computedSearchParameter({
+  searchParams,
+  name: "search",
+  defaultValue: "",
+  sanitize: (value) => unwrapPossibleSingleton(value) ?? "",
+  onSet: () => {
+    page.value = 1;
   },
 });
 
-const search = computed({
-  get() {
-    return unwrapPossibleSingleton(searchParams["search"]) ?? "";
-  },
-  set(value) {
-    if (value) {
-      searchParams["search"] = value;
-    } else {
-      delete searchParams["search"];
-    }
-  },
-});
-
-const author = computed({
-  get() {
-    return unwrapPossibleSingleton(searchParams["author"]) ?? "";
-  },
-  set(value) {
-    if (value) {
-      searchParams["author"] = value;
-    } else {
-      delete searchParams["author"];
-    }
+const author = computedSearchParameter({
+  searchParams,
+  name: "author",
+  defaultValue: "",
+  sanitize: (value) => unwrapPossibleSingleton(value) ?? "",
+  onSet: () => {
+    page.value = 1;
   },
 });
 
 const searchValue = ref(search.value);
 const authorValue = ref(author.value);
 
-function computedBooleanSearchParameter(name: string, fallback = true) {
-  return computed({
-    get() {
-      return (searchParams[name] ?? String(fallback)) === "true";
-    },
-    set(value) {
-      if (value === fallback) {
-        delete searchParams[name];
-      } else {
-        searchParams[name] = String(value);
-      }
-    },
-  });
-}
-
-const queryType = computed({
-  get() {
-    return searchParams["query_type"] ?? "search";
-  },
-  set(value) {
-    if (value === "search") {
-      delete searchParams["query_type"];
-    } else {
-      searchParams["query_type"] = value;
-    }
+const queryType = computedSearchParameter({
+  searchParams,
+  name: "query_type",
+  defaultValue: "search",
+  sanitize: (value) =>
+    narrowingIncludes(CHUB_CARD_QUERY_TYPES, value) ? value : "search",
+  onSet: () => {
+    page.value = 1;
   },
 });
 
@@ -115,17 +105,55 @@ const isTimeline = computed({
   },
 });
 
-const excludeMine = computedBooleanSearchParameter("exclude_mine");
-const includeForks = computedBooleanSearchParameter("include_forks");
-const nsfw = computedBooleanSearchParameter("nsfw", false);
-const nsfl = computedBooleanSearchParameter("nsfl", false);
-
-const topics = computed({
-  get() {
-    return wrapPossibleSingleton(searchParams["topics"]);
+const sortType = computedSearchParameter({
+  searchParams,
+  name: "sort",
+  defaultValue: "default",
+  sanitize: (value) =>
+    narrowingIncludes(CHUB_SORT_TYPES, value) ? value : "default",
+  onSet: () => {
+    page.value = 1;
   },
-  set(value) {
-    searchParams["topics"] = value;
+});
+
+const excludeMine = computedBooleanSearchParameter({
+  searchParams,
+  name: "exclude_mine",
+  onSet: () => {
+    page.value = 1;
+  },
+});
+const includeForks = computedBooleanSearchParameter({
+  searchParams,
+  name: "include_forks",
+  onSet: () => {
+    page.value = 1;
+  },
+});
+const nsfw = computedBooleanSearchParameter({
+  searchParams,
+  name: "nsfw",
+  defaultValue: false,
+  onSet: () => {
+    page.value = 1;
+  },
+});
+const nsfl = computedBooleanSearchParameter({
+  searchParams,
+  name: "nsfl",
+  defaultValue: false,
+  onSet: () => {
+    page.value = 1;
+  },
+});
+
+const topics = computedArraySearchParameter({
+  searchParams,
+  name: "topics",
+  defaultValue: [],
+  sanitize: (value) => value,
+  onSet: () => {
+    page.value = 1;
   },
 });
 
@@ -150,6 +178,8 @@ const query = computed<ChubCardQuery>(() => {
           ...(!includeForks.value && { include_forks: includeForks.value }),
           ...(nsfw.value && { nsfw: nsfw.value }),
           ...(nsfl.value && { nsfl: nsfl.value }),
+          ...(sortType.value !== "default" && { sort: sortType.value }),
+          ...(page.value !== 1 && { page: page.value }),
         },
       };
   }
@@ -234,22 +264,37 @@ function removeTopic(topic: string) {
       <span>Loading...</span>
     </div>
     <div v-else>
-      <input
-        v-model="searchValue"
-        @change="search = searchValue"
-        type="text"
-        placeholder="Search cards..."
-        class="chub-search-input"
-      />
-      <div class="chub-author">
-        <label>Author</label>
+      <div>
+        <div class="buttons">
+          <button @click="page = 1">«</button>
+          <button @click="page -= 1">&lsaquo;</button>
+          <label>
+            Page
+            <input type="number" v-model="page" />
+          </label>
+          <button @click="page += 1">&rsaquo;</button>
+        </div>
         <input
-          v-model="authorValue"
-          @change="author = authorValue"
+          v-model="searchValue"
+          @change="search = searchValue"
           type="text"
-          placeholder="Author username"
-          class="chub-author-input"
+          placeholder="Search cards..."
+          class="chub-search-input"
         />
+        <label>
+          Author
+          <input
+            v-model="authorValue"
+            @change="author = authorValue"
+            type="text"
+            placeholder="Author username"
+            class="chub-author-input"
+          />
+        </label>
+        <label>
+          Sort by
+          <ChubSortDropdown v-model="sortType" />
+        </label>
       </div>
       <div class="chub-checkboxes">
         <label>
@@ -374,7 +419,7 @@ function removeTopic(topic: string) {
 
 .chub-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 1em;
 }
 

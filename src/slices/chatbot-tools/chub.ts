@@ -1,18 +1,28 @@
 import { filterOutUndefined } from "../../lib/object";
 
+const CHUB_PAGE_SIZE = 40;
 const BASE_URL = "https://gateway.chub.ai";
 const API_URL = `${BASE_URL}/api`;
+
+// TODO: Temporary workaround. Should be user configurable, however this should stay
+// to be able to revert to this as the default.
+export const CHUB_TAGS_TO_HIDE = ["ROOT", "TAVERN", "OAI", "GPT4"];
 
 export type UUID = string & {
   readonly __type: "UUID";
 };
 
-export type ChubPage<T> = {
+export type ChubPageRaw<T> = {
   readonly count: number;
   readonly nodes: readonly T[];
   readonly page: number;
   readonly previous_cursor: null | string;
   readonly cursor: null | string;
+};
+
+// FIXME: is it actually possible to detect search results count?
+export type ChubPage<T> = ChubPageRaw<T> & {
+  readonly pageCount: number;
 };
 
 export type ChubUserId = number & {
@@ -53,12 +63,12 @@ export type ChubUser = {
   readonly first_name: string;
   readonly last_name: string;
   readonly public_email: string | null;
-  readonly projects: ChubPage<ChubCardRaw>;
+  readonly projects: ChubPageRaw<ChubCardRaw>;
   readonly bio: string | null;
   readonly discord: string | null;
   readonly agnai_id: string | null;
   readonly avatar_url: string;
-  readonly models: ChubPage<ChubModel>;
+  readonly models: ChubPageRaw<ChubModel>;
   readonly n_followees: number;
   readonly n_followers: number;
   /** Whether the user follows you */
@@ -133,19 +143,23 @@ interface ChubCardRaw extends Omit<ChubCard, "lastActivityAt" | "createdAt"> {
   readonly createdAt: string;
 }
 
-export function chubCardRawToChubCard(raw: ChubCardRaw): ChubCard {
+export function chubCardRawToChubCard(card: ChubCardRaw): ChubCard {
   return {
-    ...raw,
-    lastActivityAt: new Date(raw.lastActivityAt),
-    createdAt: new Date(raw.createdAt),
+    ...card,
+    lastActivityAt: new Date(card.lastActivityAt),
+    createdAt: new Date(card.createdAt),
   };
 }
 
+export function chubPageRawToChubPage<T>(page: ChubPageRaw<T>): ChubPage<T> {
+  return { ...page, pageCount: Math.ceil(page.nodes.length / CHUB_PAGE_SIZE) };
+}
+
 export async function chubListSimilarCards(
-  id: number
+  id: number,
 ): Promise<readonly ChubCard[]> {
   const response = await fetch(`${API_URL}/projects/similar/${id}/true/true`);
-  const data: ChubPage<ChubCardRaw> = await response.json();
+  const data: ChubPageRaw<ChubCardRaw> = await response.json();
   return data.nodes.map(chubCardRawToChubCard);
 }
 
@@ -158,13 +172,13 @@ interface ChubGetCardResponse {
 }
 
 export function isProbablyChubCardFullPath(
-  fullPath: unknown
+  fullPath: unknown,
 ): fullPath is ChubCardFullPath {
   return typeof fullPath === "string" && /^[^/]+[/][^/]+$/.test(fullPath);
 }
 
 export async function chubGetCardByFullPath(
-  fullPath: ChubCardFullPath
+  fullPath: ChubCardFullPath,
 ): Promise<ChubCard> {
   const response = await fetch(`${API_URL}/characters/${fullPath}`);
   const data: ChubGetCardResponse = await response.json();
@@ -182,7 +196,7 @@ export async function chubGetCardById(id: ChubCardId): Promise<ChubCard> {
 }
 
 export async function chubGetCard(
-  id: ChubCardId | ChubCardFullPath
+  id: ChubCardId | ChubCardFullPath,
 ): Promise<ChubCard> {
   if (isProbablyChubCardId(id)) {
     return await chubGetCardById(id);
@@ -201,23 +215,7 @@ export type ChubSearchParams = {
   topics?: string;
   exclude_mine?: boolean;
   include_forks?: boolean;
-  sort?:
-    | "default"
-    | "trending"
-    | "ai_rating"
-    | "star_count"
-    | "msgs_chat"
-    | "chats_user"
-    | "msgs_user"
-    | "random"
-    | "rating"
-    | "last_activity_at"
-    | "name"
-    | "n_tokens"
-    | "n_favorites"
-    | "created_at"
-    | "public_chats"
-    | "download_count";
+  sort?: ChubSortType;
   search?: string;
   username?: string;
   my_favorites?: boolean;
@@ -241,8 +239,29 @@ export const CHUB_SORT_NAMES = [
   "# Favorited",
   "Creation Time",
   "# Public Chats",
-];
+  "# Downloads",
+] as const;
 export type ChubSortName = (typeof CHUB_SORT_NAMES)[number];
+
+export const CHUB_SORT_TYPES = [
+  "default",
+  "trending",
+  "ai_rating",
+  "star_count",
+  "msgs_chat",
+  "chats_user",
+  "msgs_user",
+  "random",
+  "rating",
+  "last_activity_at",
+  "name",
+  "n_tokens",
+  "n_favorites",
+  "created_at",
+  "public_chats",
+  "download_count",
+] as const;
+export type ChubSortType = (typeof CHUB_SORT_TYPES)[number];
 
 export const CHUB_SORT_NAME_TO_TYPE = {
   "User Default": "default",
@@ -261,16 +280,17 @@ export const CHUB_SORT_NAME_TO_TYPE = {
   "Creation Time": "created_at",
   "# Public Chats": "public_chats",
   "# Downloads": "download_count",
-} satisfies Record<ChubSortName, ChubSearchParams["sort"]>;
+} satisfies Record<ChubSortName, ChubSortType>;
 
 export async function chubSearchCards(
-  params: ChubSearchParams
+  params: ChubSearchParams,
 ): Promise<readonly ChubCard[]> {
   const query = new URLSearchParams(
-    params as Record<string, string>
+    params as Record<string, string>,
   ).toString();
   const response = await fetch(`${BASE_URL}/search?${query}`);
-  const data: { readonly data: ChubPage<ChubCardRaw> } = await response.json();
+  const data: { readonly data: ChubPageRaw<ChubCardRaw> } =
+    await response.json();
   return data.data.nodes.map(chubCardRawToChubCard);
 }
 
@@ -281,16 +301,15 @@ export type ChubTimelineParams = {
 };
 
 export async function chubGetTimelinePage(
-  params: ChubTimelineParams = {}
+  params: ChubTimelineParams = {},
 ): Promise<readonly ChubCard[]> {
   const query = new URLSearchParams(
-    filterOutUndefined(params) as Record<string, string>
+    filterOutUndefined(params) as Record<string, string>,
   ).toString();
   const response = await fetch(`${API_URL}/timeline/v1?${query}`);
-  const { data }: { readonly data: ChubPage<ChubCardRaw> } =
+  const { data }: { readonly data: ChubPageRaw<ChubCardRaw> } =
     await response.json();
-  const result = data.nodes.map(chubCardRawToChubCard);
-  return result;
+  return data.nodes.map(chubCardRawToChubCard);
 }
 
 export async function chubGetSelfUser(): Promise<ChubSelfUser> {
@@ -307,8 +326,14 @@ export type ChubCardQuery =
   | { type: "timeline"; cursor?: string }
   | { type: "search"; params: ChubSearchParams; cursor?: string };
 
+export type ChubCardQueryType = ChubCardQuery["type"];
+export const CHUB_CARD_QUERY_TYPES = [
+  "timeline",
+  "search",
+] as const satisfies readonly ChubCardQueryType[];
+
 export async function chubGetCardsByQuery(
-  query: ChubCardQuery
+  query: ChubCardQuery,
 ): Promise<readonly ChubCard[]> {
   const widenedQuery = query;
   switch (query.type) {
@@ -342,7 +367,7 @@ export type ChubGetFollowsParams = {
 
 export async function chubGetFollowsByUsername(
   username: string,
-  params: ChubGetFollowsParams = {}
+  params: ChubGetFollowsParams = {},
 ): Promise<ChubFollowsResponse> {
   const query = new URLSearchParams({
     page: "1",
@@ -405,7 +430,7 @@ export type ChubConfigUpdateRequest = {
 };
 
 export async function chubUpdateConfig(
-  request: ChubConfigUpdateRequest
+  request: ChubConfigUpdateRequest,
 ): Promise<void> {
   const response = await fetch(`${API_URL}/config`, {
     method: "POST",
@@ -448,7 +473,7 @@ export type ChubConfigValue = ChubConfigEntry extends infer T
   : never;
 
 export type ChubConfigFetchResponse<
-  Keys extends ChubConfigKey = ChubConfigKey
+  Keys extends ChubConfigKey = ChubConfigKey,
 > = {
   readonly configs: {
     readonly [Key in Keys]: {
@@ -458,7 +483,7 @@ export type ChubConfigFetchResponse<
 };
 
 export async function chubFetchConfig(
-  request: ChubConfigFetchRequest
+  request: ChubConfigFetchRequest,
 ): Promise<ChubConfigFetchResponse> {
   const response = await fetch(`${BASE_URL}/config/fetch`, {
     method: "POST",
@@ -639,13 +664,13 @@ type ChubChatResponse = {
 
 export async function chubGetChat(
   chatId: ChubChatId,
-  params: ChubChatParams = {}
+  params: ChubChatParams = {},
 ): Promise<ChubChatResponse> {
   const query = new URLSearchParams(
     filterOutUndefined({
       nocache: Math.random().toString(),
       ...params,
-    }) as unknown as Record<string, string>
+    }) as unknown as Record<string, string>,
   ).toString();
   const response = await fetch(`${API_URL}/core/chats/v2/${chatId}?${query}`);
   return await response.json();
@@ -713,7 +738,7 @@ type ChubChatAtomicMessageResponse = {
 
 export async function chubPostAtomicMessage(
   chatId: ChubChatId,
-  message: ChubChatMessageRequest
+  message: ChubChatMessageRequest,
 ): Promise<ChubChatAtomicMessageResponse> {
   const response = await fetch(
     `${API_URL}/core/chats/v2/${chatId}/messages/atomic`,
@@ -721,7 +746,7 @@ export async function chubPostAtomicMessage(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(message),
-    }
+    },
   );
   return await response.json();
 }

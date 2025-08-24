@@ -4,6 +4,7 @@ import rehypeStringify, {
   type Options as RehypeStringifyOptions,
 } from "rehype-stringify";
 import remarkBreaks from "remark-breaks";
+import remarkGfm from "remark-gfm";
 import remarkParse from "remark-parse";
 import remarkRehype, {
   type Options as RemarkRehypeOptions,
@@ -40,6 +41,7 @@ function rehypeReplaceChubLinks() {
 const markdownToHtmlProcessor = unified()
   .use(remarkParse)
   .use(remarkBreaks)
+  .use(remarkGfm)
   .use(remarkRehype)
   .use(rehypeReplaceChubLinks)
   .use(rehypeStringify);
@@ -47,6 +49,7 @@ const markdownToHtmlProcessor = unified()
 const markdownToHtmlUnsafeProcessor = unified()
   .use(remarkParse)
   .use(remarkBreaks)
+  .use(remarkGfm)
   .use(remarkRehype, { allowDangerousHtml: true } satisfies RemarkRehypeOptions)
   .use(rehypeRaw)
   .use(rehypeReplaceChubLinks)
@@ -58,7 +61,7 @@ const markdownToHtmlUnsafeProcessor = unified()
 
 export function chubMarkdownToHtml(
   markdown: string,
-  { unsafe = false } = {}
+  { unsafe = false } = {},
 ): string {
   return (unsafe ? markdownToHtmlUnsafeProcessor : markdownToHtmlProcessor)
     .processSync(markdown)

@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import type { ChubCard } from "./chub";
+import { CHUB_TAGS_TO_HIDE, type ChubCard } from "./chub";
 import { computed, inject } from "vue";
 import { useQuery } from "@tanstack/vue-query";
 import { chubQueryOptions } from "./chubQuery";
 import { chubProviderKey } from "./chubProvider";
+import { useTimeAgo } from "@vueuse/core";
+import { chubMarkdownToHtml } from "./chubMarkdown";
 
 const props = defineProps<{
   card: ChubCard;
@@ -24,37 +26,50 @@ const blurred = computed(
     props.card.nsfw_image &&
     (config.value?.configs?.theme?.Default?.blur_nsfw ?? blurNsfw.value),
 );
+
+const createdTimeAgo = useTimeAgo(props.card.createdAt);
 </script>
 
 <template>
   <div class="ChubCardPreview">
-    <img
-      :src="card.avatar_url"
-      class="chub-card-preview-image transition-filter"
-      :class="{ blurred }"
-      alt="Card Image"
-      @click="emit('openInFullscreen')"
-    />
-    <h2>{{ card.name }}</h2>
-    <div class="topics">
-      <button
-        v-for="topic in card.topics"
-        class="topic"
-        @click="emit('addTopic', topic)"
-      >
-        {{ topic }}
-      </button>
+    <div class="chub-card-preview-image-container">
+      <img
+        :src="card.avatar_url"
+        class="chub-card-preview-image transition-filter"
+        :class="{ 'blurred-medium': blurred }"
+        alt="Card Image"
+        @click="emit('openInFullscreen')"
+      />
     </div>
-    <div>
+    <h2>{{ card.name }}</h2>
+    <div
+      class="chub-card-preview-tagline"
+      v-html="chubMarkdownToHtml(card.tagline, { unsafe: true })"
+    ></div>
+    <div class="chub-card-preview-topics">
+      <template v-for="topic in card.topics" :key="topic">
+        <button
+          v-if="!CHUB_TAGS_TO_HIDE.includes(topic)"
+          class="chub-card-preview-topic"
+          @click="emit('addTopic', topic)"
+        >
+          {{ topic }}
+        </button>
+      </template>
+    </div>
+    <div class="buttons">
       <a
         :href="`https://chub.ai/characters/${card.fullPath}`"
-        class="open-in-chub-button button"
+        class="open-in-chub"
         target="_blank"
       >
         Chub
       </a>
-      <button @click="emit('searchByAuthor')">{{ author }}</button>
+      <div>
+        by <button @click="emit('searchByAuthor')">{{ author }}</button>
+      </div>
     </div>
+    <div class="chub-card-preview-metadata">created {{ createdTimeAgo }}</div>
   </div>
 </template>
 
@@ -65,28 +80,49 @@ const blurred = computed(
   align-items: center;
 }
 
+h2 {
+  text-align: center;
+}
+
+.chub-card-preview-image-container {
+  width: 200px;
+  height: 200px;
+  overflow: hidden;
+  border-radius: var(--radius-default);
+}
+
 .chub-card-preview-image {
   cursor: pointer;
-  border-radius: var(--radius-default);
   height: 200px;
   width: 200px;
 
   &:hover {
-    filter: brightness(0.8);
+    filter: blur(0) brightness(0.8);
   }
 }
 
-.topics {
+.chub-card-preview-tagline {
+  max-width: 100%;
+  overflow-wrap: break-word;
+  text-align: center;
+}
+
+.chub-card-preview-topics {
   display: flex;
   flex-flow: row wrap;
   justify-content: center;
   gap: 0.5em;
 }
 
-.topic {
+.chub-card-preview-topic {
   cursor: pointer;
   background-color: var(--bg-secondary);
   padding: 0.2em 0.5em;
   border-radius: 4px;
+}
+
+.chub-card-preview-metadata {
+  font-size: 0.9em;
+  opacity: 0.7;
 }
 </style>

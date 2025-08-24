@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, inject } from "vue";
-import type { ChubCard } from "./chub";
+import { CHUB_TAGS_TO_HIDE, type ChubCard } from "./chub";
 import { useQuery } from "@tanstack/vue-query";
 import { chubQueryOptions } from "./chubQuery";
 import { useEventListener } from "@vueuse/core";
@@ -57,14 +57,16 @@ useEventListener("keydown", (event) => {
       <button class="close-button" @click="emit('close')">&times;</button>
     </div>
     <h1>{{ card.name }}</h1>
-    <div class="topics">
-      <button
-        v-for="topic in card.topics"
-        class="topic"
-        @click="emit('addTopic', topic)"
-      >
-        {{ topic }}
-      </button>
+    <div class="chub-card-topics">
+      <template v-for="topic in card.topics" :key="topic">
+        <button
+          v-if="!CHUB_TAGS_TO_HIDE.includes(topic)"
+          class="chub-card-topic"
+          @click="emit('addTopic', topic)"
+        >
+          {{ topic }}
+        </button>
+      </template>
     </div>
     <button @click="emit('searchByAuthor')">by {{ author }}</button>
     <img
@@ -73,6 +75,10 @@ useEventListener("keydown", (event) => {
       :class="{ blurred }"
       alt="Card Image"
     />
+    <p
+      class="chub-card-tagline"
+      v-html="chubMarkdownToHtml(card.tagline, { unsafe: true })"
+    ></p>
     <p
       v-html="
         chubMarkdownToHtml(card.description, { unsafe: shouldShowCustomCss })
@@ -117,15 +123,16 @@ useEventListener("keydown", (event) => {
 
 .chub-card-description {
   max-width: 70ch;
+  overflow-wrap: break-word;
 }
 
-.topics {
+.chub-card-topics {
   display: flex;
   flex-flow: row wrap;
   gap: 0.5em;
 }
 
-.topic {
+.chub-card-topic {
   cursor: pointer;
   background-color: var(--bg-secondary);
   padding: 0.2em 0.5em;

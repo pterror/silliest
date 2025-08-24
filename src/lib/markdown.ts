@@ -7,16 +7,19 @@ import remarkRehype, {
   type Options as RemarkRehypeOptions,
 } from "remark-rehype";
 import remarkBreaks from "remark-breaks";
+import remarkGfm from "remark-gfm";
 
 const markdownToHtmlProcessor = unified()
   .use(remarkParse)
   .use(remarkBreaks)
+  .use(remarkGfm)
   .use(remarkRehype)
   .use(rehypeStringify);
 
 const markdownToHtmlUnsafeProcessor = unified()
   .use(remarkParse)
   .use(remarkBreaks)
+  .use(remarkGfm)
   .use(remarkRehype, { allowDangerousHtml: true } satisfies RemarkRehypeOptions)
   .use(rehypeStringify, {
     allowDangerousHtml: true,
@@ -26,7 +29,7 @@ const markdownToHtmlUnsafeProcessor = unified()
 
 export function markdownToHtml(
   markdown: string,
-  { unsafe = false } = {}
+  { unsafe = false } = {},
 ): string {
   return (unsafe ? markdownToHtmlUnsafeProcessor : markdownToHtmlProcessor)
     .processSync(markdown)

@@ -8,6 +8,7 @@
   --bg-darken: #00000066;
   --bg-darken-darker: #00000088;
   --blur-small: blur(8px);
+  --blur-medium: blur(16px);
   --blur-default: blur(32px);
   --radius-small: 0.25em;
   --radius-default: 0.5em;
@@ -169,6 +170,10 @@ button:not(:disabled):hover,
   filter: var(--blur-small);
 }
 
+.blurred-medium {
+  filter: var(--blur-medium);
+}
+
 .blurred {
   filter: var(--blur-default);
 }
@@ -179,4 +184,15 @@ body:has(.fullscreen) {
 
 .show-newlines {
   white-space: pre-line;
+}
+
+a[target="_blank"]::after {
+  content: "";
+  background-color: currentColor;
+  mask: url("./open_in_new_tab.svg") no-repeat;
+  display: inline-block;
+  height: 1em;
+  width: 1em;
+  margin-left: 0.2em;
+  vertical-align: middle;
 }
