@@ -10,17 +10,15 @@ import {
   CHUB_SORT_TYPES,
   CHUB_CARD_QUERY_TYPES,
 } from "./chub";
-import { computedAsync, useLocalStorage } from "@vueuse/core";
+import { computedAsync, useLocalStorage, useUrlSearchParams } from "@vueuse/core";
 import ChubCardPreview from "./ChubCardPreview.vue";
 import {
   narrowingIncludes,
   unwrapPossibleSingleton,
-  wrapPossibleSingleton,
 } from "../../lib/array";
 import { useQuery } from "@tanstack/vue-query";
 import { chubQueryOptions } from "./chubQuery";
 import ChubCard from "./ChubCard.vue";
-import { useUrlSearchParams } from "../../lib/composables/url";
 import { chubProviderKey } from "./chubProvider";
 import ChubSortDropdown from "./ChubSortDropdown.vue";
 import {
