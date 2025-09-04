@@ -42,7 +42,35 @@ const createdTimeAgo = useTimeAgo(props.card.createdAt);
         @click="emit('openInFullscreen')"
       />
     </div>
-    <h2>{{ card.name }}</h2>
+    <div class="chub-card-preview-title">
+      <h2 :title="card.name">{{ card.name }}</h2>
+    </div>
+    <div class="chub-card-preview-metadata-container">
+      <div class="buttons">
+        <a
+          :href="`https://chub.ai/characters/${card.fullPath}`"
+          class="open-in-chub"
+          target="_blank"
+        >
+          Chub
+        </a>
+        <button
+          class="chub-card-preview-download-button"
+          @click="
+            downloadExternalLinkWithoutContentDisposition(
+              `https://avatars.charhub.io/avatars/${card.fullPath}/chara_card_v2.png`,
+              `main_${card.fullPath.replace(/.+[/]/, '')}_spec_v2.png`,
+            )
+          "
+        >
+          ⤓
+        </button>
+        <div>
+          by <button @click="emit('searchByAuthor')">{{ author }}</button>
+        </div>
+      </div>
+      <div class="chub-card-preview-metadata">created {{ createdTimeAgo }}</div>
+    </div>
     <div
       class="chub-card-preview-tagline"
       v-html="chubMarkdownToHtml(card.tagline, { unsafe: true })"
@@ -58,42 +86,33 @@ const createdTimeAgo = useTimeAgo(props.card.createdAt);
         </button>
       </template>
     </div>
-    <div class="buttons">
-      <a
-        :href="`https://chub.ai/characters/${card.fullPath}`"
-        class="open-in-chub"
-        target="_blank"
-      >
-        Chub
-      </a>
-      <button
-        class="chub-card-preview-download-button"
-        @click="
-          downloadExternalLinkWithoutContentDisposition(
-            `https://avatars.charhub.io/avatars/${card.fullPath}/chara_card_v2.png`,
-            `main_${card.fullPath.replace(/.+[/]/, '')}_spec_v2.png`,
-          )
-        "
-      >
-        ⤓
-      </button>
-      <div>
-        by <button @click="emit('searchByAuthor')">{{ author }}</button>
-      </div>
-    </div>
-    <div class="chub-card-preview-metadata">created {{ createdTimeAgo }}</div>
   </div>
 </template>
 
 <style scoped>
 .ChubCardPreview {
   display: flex;
+  gap: 0.5em;
   flex-flow: column nowrap;
   align-items: center;
 }
 
+.chub-card-preview-title {
+  display: grid;
+  place-items: center;
+  font-size: 125%;
+  height: 3lh;
+}
+
 h2 {
+  margin: 0;
+  font-size: 100%;
   text-align: center;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
 }
 
 .chub-card-preview-image-container {
@@ -114,15 +133,30 @@ h2 {
 }
 
 .chub-card-preview-tagline {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  -webkit-line-clamp: 10;
+  line-clamp: 10;
+  place-items: center;
   max-width: 100%;
   overflow-wrap: break-word;
   text-align: center;
+  height: 10lh;
+  overflow: clip;
+  text-overflow: ellipsis;
+}
+
+.chub-card-preview-tagline :deep(p) {
+  margin: 0;
 }
 
 .chub-card-preview-topics {
   display: flex;
   flex-flow: row wrap;
   justify-content: center;
+  max-height: 10lh;
+  overflow: clip;
   gap: 0.5em;
 }
 
@@ -131,6 +165,12 @@ h2 {
   background-color: var(--bg-secondary);
   padding: 0.2em 0.5em;
   border-radius: 4px;
+}
+
+.chub-card-preview-metadata-container {
+  display: flex;
+  flex-flow: column nowrap;
+  place-items: center;
 }
 
 .chub-card-preview-metadata {

@@ -10,12 +10,13 @@ import {
   CHUB_SORT_TYPES,
   CHUB_CARD_QUERY_TYPES,
 } from "./chub";
-import { computedAsync, useLocalStorage, useUrlSearchParams } from "@vueuse/core";
-import ChubCardPreview from "./ChubCardPreview.vue";
 import {
-  narrowingIncludes,
-  unwrapPossibleSingleton,
-} from "../../lib/array";
+  computedAsync,
+  useLocalStorage,
+  useUrlSearchParams,
+} from "@vueuse/core";
+import ChubCardPreview from "./ChubCardPreview.vue";
+import { narrowingIncludes, unwrapPossibleSingleton } from "../../lib/array";
 import { useQuery } from "@tanstack/vue-query";
 import { chubQueryOptions } from "./chubQuery";
 import ChubCard from "./ChubCard.vue";
