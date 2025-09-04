@@ -6,6 +6,7 @@ import { chubQueryOptions } from "./chubQuery";
 import { useEventListener } from "@vueuse/core";
 import { chubMarkdownToHtml } from "./chubMarkdown";
 import { chubProviderKey } from "./chubProvider";
+import { downloadExternalLinkWithoutContentDisposition } from "../../lib/download";
 
 const props = defineProps<{
   card: ChubCard;
@@ -54,6 +55,17 @@ useEventListener("keydown", (event) => {
       >
         Open in Chub
       </a>
+      <button
+        class="chub-card-download-button"
+        @click="
+          downloadExternalLinkWithoutContentDisposition(
+            `https://avatars.charhub.io/avatars/${card.fullPath}/chara_card_v2.png`,
+            `main_${card.fullPath.replace(/.+[/]/, '')}_spec_v2.png`,
+          )
+        "
+      >
+        Download
+      </button>
       <button class="close-button" @click="emit('close')">&times;</button>
     </div>
     <h1>{{ card.name }}</h1>
@@ -119,6 +131,10 @@ useEventListener("keydown", (event) => {
 
 .chub-card-image {
   align-self: center;
+}
+
+.chub-card-tagline {
+  max-width: 70ch;
 }
 
 .chub-card-description {

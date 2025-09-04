@@ -6,6 +6,7 @@ import { chubQueryOptions } from "./chubQuery";
 import { chubProviderKey } from "./chubProvider";
 import { useTimeAgo } from "@vueuse/core";
 import { chubMarkdownToHtml } from "./chubMarkdown";
+import { downloadExternalLinkWithoutContentDisposition } from "../../lib/download";
 
 const props = defineProps<{
   card: ChubCard;
@@ -65,6 +66,17 @@ const createdTimeAgo = useTimeAgo(props.card.createdAt);
       >
         Chub
       </a>
+      <button
+        class="chub-card-preview-download-button"
+        @click="
+          downloadExternalLinkWithoutContentDisposition(
+            `https://avatars.charhub.io/avatars/${card.fullPath}/chara_card_v2.png`,
+            `main_${card.fullPath.replace(/.+[/]/, '')}_spec_v2.png`,
+          )
+        "
+      >
+        ⤓
+      </button>
       <div>
         by <button @click="emit('searchByAuthor')">{{ author }}</button>
       </div>
@@ -124,5 +136,9 @@ h2 {
 .chub-card-preview-metadata {
   font-size: 0.9em;
   opacity: 0.7;
+}
+
+:deep(img) {
+  max-width: 100%;
 }
 </style>

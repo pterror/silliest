@@ -8,5 +8,5 @@ export default defineConfig({
   integrations: [vue({ appEntrypoint: "/src/pages/_vue" })],
   compressHTML: false,
   server: { allowedHosts: ["pc"] },
-  vite: { build: { minify: false, cssMinify: false } },
+  vite: { build: { sourcemap: true, cssMinify: false } },
 });

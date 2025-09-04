@@ -11,6 +11,7 @@ import remarkRehype, {
 } from "remark-rehype";
 import { unified } from "unified";
 import { visit } from "unist-util-visit";
+import { rehypeRemoveScripts } from "../../lib/rehype";
 
 type RehypeRoot = ReturnType<NonNullable<(typeof rehype)["parser"]>>;
 
@@ -43,6 +44,7 @@ const markdownToHtmlProcessor = unified()
   .use(remarkBreaks)
   .use(remarkGfm)
   .use(remarkRehype)
+  .use(rehypeRemoveScripts)
   .use(rehypeReplaceChubLinks)
   .use(rehypeStringify);
 
@@ -52,6 +54,7 @@ const markdownToHtmlUnsafeProcessor = unified()
   .use(remarkGfm)
   .use(remarkRehype, { allowDangerousHtml: true } satisfies RemarkRehypeOptions)
   .use(rehypeRaw)
+  .use(rehypeRemoveScripts)
   .use(rehypeReplaceChubLinks)
   .use(rehypeStringify, {
     allowDangerousHtml: true,

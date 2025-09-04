@@ -8,12 +8,15 @@ import remarkRehype, {
 } from "remark-rehype";
 import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
+import { rehypeRemoveScripts } from "./rehype";
+import rehypeRaw from "rehype-raw";
 
 const markdownToHtmlProcessor = unified()
   .use(remarkParse)
   .use(remarkBreaks)
   .use(remarkGfm)
   .use(remarkRehype)
+  .use(rehypeRemoveScripts)
   .use(rehypeStringify);
 
 const markdownToHtmlUnsafeProcessor = unified()
@@ -21,6 +24,8 @@ const markdownToHtmlUnsafeProcessor = unified()
   .use(remarkBreaks)
   .use(remarkGfm)
   .use(remarkRehype, { allowDangerousHtml: true } satisfies RemarkRehypeOptions)
+  .use(rehypeRaw)
+  .use(rehypeRemoveScripts)
   .use(rehypeStringify, {
     allowDangerousHtml: true,
     allowDangerousCharacters: true,
