@@ -5,15 +5,14 @@ import rehypeStringify, {
 } from "rehype-stringify";
 import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
-import remarkParse from "remark-parse";
+import remarkParse, { type Options as RemarkParseOptions } from "remark-parse";
 import remarkRehype, {
   type Options as RemarkRehypeOptions,
 } from "remark-rehype";
 import { unified } from "unified";
 import { visit } from "unist-util-visit";
 import { rehypeRemoveScripts } from "../../lib/rehype";
-
-type RehypeRoot = ReturnType<NonNullable<(typeof rehype)["parser"]>>;
+import { remarkUnindent, type RehypeRoot } from "../../lib/markdown";
 
 function rehypeReplaceChubLinks() {
   return (tree: RehypeRoot) => {
@@ -40,7 +39,7 @@ function rehypeReplaceChubLinks() {
 }
 
 const markdownToHtmlProcessor = unified()
-  .use(remarkParse)
+  .use(remarkParse, {} satisfies RemarkParseOptions)
   .use(remarkBreaks)
   .use(remarkGfm)
   .use(remarkRehype)
@@ -50,6 +49,7 @@ const markdownToHtmlProcessor = unified()
 
 const markdownToHtmlUnsafeProcessor = unified()
   .use(remarkParse)
+  .use(remarkUnindent)
   .use(remarkBreaks)
   .use(remarkGfm)
   .use(remarkRehype, { allowDangerousHtml: true } satisfies RemarkRehypeOptions)
