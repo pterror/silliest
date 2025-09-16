@@ -47,61 +47,80 @@ useEventListener("keydown", (event) => {
     <span>Loading...</span>
   </div>
   <div v-else class="ChubCard">
-    <div class="top-right-buttons buttons">
-      <a
-        :href="`https://chub.ai/characters/${card.fullPath}`"
-        class="open-in-chub-button button"
-        target="_blank"
-      >
-        Open in Chub
-      </a>
-      <button
-        class="chub-card-download-button"
-        @click="
-          downloadExternalLinkWithoutContentDisposition(
-            `https://avatars.charhub.io/avatars/${card.fullPath}/chara_card_v2.png`,
-            `main_${card.fullPath.replace(/.+[/]/, '')}_spec_v2.png`,
-          )
-        "
-      >
-        Download
-      </button>
-      <button class="close-button" @click="emit('close')">&times;</button>
-    </div>
-    <h1>{{ card.name }}</h1>
-    <div class="chub-card-topics">
-      <template v-for="topic in card.topics" :key="topic">
-        <button
-          v-if="!CHUB_TAGS_TO_HIDE.includes(topic)"
-          class="chub-card-topic"
-          @click="emit('addTopic', topic)"
-        >
-          {{ topic }}
-        </button>
-      </template>
-    </div>
-    <button @click="emit('searchByAuthor')">by {{ author }}</button>
     <img
-      :src="card.avatar_url"
+      :src="`https://avatars.charhub.io/avatars/${card.fullPath}/chara_card_v2.png`"
       class="chub-card-image"
       :class="{ blurred }"
       alt="Card Image"
     />
-    <p
-      class="chub-card-tagline"
-      v-html="chubMarkdownToHtml(card.tagline, { unsafe: true })"
-    ></p>
-    <p
-      v-html="
-        chubMarkdownToHtml(card.description, { unsafe: shouldShowCustomCss })
-      "
-      class="chub-card-description show-newlines"
-    ></p>
+    <div class="chub-card-content">
+      <div class="top-right-buttons buttons">
+        <a
+          :href="`https://chub.ai/characters/${card.fullPath}`"
+          class="open-in-chub-button button"
+          target="_blank"
+        >
+          Open in Chub
+        </a>
+        <button
+          class="chub-card-download-button"
+          @click="
+            downloadExternalLinkWithoutContentDisposition(
+              `https://avatars.charhub.io/avatars/${card.fullPath}/chara_card_v2.png`,
+              `main_${card.fullPath.replace(/.+[/]/, '')}_spec_v2.png`,
+            )
+          "
+        >
+          Download
+        </button>
+        <button class="close-button" @click="emit('close')">&times;</button>
+      </div>
+      <h1>{{ card.name }}</h1>
+      <div class="chub-card-topics">
+        <template v-for="topic in card.topics" :key="topic">
+          <button
+            v-if="!CHUB_TAGS_TO_HIDE.includes(topic)"
+            class="chub-card-topic"
+            @click="emit('addTopic', topic)"
+          >
+            {{ topic }}
+          </button>
+        </template>
+      </div>
+      <button @click="emit('searchByAuthor')">by {{ author }}</button>
+      <img
+        :src="`https://avatars.charhub.io/avatars/${card.fullPath}/chara_card_v2.png`"
+        class="chub-card-image-inline"
+        :class="{ blurred }"
+        alt="Card Image"
+      />
+      <p
+        class="chub-card-tagline"
+        v-html="chubMarkdownToHtml(card.tagline, { unsafe: true })"
+      ></p>
+      <p
+        v-html="
+          chubMarkdownToHtml(card.description, { unsafe: shouldShowCustomCss })
+        "
+        class="chub-card-description show-newlines"
+      ></p>
+    </div>
   </div>
 </template>
 
 <style scoped>
 .ChubCard {
+  height: 100%;
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+}
+
+.ChubCard > * {
+  flex: 1 0 0;
+}
+
+.chub-card-content {
   display: flex;
   flex-flow: column nowrap;
   padding: 1em;
@@ -131,6 +150,24 @@ useEventListener("keydown", (event) => {
 
 .chub-card-image {
   align-self: center;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.chub-card-image-inline {
+  display: none;
+  align-self: center;
+  max-height: 50vh;
+}
+
+@media screen and (max-width: 800px) {
+  .chub-card-image {
+    display: none;
+  }
+
+  .chub-card-image-inline {
+    display: block;
+  }
 }
 
 .chub-card-tagline {

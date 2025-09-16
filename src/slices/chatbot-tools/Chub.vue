@@ -226,12 +226,15 @@ watchEffect(() => {
   }
 });
 
-const fullscreenCard = computedAsync(() =>
-  fullscreenCardId.value
-    ? cards.value?.find((card) => card.id === fullscreenCardId.value) ??
-      chubGetCard(fullscreenCardId.value)
-    : undefined,
-);
+const fullscreenCardQuery = useQuery({
+  queryKey: ["chubGetCard", fullscreenCardId] as const,
+  queryFn: ({ queryKey: [, id] }) =>
+    id != null
+      ? cards.value?.find((card) => card.id === id || card.fullPath === id) ??
+        chubGetCard(id)
+      : null,
+});
+const fullscreenCard = fullscreenCardQuery.data;
 
 const newTopic = ref("");
 
