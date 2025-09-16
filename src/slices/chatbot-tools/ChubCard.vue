@@ -302,6 +302,7 @@ watchEffect(() => {
                   <span>User</span>
                 </div>
                 <div
+                  class="chub-card-message-content"
                   v-html="
                     chubMarkdownToHtml(
                       chatPreview
@@ -395,12 +396,14 @@ watchEffect(() => {
   flex: 1 0 0;
 }
 
-:deep(img:not(.fullscreen-preview-image)) {
+:deep(img:not(:is(.fullscreen-preview-image, .chub-card-message-avatar))) {
   cursor: pointer;
   border-radius: var(--radius-default);
 }
 
-:deep(img:not(.fullscreen-preview-image)):hover {
+:deep(
+    img:not(:is(.fullscreen-preview-image, .chub-card-message-avatar))
+  ):hover {
   filter: brightness(0.8);
   transition-property: filter;
   transition-duration: 150ms;
@@ -445,9 +448,9 @@ watchEffect(() => {
   cursor: pointer;
   position: sticky;
   top: 0;
-  display: flex;
+  display: grid;
   align-self: center;
-  align-items: center;
+  place-items: center;
   height: 100%;
   max-width: 40%;
 }
@@ -465,7 +468,7 @@ watchEffect(() => {
   max-height: 50vh;
 }
 
-@media screen and (max-width: 800px) {
+@media screen and (max-width: 1000px) {
   .chub-card-image {
     display: none;
   }
@@ -475,18 +478,20 @@ watchEffect(() => {
   }
 }
 
-.chub-card-tagline {
-  max-width: 100ch;
-}
-
-.chub-card-description {
-  max-width: 100ch;
-  overflow-wrap: break-word;
-}
-
-.chub-card-greetings {
+.chub-card-tagline,
+.chub-card-description,
+.chub-card-greetings,
+.chub-card-conversations,
+.chub-card-personality,
+.chub-card-scenario,
+.chub-card-system-prompt,
+.chub-card-post-history-instructions {
   max-width: 100ch;
   overflow-wrap: break-word;
+}
+
+:deep(code) {
+  white-space: pre-wrap;
 }
 
 :deep(img) {
@@ -516,6 +521,12 @@ watchEffect(() => {
   margin: 0.5em 1em;
 }
 
+.chub-card-conversation {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 0.5em;
+}
+
 .chub-card-message-author {
   display: flex;
   align-items: center;
@@ -533,11 +544,13 @@ watchEffect(() => {
   background-color: var(--bg-secondary);
   border-radius: var(--radius-default);
   padding: 1em;
+  margin-right: 2em;
 }
 
 .chub-card-role-user {
   background-color: var(--bg-tertiary);
   border-radius: var(--radius-default);
   padding: 1em;
+  margin-left: 2em;
 }
 </style>
