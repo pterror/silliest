@@ -6,15 +6,10 @@ import {
   type ChubCardFullPath,
   type ChubCardId,
   type ChubCardQuery,
-  CHUB_SORT_NAMES,
   CHUB_SORT_TYPES,
   CHUB_CARD_QUERY_TYPES,
 } from "./chub";
-import {
-  computedAsync,
-  useLocalStorage,
-  useUrlSearchParams,
-} from "@vueuse/core";
+import { useLocalStorage, useUrlSearchParams } from "@vueuse/core";
 import ChubCardPreview from "./ChubCardPreview.vue";
 import { narrowingIncludes, unwrapPossibleSingleton } from "../../lib/array";
 import { useQuery } from "@tanstack/vue-query";
@@ -205,7 +200,7 @@ const cardsQuery = useQuery(chubQueryOptions("chubGetCardsByQuery", [query]));
 const cards = ref<readonly ChubCardType[]>();
 
 watchEffect(() => {
-  if (cardsQuery.data.value) {
+  if (cardsQuery.data.value != null) {
     cards.value = cardsQuery.data.value;
   }
 });
@@ -262,20 +257,20 @@ function removeTopic(topic: string) {
 
 <template>
   <div class="Chub">
-    <div v-if="!cards" class="loading">
+    <div v-if="!cards" class="chub-content loading">
       <span>Loading...</span>
     </div>
-    <div v-else>
-      <div>
-        <div class="buttons">
-          <button @click="page = 1">«</button>
-          <button @click="page -= 1">&lsaquo;</button>
-          <label>
-            Page
-            <input type="number" v-model="page" />
-          </label>
-          <button @click="page += 1">&rsaquo;</button>
-        </div>
+    <div class="chub-content" v-else>
+      <div class="chub-page-controls buttons">
+        <button @click="page = 1">«</button>
+        <button @click="page -= 1">&lsaquo;</button>
+        <label>
+          Page
+          <input type="number" v-model="page" />
+        </label>
+        <button @click="page += 1">&rsaquo;</button>
+      </div>
+      <div class="chub-controls">
         <input
           v-model="searchValue"
           @change="search = searchValue"
@@ -347,7 +342,10 @@ function removeTopic(topic: string) {
           <button @click="addNewTopic">Add</button>
         </div>
       </div>
-      <div class="chub-cards">
+      <div v-if="cards.length === 0" class="chub-no-results">
+        <span>No cards found! Try using different search filters.</span>
+      </div>
+      <div v-else class="chub-cards">
         <ChubCardPreview
           v-for="card in cards"
           :key="card.id"
@@ -358,6 +356,15 @@ function removeTopic(topic: string) {
           @searchByAuthor="author = card.fullPath.split('/')[0] ?? ''"
         />
       </div>
+    </div>
+    <div class="chub-page-controls buttons">
+      <button @click="page = 1">«</button>
+      <button @click="page -= 1">&lsaquo;</button>
+      <label>
+        Page
+        <input type="number" v-model="page" />
+      </label>
+      <button @click="page += 1">&rsaquo;</button>
     </div>
   </div>
   <Teleport to="body" v-if="fullscreenCard">
@@ -376,12 +383,35 @@ function removeTopic(topic: string) {
 
 <style scoped>
 .Chub {
+  display: flex;
+  flex-flow: column nowrap;
   width: 100%;
   height: 100%;
 }
 
+.chub-content {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  overflow: auto;
+}
+
 .loading {
   font-size: 1.5em;
+}
+
+.chub-no-results {
+  display: grid;
+  place-items: center;
+  font-size: 1.25em;
+  text-align: center;
+  flex: 1 0 auto;
+}
+
+.chub-controls {
+  display: flex;
+  gap: 0.5em;
 }
 
 .chub-topics > label {
