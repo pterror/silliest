@@ -102,7 +102,7 @@ useEventListener("keydown", (event) => {
         v-html="
           chubMarkdownToHtml(card.description, { unsafe: shouldShowCustomCss })
         "
-        class="chub-card-description show-newlines"
+        class="chub-card-description"
       ></p>
     </div>
   </div>
@@ -110,10 +110,11 @@ useEventListener("keydown", (event) => {
 
 <style scoped>
 .ChubCard {
+  position: relative;
   height: 100%;
   display: flex;
   flex-flow: row nowrap;
-  align-items: center;
+  overflow: auto;
 }
 
 .ChubCard > * {
@@ -126,6 +127,7 @@ useEventListener("keydown", (event) => {
   padding: 1em;
   gap: 1em;
   align-items: center;
+  height: fit-content;
 }
 
 .top-right-buttons {
@@ -149,8 +151,11 @@ useEventListener("keydown", (event) => {
 }
 
 .chub-card-image {
+  position: sticky;
+  top: 0;
   align-self: center;
   max-height: 100%;
+  max-width: 40%;
   object-fit: contain;
 }
 
@@ -171,12 +176,13 @@ useEventListener("keydown", (event) => {
 }
 
 .chub-card-tagline {
-  max-width: 70ch;
+  max-width: 100ch;
 }
 
 .chub-card-description {
-  max-width: 70ch;
+  max-width: 100ch;
   overflow-wrap: break-word;
+  padding-bottom: 1em;
 }
 
 .chub-card-topics {
