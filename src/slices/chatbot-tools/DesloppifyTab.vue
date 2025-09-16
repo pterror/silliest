@@ -30,8 +30,8 @@ const emit = defineEmits<{
 const title = computed(() =>
   props.file.name.replace(
     /^main_?|(?:-[0-9a-f]+)?_?(?:desloppified)?_?(?:spec_v2)?[.]png$/gi,
-    ""
-  )
+    "",
+  ),
 );
 
 const newDescriptionEl = ref<HTMLDivElement | undefined>(undefined);
@@ -49,8 +49,8 @@ const cannotSubmitTag = computed(
     tags.value.some(
       (tag) =>
         tag.localeCompare(newTag.value, undefined, { sensitivity: "base" }) ===
-        0
-    )
+        0,
+    ),
 );
 const addTag = () => {
   if (!newTag.value) return;
@@ -77,9 +77,9 @@ const png = computedAsync(() =>
       console.error(
         `Could not decode PNG file '${props.file.name}'`,
         "Error:",
-        error
+        error,
       );
-    })
+    }),
 );
 
 const lineProcessors = ref(structuredClone(DEFAULT_LINE_PROCESSORS));
@@ -109,13 +109,13 @@ watchEffect(() => {
       "Errors:",
       formatError(metadata.error),
       "Value:",
-      rawPayload
+      rawPayload,
     );
   } catch (error) {
     console.error(
       `Could not read metadata of card '${props.file.name}'`,
       "Error:",
-      error
+      error,
     );
   }
 });
@@ -134,7 +134,7 @@ const currentDescription = computed(() =>
     ? undefined
     : "data" in metadata.value
     ? metadata.value.data.description
-    : metadata.value.description
+    : metadata.value.description,
 );
 
 const newDescription = computed(() => {
@@ -146,7 +146,7 @@ const newDescription = computed(() => {
   return desloppify(currentDescription.value, {
     ...(name !== undefined ? { name } : {}),
     lineProcessors: unsafeEntries(lineProcessors.value).flatMap(([k, v]) =>
-      v ? [k] : []
+      v ? [k] : [],
     ),
   });
 });
@@ -174,8 +174,8 @@ const download = () => {
     }
     newPngValue.text["chara"] = btoa(
       String.fromCharCode(
-        ...new TextEncoder().encode(JSON.stringify(newMetadata))
-      )
+        ...new TextEncoder().encode(JSON.stringify(newMetadata)),
+      ),
     );
   }
   if ("data" in newMetadata) {
@@ -191,13 +191,13 @@ const download = () => {
       }
     }
   }
-  const newBuffer = encode(newPngValue);
+  const newBuffer = encode(newPngValue) as Uint8Array<ArrayBuffer>;
   const url = URL.createObjectURL(new Blob([newBuffer]));
   const link = document.createElement("a");
   link.href = url;
   link.download = props.file.name.replace(
     /_?(?:desloppified)?(_?spec_v2)?(?: ?[(][\d\s]*[)])?[.]png/,
-    "_desloppified$&"
+    "_desloppified$&",
   );
   document.body.appendChild(link);
   link.click();
@@ -347,26 +347,9 @@ const download = () => {
   border-radius: 0.25em;
 }
 
-.fullscreen-preview {
-  background: var(--bg-darken);
-  position: fixed;
-  width: 100vw;
-  height: 100vh;
-  top: 0;
-  left: 0;
-  display: grid;
-  place-items: center;
-}
-
 .fullscreen-preview:hover:not(:has(> *:hover)) {
   cursor: pointer;
   background: var(--bg-darken-darker);
-}
-
-.fullscreen-preview img {
-  max-height: 95vh;
-  max-width: 95vw;
-  border-radius: 0.25em;
 }
 
 .new-tag-input {

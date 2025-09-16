@@ -27,10 +27,17 @@ import {
 
 const searchParams = useUrlSearchParams(undefined, { writeMode: "push" });
 
+const username = useLocalStorage("chub-placeholder-username", "User");
+const avatarUrl = useLocalStorage(
+  "chub-placeholder-avatar",
+  "https://sillie.st/3c.png",
+);
 const blurNsfw = useLocalStorage("chub-blur-nsfw", true);
 const showCustomCss = useLocalStorage("chub-show-custom-css", true);
 
 provide(chubProviderKey, {
+  username,
+  avatarUrl,
   blurNsfw,
   showCustomCss,
 });
@@ -224,10 +231,7 @@ watchEffect(() => {
 const fullscreenCardQuery = useQuery({
   queryKey: ["chubGetCard", fullscreenCardId] as const,
   queryFn: ({ queryKey: [, id] }) =>
-    id != null
-      ? cards.value?.find((card) => card.id === id || card.fullPath === id) ??
-        chubGetCard(id)
-      : null,
+    id != null ? chubGetCard(id, { full: true }) : null,
 });
 const fullscreenCard = fullscreenCardQuery.data;
 
@@ -261,6 +265,26 @@ function removeTopic(topic: string) {
       <span>Loading...</span>
     </div>
     <div class="chub-content" v-else>
+      <div class="chub-controls">
+        <label>
+          Username (for chat placeholders)
+          <input
+            v-model="username"
+            type="text"
+            placeholder="Username"
+            class="chub-username-input"
+          />
+        </label>
+        <label>
+          Avatar (for chat placeholders)
+          <input
+            v-model="avatarUrl"
+            type="text"
+            placeholder="Avatar URL"
+            class="chub-avatar-input"
+          />
+        </label>
+      </div>
       <div class="chub-page-controls buttons">
         <button @click="page = 1">«</button>
         <button @click="page -= 1">&lsaquo;</button>
@@ -367,7 +391,7 @@ function removeTopic(topic: string) {
       <button @click="page += 1">&rsaquo;</button>
     </div>
   </div>
-  <Teleport to="body" v-if="fullscreenCard">
+  <Teleport v-if="fullscreenCard" to="body">
     <div class="fullscreen">
       <ChubCard
         :card="fullscreenCard"

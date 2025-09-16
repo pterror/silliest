@@ -38,6 +38,17 @@ function rehypeReplaceChubLinks() {
   };
 }
 
+function rehypeImageLightbox() {
+  return (tree: RehypeRoot) => {
+    visit(tree, "element", (node) => {
+      if (node.tagName === "img") {
+        node.properties.onclick =
+          'const img = event.target; if (img && img.src) { const customEvent = new CustomEvent("chub-image-click", { detail: img.src }); window.dispatchEvent(customEvent); }';
+      }
+    });
+  };
+}
+
 const markdownToHtmlProcessor = unified()
   .use(remarkParse, {} satisfies RemarkParseOptions)
   .use(remarkBreaks)
@@ -56,6 +67,7 @@ const markdownToHtmlUnsafeProcessor = unified()
   .use(rehypeRaw)
   .use(rehypeRemoveScripts)
   .use(rehypeReplaceChubLinks)
+  .use(rehypeImageLightbox)
   .use(rehypeStringify, {
     allowDangerousHtml: true,
     allowDangerousCharacters: true,

@@ -16,8 +16,8 @@ export type ChubPageRaw<T> = {
   readonly count: number;
   readonly nodes: readonly T[];
   readonly page: number;
-  readonly previous_cursor: null | string;
-  readonly cursor: null | string;
+  readonly previous_cursor: string | null;
+  readonly cursor: string | null;
 };
 
 // FIXME: is it actually possible to detect search results count?
@@ -92,7 +92,53 @@ export interface ChubLabel {
   readonly description: string;
 }
 
-export interface ChubCard {
+export interface ChubExtension {
+  readonly id: ChubCardId;
+  readonly preset: string | null;
+  readonly full_path: ChubCardFullPath;
+  readonly extensions: unknown[];
+  readonly expressions: unknown | null;
+  readonly alt_expressions: Record<string, unknown>;
+  readonly background_image: string;
+  readonly related_lorebooks: unknown[];
+}
+
+export interface DepthPrompt {
+  readonly depth: number;
+  readonly prompt: string;
+}
+
+export interface ChubCardExtensions {
+  readonly chub: ChubExtension;
+  readonly depth_prompt: DepthPrompt;
+}
+
+export interface ChubCardDefinition {
+  readonly id: number;
+  readonly is_public: boolean;
+  readonly full_path: string;
+  readonly avatar: string;
+  readonly project_name: string;
+  readonly nsfw_image: boolean;
+  readonly name: string;
+  readonly description: string;
+  readonly example_dialogs: string;
+  readonly first_message: string;
+  readonly personality: string;
+  readonly scenario: string;
+  readonly system_prompt: string;
+  readonly post_history_instructions: string;
+  readonly tavern_personality: string;
+  readonly alternate_greetings: readonly string[];
+  readonly embedded_lorebook: unknown | null;
+  readonly extensions: ChubCardExtensions;
+  readonly bound_preset: string | null;
+  readonly is_owner: boolean;
+  readonly voice_id: string | null;
+  readonly voice: unknown | null;
+}
+
+export interface ChubCard<Full extends boolean = boolean> {
   readonly id: ChubCardId;
   readonly name: string;
   readonly fullPath: ChubCardFullPath;
@@ -118,7 +164,7 @@ export interface ChubCard {
   readonly hasGallery: boolean;
   readonly nChats: number;
   readonly nMessages: number;
-  readonly definition: null | string;
+  readonly definition: Full extends true ? ChubCardDefinition : null;
   readonly permissions: "read" | "write" | "admin";
   readonly is_public: boolean;
   readonly is_favorite: boolean;
@@ -128,9 +174,9 @@ export interface ChubCard {
   readonly is_unlisted: boolean;
   readonly avatar_url: string;
   readonly max_res_url: string;
-  readonly bound_preset: null | string;
-  readonly project_uuid: null | string;
-  readonly voice_id: null | string;
+  readonly bound_preset: string | null;
+  readonly project_uuid: string | null;
+  readonly voice_id: string | null;
   readonly verified: boolean;
   readonly recommended: boolean;
   readonly ratings_disabled: boolean;
@@ -138,7 +184,8 @@ export interface ChubCard {
   readonly badges: readonly string[];
 }
 
-interface ChubCardRaw extends Omit<ChubCard, "lastActivityAt" | "createdAt"> {
+interface ChubCardRaw<Full extends boolean = boolean>
+  extends Omit<ChubCard<Full>, "lastActivityAt" | "createdAt"> {
   readonly lastActivityAt: string;
   readonly createdAt: string;
 }
@@ -177,10 +224,16 @@ export function isProbablyChubCardFullPath(
   return typeof fullPath === "string" && /^[^/]+[/][^/]+$/.test(fullPath);
 }
 
-export async function chubGetCardByFullPath(
+export async function chubGetCardByFullPath<Full extends boolean = false>(
   fullPath: ChubCardFullPath,
-): Promise<ChubCard> {
-  const response = await fetch(`${API_URL}/characters/${fullPath}`);
+  options: ChubGetCardOptions<Full> = {},
+): Promise<ChubCard<Full>> {
+  const params = new URLSearchParams(
+    filterOutUndefined({
+      full: options.full ? "true" : undefined,
+    }) as Record<string, string>,
+  ).toString();
+  const response = await fetch(`${API_URL}/characters/${fullPath}?${params}`);
   const data: ChubGetCardResponse = await response.json();
   return chubCardRawToChubCard(data.node);
 }
@@ -189,19 +242,32 @@ export function isProbablyChubCardId(id: unknown): id is ChubCardId {
   return typeof id === "number" && Number.isInteger(id) && id > 0;
 }
 
-export async function chubGetCardById(id: ChubCardId): Promise<ChubCard> {
-  const response = await fetch(`${API_URL}/characters/${id}`);
+export async function chubGetCardById<Full extends boolean = false>(
+  id: ChubCardId,
+  options: ChubGetCardOptions<Full> = {},
+): Promise<ChubCard<Full>> {
+  const params = new URLSearchParams(
+    filterOutUndefined({
+      full: options.full ? "true" : undefined,
+    }) as Record<string, string>,
+  ).toString();
+  const response = await fetch(`${API_URL}/characters/${id}?${params}`);
   const data: ChubGetCardResponse = await response.json();
   return chubCardRawToChubCard(data.node);
 }
 
-export async function chubGetCard(
+export interface ChubGetCardOptions<Full extends boolean = boolean> {
+  readonly full?: Full;
+}
+
+export async function chubGetCard<Full extends boolean = false>(
   id: ChubCardId | ChubCardFullPath,
-): Promise<ChubCard> {
+  options: ChubGetCardOptions<Full> = {},
+): Promise<ChubCard<Full>> {
   if (isProbablyChubCardId(id)) {
-    return await chubGetCardById(id);
+    return await chubGetCardById(id, options);
   } else {
-    return await chubGetCardByFullPath(id);
+    return await chubGetCardByFullPath(id, options);
   }
 }
 
@@ -547,14 +613,14 @@ type ChubAccount = {
   readonly stripe: null | unknown; // Stripe data
   readonly referrer_id: string | null;
   readonly email: string | null;
-  readonly subscription_expires: null | string; // ISO date string or null
+  readonly subscription_expires: string | null; // ISO date string or null
   readonly will_cancel: boolean;
   readonly last_payment_method: null | unknown; // Payment method data
   readonly fraud_flag: boolean;
   readonly config: ChubApiConfig;
   readonly balance: number;
   readonly bluesky: null | unknown; // Bluesky data
-  readonly preferred_language: null | string; // ISO language code or null
+  readonly preferred_language: string | null; // ISO language code or null
 };
 
 export type ChubApiConfig = {
@@ -608,8 +674,8 @@ export type ChubApiConfig = {
   readonly nai_preamble: string;
   readonly nai_prefix: "vanilla";
   readonly nai_phrase_rep_pen: "off";
-  readonly prompt_template: null | string; // Template for prompts
-  readonly message_template: null | string; // Template for messages
+  readonly prompt_template: string | null; // Template for prompts
+  readonly message_template: string | null; // Template for messages
 };
 
 export async function chubGetAccount(): Promise<ChubAccount> {
@@ -649,8 +715,8 @@ type ChubChatMessage = {
   readonly is_main: boolean;
   readonly child_ids: readonly ChubChatMessageId[];
   readonly color: string; // Hex color code
-  readonly model_id: null | string; // Model identifier
-  readonly originator: null | string; // Originator identifier
+  readonly model_id: string | null; // Model identifier
+  readonly originator: string | null; // Originator identifier
 };
 
 type ChubChatResponse = {

@@ -196,3 +196,20 @@ a[target="_blank"]::after {
   margin-left: 0.2em;
   vertical-align: middle;
 }
+
+.fullscreen-preview {
+  background: var(--bg-darken);
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  top: 0;
+  left: 0;
+  display: grid;
+  place-items: center;
+}
+
+.fullscreen-preview img {
+  max-height: 95vh;
+  max-width: 95vw;
+  border-radius: 0.25em;
+}

@@ -17,7 +17,7 @@ const onFileInput = (event: Event) => {
   <div class="Desloppify">
     <input type="file" multiple @input="onFileInput" />
     <div class="tab-container">
-      <template v-for="file in files" :key="file.name" class="tab-container">
+      <template v-for="file in files" :key="file.name">
         <DesloppifyTab
           :file="file"
           :default-checked="file === files[0]"
