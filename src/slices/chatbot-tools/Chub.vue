@@ -377,7 +377,7 @@ function removeTopic(topic: string) {
           :focused="card.id === fullscreenCardId"
           @openInFullscreen="fullscreenCardId = card.fullPath"
           @addTopic="addTopic"
-          @searchByAuthor="author = card.fullPath.split('/')[0] ?? ''"
+          @searchByAuthor="author = $event"
         />
       </div>
     </div>
@@ -396,10 +396,8 @@ function removeTopic(topic: string) {
       <ChubCard
         :card="fullscreenCard"
         @close="fullscreenCardId = undefined"
-        @searchByAuthor="
-          (fullscreenCardId = undefined),
-            (author = fullscreenCard.fullPath.split('/')[0] ?? '')
-        "
+        @openInFullscreen="fullscreenCardId = $event"
+        @searchByAuthor="(fullscreenCardId = undefined), (author = $event)"
       />
     </div>
   </Teleport>

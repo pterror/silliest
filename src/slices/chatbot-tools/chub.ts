@@ -210,6 +210,28 @@ export async function chubListSimilarCards(
   return data.nodes.map(chubCardRawToChubCard);
 }
 
+export interface ChubListForksOptions {
+  readonly nsfw?: boolean;
+  readonly nsfl?: boolean;
+}
+
+// https://gateway.chub.ai/forks/project/4700696?limit=20&nsfw=true&nsfl=true
+export async function chubListForks(
+  id: number,
+  options: ChubListForksOptions = {},
+): Promise<readonly ChubCard[]> {
+  const params = new URLSearchParams(
+    filterOutUndefined({
+      limit: CHUB_PAGE_SIZE.toString(),
+      nsfw: options.nsfw ? "true" : undefined,
+      nsfl: options.nsfl ? "true" : undefined,
+    }) as Record<string, string>,
+  ).toString();
+  const response = await fetch(`${BASE_URL}/forks/project/${id}?${params}`);
+  const data: ChubPageRaw<ChubCardRaw> = await response.json();
+  return data.nodes.map(chubCardRawToChubCard);
+}
+
 interface ChubGetCardResponse {
   readonly errors: readonly unknown[] | null;
   readonly node: ChubCardRaw;

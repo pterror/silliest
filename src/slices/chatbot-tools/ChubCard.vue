@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { computed, inject, ref, toRaw, watchEffect } from "vue";
-import { CHUB_TAGS_TO_HIDE, type ChubCard } from "./chub";
+import {
+  CHUB_TAGS_TO_HIDE,
+  chubListForks,
+  type ChubCard,
+  type ChubCardFullPath,
+  type ChubCardId,
+} from "./chub";
 import { useQuery } from "@tanstack/vue-query";
 import { chubQueryOptions } from "./chubQuery";
 import { useEventListener } from "@vueuse/core";
@@ -11,13 +17,15 @@ import {
   characterCardReplaceMacros,
   parseExampleMessages,
 } from "./characterCard";
+import ChubCardPreview from "./ChubCardPreview.vue";
 
 const props = defineProps<{
   card: ChubCard<true>;
 }>();
 const emit = defineEmits<{
   close: [];
-  searchByAuthor: [];
+  openInFullscreen: [id: ChubCardId | ChubCardFullPath];
+  searchByAuthor: [author: string];
   addTopic: [topic: string];
 }>();
 
@@ -33,7 +41,7 @@ const imageUrl = computed(() =>
     : null,
 );
 
-const author = computed(() => props.card.fullPath.split("/")[0]);
+const author = computed(() => props.card.fullPath.replace(/[/][\s\S]+/, ""));
 
 const blurred = computed(
   () =>
@@ -67,9 +75,13 @@ const exampleDialogs = computed(() =>
   parseExampleMessages(props.card.definition.example_dialogs),
 );
 
-watchEffect(() => {
-  console.log(fullscreenPreviewImage.value);
-});
+const forks = ref<readonly ChubCard[] | null>();
+
+const loadForks = async () => {
+  if (forks.value) return;
+  forks.value = await chubListForks(props.card.id);
+  console.log(toRaw(forks.value));
+};
 </script>
 
 <template>
@@ -120,7 +132,7 @@ watchEffect(() => {
           </button>
         </template>
       </div>
-      <button @click="emit('searchByAuthor')">by {{ author }}</button>
+      <button @click="emit('searchByAuthor', author)">by {{ author }}</button>
       <label>
         <input type="checkbox" v-model="chatPreview" />
         Preview chat names
@@ -136,7 +148,7 @@ watchEffect(() => {
         class="chub-card-tagline"
         v-html="chubMarkdownToHtml(card.tagline, { unsafe: true })"
       ></p>
-      <div class="tab-container">
+      <div class="chub-card-info tab-container">
         <label class="tab-title">
           <input
             type="radio"
@@ -367,6 +379,38 @@ watchEffect(() => {
             )
           "
         ></div>
+        <label v-if="card.forksCount > 0" class="tab-title">
+          <input
+            type="radio"
+            name="chub-card-tab"
+            class="invisible-radio"
+            value="forks"
+            @click="loadForks()"
+          />
+          Forks ({{ card.forksCount }})
+        </label>
+        <div
+          v-if="card.forksCount > 0 && forks?.length === 0"
+          class="chub-card-no-forks tab-contents"
+        >
+          No public forks.
+        </div>
+        <div
+          v-if="card.forksCount > 0 && forks?.length !== 0"
+          class="chub-card-forks tab-contents"
+        >
+          <ChubCardPreview
+            v-for="fork in forks"
+            :key="fork.id"
+            :card="fork"
+            @close="emit('close')"
+            @openInFullscreen="emit('openInFullscreen', fork.fullPath)"
+            @searchByAuthor="
+              emit('searchByAuthor', fork.fullPath.replace(/[/][\s\S]+/, ''))
+            "
+            @addTopic="(topic) => emit('addTopic', topic)"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -407,6 +451,10 @@ watchEffect(() => {
   filter: brightness(0.8);
   transition-property: filter;
   transition-duration: 150ms;
+}
+
+.chub-card-info {
+  width: 100%;
 }
 
 .chub-card-content {
@@ -552,5 +600,18 @@ watchEffect(() => {
   border-radius: var(--radius-default);
   padding: 1em;
   margin-left: 2em;
+}
+
+.chub-card-no-forks {
+  display: grid;
+  place-items: center;
+  font-size: 1.25em;
+  text-align: center;
+}
+
+.chub-card-forks.chub-card-forks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1em;
 }
 </style>

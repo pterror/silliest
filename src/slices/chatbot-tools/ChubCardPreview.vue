@@ -13,14 +13,14 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{
   openInFullscreen: [];
-  searchByAuthor: [];
+  searchByAuthor: [name: string];
   addTopic: [topic: string];
 }>();
 
 const configQuery = useQuery(chubQueryOptions("chubFetchEntireConfig", []));
 const config = configQuery.data;
 const { blurNsfw } = inject(chubProviderKey)!;
-const author = computed(() => props.card.fullPath.split("/")[0]);
+const author = computed(() => props.card.fullPath.replace(/[/][\s\S]+/, ""));
 
 const blurred = computed(
   () =>
@@ -66,7 +66,8 @@ const createdTimeAgo = useTimeAgo(props.card.createdAt);
           ⤓
         </button>
         <div>
-          by <button @click="emit('searchByAuthor')">{{ author }}</button>
+          by
+          <button @click="emit('searchByAuthor', author)">{{ author }}</button>
         </div>
       </div>
       <div class="chub-card-preview-metadata">created {{ createdTimeAgo }}</div>
