@@ -1,4 +1,3 @@
-import type { rehype } from "rehype";
 import rehypeRaw from "rehype-raw";
 import rehypeStringify, {
   type Options as RehypeStringifyOptions,
@@ -12,7 +11,11 @@ import remarkRehype, {
 import { unified } from "unified";
 import { visit } from "unist-util-visit";
 import { rehypeRemoveScripts } from "../../lib/rehype";
-import { remarkUnindent, type RehypeRoot } from "../../lib/markdown";
+import {
+  rehypeParseInlineQuotes,
+  remarkUnindent,
+  type RehypeRoot,
+} from "../../lib/markdown";
 
 function rehypeReplaceChubLinks() {
   return (tree: RehypeRoot) => {
@@ -49,36 +52,78 @@ function rehypeImageLightbox() {
   };
 }
 
-const markdownToHtmlProcessor = unified()
-  .use(remarkParse, {} satisfies RemarkParseOptions)
-  .use(remarkBreaks)
-  .use(remarkGfm)
-  .use(remarkRehype)
-  .use(rehypeRemoveScripts)
-  .use(rehypeReplaceChubLinks)
-  .use(rehypeStringify);
+function rehypeReplaceMacros(macros: Record<string, string> | undefined) {
+  return (tree: RehypeRoot) => {
+    if (!macros || Object.keys(macros).length === 0) return;
+    visit(tree, "text", (node, index, parent) => {
+      const parts = node.value.match(/{{(?:.*?)}}|[^{]+|[{]/g) ?? [];
+      const newChildren: NonNullable<typeof parent>["children"] = [];
+      for (const part of parts) {
+        const macroMatch = part.match(/^{{(.*?)}}$/);
+        if (macroMatch) {
+          const macroName = macroMatch[1];
+          if (macroName && macros[macroName]) {
+            newChildren.push({
+              type: "element",
+              tagName: "span",
+              properties: {
+                className: `chub-card-macro chub-card-macro-${macroName}`,
+              },
+              children: [{ type: "text", value: macros[macroName] }],
+            });
+          } else {
+            newChildren.push({ type: "text", value: part });
+          }
+        } else {
+          newChildren.push({ type: "text", value: part });
+        }
+      }
+      if (parent && typeof index === "number") {
+        parent.children.splice(index, 1, ...newChildren);
+      }
+    });
+  };
+}
 
-const markdownToHtmlUnsafeProcessor = unified()
-  .use(remarkParse)
-  .use(remarkUnindent)
-  .use(remarkBreaks)
-  .use(remarkGfm)
-  .use(remarkRehype, { allowDangerousHtml: true } satisfies RemarkRehypeOptions)
-  .use(rehypeRaw)
-  .use(rehypeRemoveScripts)
-  .use(rehypeReplaceChubLinks)
-  .use(rehypeImageLightbox)
-  .use(rehypeStringify, {
-    allowDangerousHtml: true,
-    allowDangerousCharacters: true,
-    allowParseErrors: true,
-  } satisfies RehypeStringifyOptions);
+const markdownToHtmlProcessor = () =>
+  unified()
+    .use(remarkParse, {} satisfies RemarkParseOptions)
+    .use(remarkBreaks)
+    .use(remarkGfm)
+    .use(remarkRehype)
+    .use(rehypeRemoveScripts)
+    .use(rehypeReplaceChubLinks)
+    .use(rehypeParseInlineQuotes)
+    .use(rehypeStringify);
+
+const markdownToHtmlUnsafeProcessor = () =>
+  unified()
+    .use(remarkParse)
+    .use(remarkUnindent)
+    .use(remarkBreaks)
+    .use(remarkGfm)
+    .use(remarkRehype, {
+      allowDangerousHtml: true,
+    } satisfies RemarkRehypeOptions)
+    .use(rehypeRaw)
+    .use(rehypeRemoveScripts)
+    .use(rehypeReplaceChubLinks)
+    .use(rehypeParseInlineQuotes)
+    .use(rehypeImageLightbox)
+    .use(rehypeStringify, {
+      allowDangerousHtml: true,
+      allowDangerousCharacters: true,
+      allowParseErrors: true,
+    } satisfies RehypeStringifyOptions);
+
+const defaultMacros: Record<string, string> = {};
 
 export function chubMarkdownToHtml(
   markdown: string,
-  { unsafe = false } = {},
+  { unsafe = false, macros = defaultMacros } = {},
 ): string {
-  return (unsafe ? markdownToHtmlUnsafeProcessor : markdownToHtmlProcessor)
+  return (unsafe ? markdownToHtmlUnsafeProcessor() : markdownToHtmlProcessor())
+    .use(rehypeReplaceMacros, macros)
     .processSync(markdown)
     .toString();
 }

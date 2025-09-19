@@ -192,8 +192,8 @@ const title = computed(() => {
     const topicsString = topics.value.length
       ? ` on ${topics.value.join(", ")}`
       : "";
-    const searchString = search.value ? ` "${search.value}"` : "";
-    return `cards${authorString}${topicsString}${searchString} | chub`;
+    const searchString = search.value ? `"${search.value}" ` : "";
+    return `${searchString}cards${authorString}${topicsString} | chub`;
   }
   return "timeline | chub";
 });

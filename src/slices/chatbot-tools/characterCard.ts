@@ -1,5 +1,45 @@
 import { regexEscape } from "../../lib/regex";
 
+const dateLocale = "en-US";
+
+const macrosObjectPrototype = {
+  get weekday() {
+    return new Date().toLocaleDateString(dateLocale, { weekday: "long" });
+  },
+  get isotime() {
+    return (
+      new Date()
+        .toISOString()
+        .replace(/.*T/, "")
+        .match(/\d+:\d+/)?.[0] ?? ""
+    );
+  },
+  get isodate() {
+    return new Date().toISOString().replace(/T.*/, "");
+  },
+  get date() {
+    return new Date().toLocaleDateString(dateLocale, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  },
+  get time() {
+    return new Date().toLocaleTimeString(dateLocale, {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  },
+};
+
+export const constructMacrosObject = ({
+  user,
+  char,
+}: {
+  user: string;
+  char: string;
+}) => Object.setPrototypeOf({ user, char }, macrosObjectPrototype);
+
 export const characterCardReplaceMacros = (
   value: string,
   macros: Record<string, string>,
@@ -15,8 +55,9 @@ export const characterCardReplaceMacros = (
   );
 
 export interface ChatMessage {
-  readonly role: "char" | "user";
+  readonly role: "char" | "user" | "error";
   readonly content: string;
+  readonly error: boolean;
 }
 
 export const parseExampleMessages = (
@@ -38,7 +79,11 @@ export const parseExampleMessages = (
         ? Array.from(messages, (message): ChatMessage => {
             const role = message.startsWith("{{user}}:") ? "user" : "char";
             const content = message.replace(/^\{\{(char|user)\}\}:/, "").trim();
-            return { role, content };
+            return {
+              role,
+              content,
+              error: role === "char" && !message.startsWith("{{char}}:"),
+            };
           })
         : [];
     });

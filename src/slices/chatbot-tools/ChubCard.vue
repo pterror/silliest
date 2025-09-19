@@ -15,6 +15,7 @@ import { chubProviderKey } from "./chubProvider";
 import { downloadExternalLinkWithoutContentDisposition } from "../../lib/download";
 import {
   characterCardReplaceMacros,
+  constructMacrosObject,
   parseExampleMessages,
 } from "./characterCard";
 import ChubCardPreview from "./ChubCardPreview.vue";
@@ -66,10 +67,14 @@ useEventListener("chub-image-click" as never, (event) => {
   fullscreenPreviewImage.value = customEvent.detail;
 });
 
-const macros = computed(() => ({
-  char: props.card.definition.name,
-  user: username.value,
-}));
+const macros = computed(() =>
+  chatPreview
+    ? constructMacrosObject({
+        char: props.card.definition.name,
+        user: username.value,
+      })
+    : undefined,
+);
 
 const exampleDialogs = computed(() =>
   parseExampleMessages(props.card.definition.example_dialogs),
@@ -80,7 +85,6 @@ const forks = ref<readonly ChubCard[] | null>();
 const loadForks = async () => {
   if (forks.value) return;
   forks.value = await chubListForks(props.card.id);
-  console.log(toRaw(forks.value));
 };
 </script>
 
@@ -179,17 +183,10 @@ const loadForks = async () => {
         <div
           class="chub-card-personality tab-contents"
           v-html="
-            chubMarkdownToHtml(
-              chatPreview
-                ? characterCardReplaceMacros(
-                    card.definition.personality,
-                    macros,
-                  )
-                : card.definition.personality,
-              {
-                unsafe: shouldShowCustomCss,
-              },
-            )
+            chubMarkdownToHtml(card.definition.personality, {
+              unsafe: shouldShowCustomCss,
+              macros,
+            })
           "
         ></div>
         <label v-if="card.definition.scenario" class="tab-title">
@@ -205,12 +202,10 @@ const loadForks = async () => {
           v-if="card.definition.scenario"
           class="chub-card-scenario tab-contents"
           v-html="
-            chubMarkdownToHtml(
-              chatPreview
-                ? characterCardReplaceMacros(card.definition.scenario, macros)
-                : card.definition.scenario,
-              { unsafe: shouldShowCustomCss },
-            )
+            chubMarkdownToHtml(card.definition.scenario, {
+              unsafe: shouldShowCustomCss,
+              macros,
+            })
           "
         ></div>
         <label class="tab-title">
@@ -237,15 +232,10 @@ const loadForks = async () => {
             <div
               class="tab-contents"
               v-html="
-                chubMarkdownToHtml(
-                  chatPreview
-                    ? characterCardReplaceMacros(
-                        card.definition.first_message,
-                        macros,
-                      )
-                    : card.definition.first_message,
-                  { unsafe: shouldShowCustomCss },
-                )
+                chubMarkdownToHtml(card.definition.first_message, {
+                  unsafe: shouldShowCustomCss,
+                  macros,
+                })
               "
             ></div>
             <template
@@ -263,10 +253,10 @@ const loadForks = async () => {
               <div
                 class="tab-contents"
                 v-html="
-                  chubMarkdownToHtml(
-                    chatPreview ? characterCardReplaceMacros(msg, macros) : msg,
-                    { unsafe: shouldShowCustomCss },
-                  )
+                  chubMarkdownToHtml(msg, {
+                    unsafe: shouldShowCustomCss,
+                    macros,
+                  })
                 "
               ></div>
             </template>
@@ -304,6 +294,9 @@ const loadForks = async () => {
                     class="chub-card-message-avatar"
                   />
                   <span>{{ card.definition.name }}</span>
+                  <span v-if="message.error" class="chub-card-message-error">
+                    {{ '(Error: Message does not start with "\{\{char\}\}:")' }}
+                  </span>
                 </div>
                 <div v-else class="chub-card-message-author">
                   <img
@@ -316,12 +309,10 @@ const loadForks = async () => {
                 <div
                   class="chub-card-message-content"
                   v-html="
-                    chubMarkdownToHtml(
-                      chatPreview
-                        ? characterCardReplaceMacros(message.content, macros)
-                        : message.content,
-                      { unsafe: shouldShowCustomCss },
-                    )
+                    chubMarkdownToHtml(message.content, {
+                      unsafe: shouldShowCustomCss,
+                      macros,
+                    })
                   "
                 ></div>
               </div>
@@ -341,15 +332,10 @@ const loadForks = async () => {
           v-if="card.definition.system_prompt"
           class="chub-card-system-prompt tab-contents"
           v-html="
-            chubMarkdownToHtml(
-              chatPreview
-                ? characterCardReplaceMacros(
-                    card.definition.system_prompt,
-                    macros,
-                  )
-                : card.definition.system_prompt,
-              { unsafe: shouldShowCustomCss },
-            )
+            chubMarkdownToHtml(card.definition.system_prompt, {
+              unsafe: shouldShowCustomCss,
+              macros,
+            })
           "
         ></div>
         <label
@@ -368,15 +354,10 @@ const loadForks = async () => {
           v-if="card.definition.post_history_instructions"
           class="chub-card-system-prompt tab-contents"
           v-html="
-            chubMarkdownToHtml(
-              chatPreview
-                ? characterCardReplaceMacros(
-                    card.definition.post_history_instructions,
-                    macros,
-                  )
-                : card.definition.post_history_instructions,
-              { unsafe: shouldShowCustomCss },
-            )
+            chubMarkdownToHtml(card.definition.post_history_instructions, {
+              unsafe: shouldShowCustomCss,
+              macros,
+            })
           "
         ></div>
         <label v-if="card.forksCount > 0" class="tab-title">
@@ -504,8 +485,9 @@ const loadForks = async () => {
 }
 
 .chub-card-image > img {
-  max-width: 100%;
-  max-height: 100%;
+  /* not an ideal solution as it assumes the image is the only thing on its side of the screen.
+   * not sure why `max-height: 100%` does not work. */
+  max-height: 100vh;
   object-fit: contain;
 }
 
@@ -602,6 +584,10 @@ const loadForks = async () => {
   margin-left: 2em;
 }
 
+.chub-card-message-error {
+  color: oklch(80% 30% 20);
+}
+
 .chub-card-no-forks {
   display: grid;
   place-items: center;
@@ -613,5 +599,17 @@ const loadForks = async () => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 1em;
+}
+
+:deep(.chub-card-macro) {
+  color: oklch(80% 30% 180);
+}
+
+:deep(.chub-card-macro-char) {
+  color: oklch(80% 30% 330);
+}
+
+:deep(.chub-card-macro-user) {
+  color: oklch(80% 30% 240);
 }
 </style>
