@@ -66,23 +66,48 @@ export function rehypeParseInlineQuotes() {
   return (tree: RehypeRoot) => {
     // Extract all instances of inline quotes, i.e. text wrapped in double quotes.
     // Wrap them in <q> tags.
-    visit(tree, "text", (node, index, parent) => {
-      const newChildren: NonNullable<typeof parent>["children"] = [];
-      const parts = node.value.match(/"[^"]*"|[^"]+|"/g);
-      if (!parts || parts?.length === 1) return;
-      for (const part of parts) {
-        if (part.startsWith('"') && part.endsWith('"')) {
-          newChildren.push({
-            type: "element",
-            tagName: "q",
-            properties: {},
-            children: [{ type: "text", value: part.slice(1, -1) }],
-          });
-        } else {
-          newChildren.push({ type: "text", value: part });
+    visit(tree, "element", (node) => {
+      if (node.tagName !== "p") return;
+      const newChildren: NonNullable<typeof node>["children"] = [];
+      let quoteChildren: NonNullable<typeof node>["children"] | undefined =
+        undefined;
+      for (const child of node.children) {
+        if (child.type !== "text") {
+          (quoteChildren ?? newChildren).push(child);
+          continue;
+        }
+        const parts = child.value.match(/[^"]+|"/g);
+        if (!parts) continue;
+        for (const part of parts) {
+          if (part === '"') {
+            if (quoteChildren) {
+              // End quote
+              newChildren.push({
+                type: "element",
+                tagName: "q",
+                properties: {},
+                children: quoteChildren,
+              });
+              quoteChildren = undefined;
+            } else {
+              // Start quote
+              quoteChildren = [];
+            }
+          } else {
+            (quoteChildren ?? newChildren).push({ type: "text", value: part });
+          }
         }
       }
-      parent?.children.splice(index!, 1, ...newChildren);
+      if (quoteChildren) {
+        // Unclosed quote, assume it ends at the end of the paragraph.
+        newChildren.push({
+          type: "element",
+          tagName: "q",
+          properties: {},
+          children: quoteChildren,
+        });
+      }
+      node.children = newChildren;
     });
   };
 }

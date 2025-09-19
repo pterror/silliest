@@ -1,3 +1,4 @@
+import moment from "moment";
 import { regexEscape } from "../../lib/regex";
 
 const dateLocale = "en-US";
@@ -38,7 +39,17 @@ export const constructMacrosObject = ({
 }: {
   user: string;
   char: string;
-}) => Object.setPrototypeOf({ user, char }, macrosObjectPrototype);
+}) =>
+  new Proxy(Object.setPrototypeOf({ user, char }, macrosObjectPrototype), {
+    get(target, prop) {
+      if (prop in target || typeof prop !== "string") {
+        return (target as any)[prop];
+      }
+      const match = prop.match(/^datetimeformat (.+)$/);
+      if (!match?.[1]) return;
+      return moment().format(match[1]);
+    },
+  });
 
 export const characterCardReplaceMacros = (
   value: string,
