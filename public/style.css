@@ -211,5 +211,5 @@ a[target="_blank"]::after {
 .fullscreen-preview img {
   max-height: 95vh;
   max-width: 95vw;
-  border-radius: 0.25em;
+  border-radius: var(--radius-default);
 }

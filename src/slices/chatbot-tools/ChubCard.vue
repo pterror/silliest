@@ -520,6 +520,20 @@ const loadForks = async () => {
   overflow-wrap: break-word;
 }
 
+:is(
+    .chub-card-tagline,
+    .chub-card-description,
+    .chub-card-greetings,
+    .chub-card-conversations,
+    .chub-card-personality,
+    .chub-card-scenario,
+    .chub-card-system-prompt,
+    .chub-card-post-history-instructions
+  )
+  :deep(p) {
+  margin: 0;
+}
+
 :deep(code) {
   white-space: pre-wrap;
 }

@@ -62,12 +62,33 @@ export function remarkUnindent() {
   };
 }
 
+const isTextLikeTag: Record<string, true> = {
+  p: true,
+  li: true,
+  h1: true,
+  h2: true,
+  h3: true,
+  h4: true,
+  h5: true,
+  h6: true,
+  blockquote: true,
+  q: true,
+  span: true,
+  sub: true,
+  sup: true,
+  strong: true,
+  em: true,
+  b: true,
+  i: true,
+  u: true,
+};
+
 export function rehypeParseInlineQuotes() {
   return (tree: RehypeRoot) => {
     // Extract all instances of inline quotes, i.e. text wrapped in double quotes.
     // Wrap them in <q> tags.
     visit(tree, "element", (node) => {
-      if (node.tagName !== "p") return;
+      if (!isTextLikeTag[node.tagName]) return;
       const newChildren: NonNullable<typeof node>["children"] = [];
       let quoteChildren: NonNullable<typeof node>["children"] | undefined =
         undefined;
