@@ -176,7 +176,7 @@ const query = computed<ChubCardQuery>(() => {
           ...(search.value && { search: search.value }),
           ...(author.value && { username: author.value }),
           ...(!excludeMine.value && { exclude_mine: excludeMine.value }),
-          ...(!includeForks.value && { include_forks: includeForks.value }),
+          ...(includeForks.value && { include_forks: includeForks.value }),
           ...(nsfw.value && { nsfw: nsfw.value }),
           ...(nsfl.value && { nsfl: nsfl.value }),
           ...(sortType.value !== "default" && { sort: sortType.value }),
