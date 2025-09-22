@@ -15,12 +15,16 @@
     <link rel="stylesheet" href="/style.css" />
     <style is:global>
       :root {
-        --fg-lightness: 30%;
+        --fg-lightness: 55%;
+        --fg-colorization: 50%;
+        background-color: #ddd;
       }
 
       @media (prefers-color-scheme: dark) {
         :root {
           --fg-lightness: 70%;
+          --fg-colorization: 40%;
+          background-color: #222;
         }
       }
 
@@ -28,6 +32,11 @@
         display: flex;
         flex-flow: column nowrap;
         gap: 0.5em;
+      }
+
+      button {
+        font-size: 100%;
+        padding: 0.25em 0.5em;
       }
 
       #keyInput {
@@ -49,15 +58,15 @@
       }
 
       .status-success {
-        color: oklch(var(--fg-lightness) 0.15 160);
+        color: oklch(var(--fg-lightness) var(--fg-colorization) 160);
       }
 
       .status-failure {
-        color: oklch(var(--fg-lightness) 0.15 360);
+        color: oklch(var(--fg-lightness) var(--fg-colorization) 360);
       }
 
       .status-info {
-        color: oklch(var(--fg-lightness) 0.15 230);
+        color: oklch(var(--fg-lightness) var(--fg-colorization) 230);
       }
     </style>
   </head>
@@ -79,32 +88,93 @@
     <input id="filesInput" type="file" multiple />
     <div id="statusDisplay"></div>
     <div id="fileCountDisplay"></div>
+    <div>
+      <button id="copyAllUrlsButton">Copy all URLs!</button>
+      <button id="clearUrlsButton">Clear URLs</button>
+    </div>
     <div id="urlsDisplay" class="show-newlines">No URLs yet!</div>
     <div id="dropTarget">Drop files here</div>
     <script>
-      let files: File[] = [];
-      let urls: string[] = [];
+      const files: File[] = [];
+      const urls: string[] = [];
+
+      const htmlEscapeMap: Record<string, string> = {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+      };
+      function escapeHTML(url: string) {
+        return url.replace(
+          /[&<>]/g,
+          (match) => htmlEscapeMap[match as keyof typeof htmlEscapeMap]!,
+        );
+      }
+
       const fileCountDisplay = document.getElementById(
-        "fileCountDisplay"
+        "fileCountDisplay",
       ) as HTMLDivElement;
       const urlsDisplay = document.getElementById(
-        "urlsDisplay"
+        "urlsDisplay",
       ) as HTMLDivElement;
       function updateFileCount() {
         fileCountDisplay.innerText = `${files.length} file(s) to be uploaded`;
       }
       function setFiles(newFiles: File[]) {
-        files = newFiles;
+        files.splice(0, files.length, ...newFiles);
         updateFileCount();
       }
       setFiles([]);
+      function copyUrls(urls: readonly string[]) {
+        if (!urls.length) return;
+        navigator.clipboard.writeText(urls.join("\n"));
+        showSuccess(`Copied ${urls.length} URL(s) to clipboard!`);
+      }
+      function copyUrl(url: string) {
+        copyUrls([url]);
+      }
+      declare global {
+        interface Window {
+          copyUrl: (url: string) => void;
+        }
+      }
+      window.copyUrl = copyUrl; // make globally accessible for button onclick
+      function updateUrlsDisplay() {
+        if (!urls.length) {
+          urlsDisplay.innerText = "No URLs yet!";
+          return;
+        }
+        urlsDisplay.innerHTML = urls
+          .map(
+            (url) =>
+              `<button onclick="copyUrl('${url}')">Copy URL</button> <a href="${url}" target="_blank">${escapeHTML(url)}</a>`,
+          )
+          .join("<br>");
+      }
+      updateUrlsDisplay();
       function pushUrl(url: string) {
         urls.push(url);
-        urlsDisplay.innerText = urls.join("\n");
+        updateUrlsDisplay();
       }
 
+      const copyAllUrlsButton = document.getElementById(
+        "copyAllUrlsButton",
+      ) as HTMLButtonElement;
+      function copyAllUrls() {
+        copyUrls(urls);
+      }
+      copyAllUrlsButton.addEventListener("click", copyAllUrls);
+
+      const clearUrlsButton = document.getElementById(
+        "clearUrlsButton",
+      ) as HTMLButtonElement;
+      function clearUrls() {
+        urls.splice(0, urls.length);
+        updateUrlsDisplay();
+      }
+      clearUrlsButton.addEventListener("click", clearUrls);
+
       const filesInput = document.getElementById(
-        "filesInput"
+        "filesInput",
       ) as HTMLInputElement;
       function onFileInput() {
         if (filesInput.files?.length) {
@@ -123,7 +193,7 @@
         return Boolean(getKey());
       }
       const statusDisplay = document.getElementById(
-        "statusDisplay"
+        "statusDisplay",
       ) as HTMLDivElement;
       function makeShowFunction(className: string) {
         return (message: string) => {
@@ -134,7 +204,11 @@
       const showSuccess = makeShowFunction("status-success");
       const showFailure = makeShowFunction("status-failure");
       const showInfo = makeShowFunction("status-info");
-      showSuccess("Ready to upload!");
+      if (hasKey()) {
+        showInfo("Drag files (or click the file picker above) to upload!");
+      } else {
+        showFailure("You need a key to use this uploader!");
+      }
 
       const keyInput = document.getElementById("keyInput") as HTMLInputElement;
       function updateKeyInputPlaceholder() {
@@ -185,28 +259,28 @@
                 () => {
                   failures += 1;
                   failedFiles.push(file);
-                }
+                },
               )
               .finally(() => {
                 showInfo(
-                  `${successes} succeeded/${failures} failed/${total} total`
+                  `${successes} succeeded/${failures} failed/${total} total`,
                 );
-              })
-          )
+              }),
+          ),
         );
         setFiles(failedFiles);
         if (failures === 0) {
           showSuccess(`${successes} files uploaded`);
         } else {
           showFailure(
-            `Press 'upload' again to re-try ${failures} failed uploads (${successes}/${total} succeeded)`
+            `Press 'upload' again to re-try ${failures} failed uploads (${successes}/${total} succeeded)`,
           );
         }
         return { successes, failures, total, failedFiles };
       }
 
       const dropTarget = document.getElementById(
-        "dropTarget"
+        "dropTarget",
       ) as HTMLDivElement;
       function handleFilesDrag(event: DragEvent) {
         event.preventDefault();
@@ -225,7 +299,7 @@
       }
 
       const uploadButton = document.getElementById(
-        "uploadButton"
+        "uploadButton",
       ) as HTMLButtonElement;
       uploadButton.addEventListener("click", uploadSelectedFiles);
     </script>
