@@ -34,6 +34,10 @@
         gap: 0.5em;
       }
 
+      input {
+        font-size: 100%;
+      }
+
       button {
         font-size: 100%;
         padding: 0.25em 0.5em;
@@ -110,6 +114,20 @@
         );
       }
 
+      const statusDisplay = document.getElementById(
+        "statusDisplay",
+      ) as HTMLDivElement;
+
+      function makeShowFunction(className: string) {
+        return (message: string) => {
+          statusDisplay.innerText = message;
+          statusDisplay.className = className;
+        };
+      }
+      const showSuccess = makeShowFunction("status-success");
+      const showFailure = makeShowFunction("status-failure");
+      const showInfo = makeShowFunction("status-info");
+
       const fileCountDisplay = document.getElementById(
         "fileCountDisplay",
       ) as HTMLDivElement;
@@ -118,6 +136,9 @@
       ) as HTMLDivElement;
       function updateFileCount() {
         fileCountDisplay.innerText = `${files.length} file(s) to be uploaded`;
+        showSuccess(
+          `${files.length} files ready for upload! Click 'Upload All' to upload.`,
+        );
       }
       function setFiles(newFiles: File[]) {
         files.splice(0, files.length, ...newFiles);
@@ -192,18 +213,6 @@
       function hasKey() {
         return Boolean(getKey());
       }
-      const statusDisplay = document.getElementById(
-        "statusDisplay",
-      ) as HTMLDivElement;
-      function makeShowFunction(className: string) {
-        return (message: string) => {
-          statusDisplay.innerText = message;
-          statusDisplay.className = className;
-        };
-      }
-      const showSuccess = makeShowFunction("status-success");
-      const showFailure = makeShowFunction("status-failure");
-      const showInfo = makeShowFunction("status-info");
       if (hasKey()) {
         showInfo("Drag files (or click the file picker above) to upload!");
       } else {
