@@ -4,18 +4,19 @@ import rehypeStringify, {
 } from "rehype-stringify";
 import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
-import remarkParse, { type Options as RemarkParseOptions } from "remark-parse";
+import remarkParse from "remark-parse";
 import remarkRehype, {
   type Options as RemarkRehypeOptions,
 } from "remark-rehype";
 import { unified } from "unified";
 import { visit } from "unist-util-visit";
-import { rehypeRemoveScripts } from "../../lib/rehype";
 import {
   rehypeParseInlineQuotes,
-  remarkUnindent,
-  type RehypeRoot,
-} from "../../lib/markdown";
+  rehypeRemoveAutoplay,
+  rehypeRemoveInteractiveElements,
+  rehypeRemoveScripts,
+} from "../../lib/rehype";
+import { remarkUnindent, type RehypeRoot } from "../../lib/markdown";
 
 function rehypeReplaceChubLinks() {
   return (tree: RehypeRoot) => {
@@ -87,10 +88,12 @@ function rehypeReplaceMacros(macros: Record<string, string> | undefined) {
 
 const markdownToHtmlProcessor = () =>
   unified()
-    .use(remarkParse, {} satisfies RemarkParseOptions)
+    .use(remarkParse)
+    .use(remarkUnindent)
     .use(remarkBreaks)
     .use(remarkGfm)
     .use(remarkRehype)
+    .use(rehypeRemoveInteractiveElements)
     .use(rehypeRemoveScripts)
     .use(rehypeReplaceChubLinks)
     .use(rehypeParseInlineQuotes)
@@ -106,6 +109,7 @@ const markdownToHtmlUnsafeProcessor = () =>
       allowDangerousHtml: true,
     } satisfies RemarkRehypeOptions)
     .use(rehypeRaw)
+    .use(rehypeRemoveInteractiveElements)
     .use(rehypeRemoveScripts)
     .use(rehypeReplaceChubLinks)
     .use(rehypeParseInlineQuotes)
@@ -120,9 +124,13 @@ const defaultMacros: Record<string, string> = {};
 
 export function chubMarkdownToHtml(
   markdown: string,
-  { unsafe = false, macros = defaultMacros } = {},
+  { unsafe = false, disableAutoplay = true, macros = defaultMacros } = {},
 ): string {
-  return (unsafe ? markdownToHtmlUnsafeProcessor() : markdownToHtmlProcessor())
+  const base = unsafe
+    ? markdownToHtmlUnsafeProcessor()
+    : markdownToHtmlProcessor();
+  const base2 = disableAutoplay ? base.use(rehypeRemoveAutoplay) : base;
+  return base2
     .use(rehypeReplaceMacros, macros)
     .processSync(markdown)
     .toString();

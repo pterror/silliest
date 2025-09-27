@@ -150,7 +150,12 @@ const loadForks = async () => {
       />
       <p
         class="chub-card-tagline"
-        v-html="chubMarkdownToHtml(card.tagline, { unsafe: true })"
+        v-html="
+          chubMarkdownToHtml(card.tagline, {
+            unsafe: shouldShowCustomCss,
+            macros,
+          })
+        "
       ></p>
       <div class="chub-card-info tab-container">
         <label class="tab-title">
@@ -168,6 +173,8 @@ const loadForks = async () => {
           v-html="
             chubMarkdownToHtml(card.description, {
               unsafe: shouldShowCustomCss,
+              macros,
+              disableAutoplay: false,
             })
           "
         ></div>
@@ -436,6 +443,11 @@ const loadForks = async () => {
 
 .chub-card-info {
   width: 100%;
+}
+
+.chub-card-info :deep(hr) {
+  width: calc(100% - 2em);
+  margin: 0 1em;
 }
 
 .chub-card-content {
