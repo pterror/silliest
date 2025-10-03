@@ -377,27 +377,23 @@ const loadForks = async () => {
           />
           Forks ({{ card.forksCount }})
         </label>
-        <div
-          v-if="card.forksCount > 0 && forks?.length === 0"
-          class="chub-card-no-forks tab-contents"
-        >
-          No public forks.
-        </div>
-        <div
-          v-if="card.forksCount > 0 && forks?.length !== 0"
-          class="chub-card-forks tab-contents"
-        >
-          <ChubCardPreview
-            v-for="fork in forks"
-            :key="fork.id"
-            :card="fork"
-            @close="emit('close')"
-            @openInFullscreen="emit('openInFullscreen', fork.fullPath)"
-            @searchByAuthor="
-              emit('searchByAuthor', fork.fullPath.replace(/[/][\s\S]+/, ''))
-            "
-            @addTopic="(topic) => emit('addTopic', topic)"
-          />
+        <div v-if="card.forksCount > 0" class="tab-contents">
+          <div v-if="forks?.length === 0" class="chub-card-no-forks">
+            No public forks.
+          </div>
+          <div v-else class="chub-card-forks">
+            <ChubCardPreview
+              v-for="fork in forks"
+              :key="fork.id"
+              :card="fork"
+              @close="emit('close')"
+              @openInFullscreen="emit('openInFullscreen', fork.fullPath)"
+              @searchByAuthor="
+                emit('searchByAuthor', fork.fullPath.replace(/[/][\s\S]+/, ''))
+              "
+              @addTopic="(topic) => emit('addTopic', topic)"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -615,7 +611,6 @@ const loadForks = async () => {
 }
 
 .chub-card-no-forks {
-  display: grid;
   place-items: center;
   font-size: 1.25em;
   text-align: center;
