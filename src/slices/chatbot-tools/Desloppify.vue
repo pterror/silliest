@@ -3,18 +3,21 @@ import { ref } from "vue";
 import DesloppifyTab from "./DesloppifyTab.vue";
 import { useEventListener } from "@vueuse/core";
 import { extractUrls } from "../../lib/url";
+import { chubGetCardByFullPath, type ChubCardFullPath } from "./chub";
+import { chubCardToTavernCardFile } from "./chubPngHelpers";
 
 const files = ref<File[]>([]);
 
 const onFileInput = (event: Event) => {
   if (!(event.currentTarget instanceof HTMLInputElement)) return;
-  files.value.push(...(event.currentTarget.files ?? []));
+  if (!event.currentTarget.files) return;
+  files.value.push(...Array.from(event.currentTarget.files));
 };
 
 const processDataTransfer = (dataTransfer: DataTransfer) => {
-  files.value = [...files.value, ...(dataTransfer.files ?? [])];
+  files.value.push(...Array.from(dataTransfer.files));
   const seenUrls = new Set<string>();
-  for (const item of dataTransfer.items) {
+  for (const item of Array.from(dataTransfer.items)) {
     if (item.kind !== "string") continue;
     item.getAsString((s) => {
       for (const url of extractUrls(s)) {
@@ -25,12 +28,11 @@ const processDataTransfer = (dataTransfer: DataTransfer) => {
         );
         if (chubOrCharhubMatch) {
           const [, userName, charName] = chubOrCharhubMatch;
-          const avatarUrl = `https://avatars.charhub.io/avatars/${userName}/${charName}/chara_card_v2.png`;
-          const fileName = `main_${charName}_spec_v2.png`;
-          fetch(avatarUrl).then(async (response) => {
-            const blob = await response.blob();
-            const f = new File([blob], fileName, { type: blob.type });
-            files.value.push(f);
+          chubGetCardByFullPath(`${userName}/${charName}` as ChubCardFullPath, {
+            full: true,
+          }).then(async (chubCard) => {
+            const card = await chubCardToTavernCardFile(chubCard);
+            files.value.push(card);
           });
         } else {
           fetch(url).then(async (response) => {

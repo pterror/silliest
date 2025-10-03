@@ -9,10 +9,55 @@ export const TavernCardExtensionDepthPrompt = z.object({
   prompt: z.string(),
 });
 
+export type TavernCardExtensionChubExpressionName = z.infer<
+  typeof TavernCardExtensionChubExpressionName
+>;
+export const TavernCardExtensionChubExpressionName = z.literal([
+  "joy",
+  "fear",
+  "love",
+  "anger",
+  "grief",
+  "pride",
+  "caring",
+  "desire",
+  "relief",
+  "disgust",
+  "neutral",
+  "remorse",
+  "sadness",
+  "approval",
+  "optimism",
+  "surprise",
+  "amusement",
+  "annoyance",
+  "confusion",
+  "curiosity",
+  "gratitude",
+  "admiration",
+  "excitement",
+  "disapproval",
+  "nervousness",
+  "realization",
+  "embarrassment",
+  "disappointment",
+]);
+
+export type TavernCardExtensionChubExpressions = z.infer<
+  typeof TavernCardExtensionChubExpressions
+>;
+export const TavernCardExtensionChubExpressions = z.object({
+  version: z.string(),
+  compressed: z.string(),
+  is_default: z.boolean(),
+  expressions: z.record(z.string(), z.string()),
+});
+
 export type TavernCardExtensionChub = z.infer<typeof TavernCardExtensionChub>;
 export const TavernCardExtensionChub = z.object({
   background_image: z.union([z.string(), z.null()]).optional(),
-  expressions: z.union([z.record(z.string(), z.string()), z.null()]).optional(),
+  custom_css: z.union([z.string(), z.null()]).optional(),
+  expressions: TavernCardExtensionChubExpressions.optional(),
   alt_expressions: z.record(z.string(), z.string()).optional(),
   extensions: z.array(z.unknown()).optional(),
   full_path: z.string(),
@@ -87,11 +132,11 @@ export const TavernCardV2 = z.object({
     creator_notes: z.string(),
     system_prompt: z.string(),
     post_history_instructions: z.string(),
-    alternate_greetings: z.array(z.string()),
+    alternate_greetings: z.array(z.string()).readonly(),
     character_book: CharacterBook.optional(),
 
     // May 8th additions
-    tags: z.array(z.string()),
+    tags: z.array(z.string()).readonly(),
     creator: z.string(),
     character_version: z.string(),
     extensions: TavernCardV2Extensions,

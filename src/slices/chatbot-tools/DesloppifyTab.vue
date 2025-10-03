@@ -86,7 +86,7 @@ const lineProcessors = ref(structuredClone(DEFAULT_LINE_PROCESSORS));
 
 const setMetadata = (value: TavernCard) => {
   metadata.value = value;
-  tags.value = "data" in value ? value.data.tags : [];
+  tags.value = "data" in value ? [...value.data.tags] : [];
   name.value = "data" in value ? value.data.name : value.name;
 };
 
@@ -98,7 +98,9 @@ watchEffect(() => {
     if (!metadataV2Text) return;
     // https://github.com/kwaroran/character-card-spec-v3/blob/main/SPEC_V3.md
     // const metadataV3Text = png.text["ccv3"];
-    const rawPayload: unknown = JSON.parse(atob(metadataV2Text));
+    const rawPayload: unknown = JSON.parse(
+      new TextDecoder().decode(Uint8Array.fromBase64(metadataV2Text)),
+    );
     const metadata = TavernCard.safeParse(rawPayload);
     if (metadata.success) {
       setMetadata(metadata.data);

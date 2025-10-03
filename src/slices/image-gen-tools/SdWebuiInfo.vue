@@ -8,13 +8,14 @@ const files = ref<File[]>([]);
 
 const onFileInput = (event: Event) => {
   if (!(event.currentTarget instanceof HTMLInputElement)) return;
-  files.value.push(...(event.currentTarget.files ?? []));
+  if (!event.currentTarget.files) return;
+  files.value.push(...Array.from(event.currentTarget.files));
 };
 
 const processDataTransfer = (dataTransfer: DataTransfer) => {
-  files.value = [...files.value, ...(dataTransfer.files ?? [])];
+  files.value.push(...Array.from(dataTransfer.files));
   const seenUrls = new Set<string>();
-  for (const item of dataTransfer.items) {
+  for (const item of Array.from(dataTransfer.items)) {
     if (item.kind !== "string") continue;
     item.getAsString((s) => {
       for (const url of extractUrls(s)) {

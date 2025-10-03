@@ -4,26 +4,16 @@ import { getMessageOrToString } from "./error";
 
 export function parseFromUnknown<Type>(
   data: unknown,
-  Type: z.ZodType<Type>
+  Type: z.ZodType<Type>,
 ): Type {
   const parsed = Type.safeParse(data);
   if (!parsed.success) {
     console.error("Invalid data:", parsed.error);
     throw new Error(
-      `Invalid data: ${z.formatError(parsed.error)._errors.join(", ")}`
+      `Invalid data: ${z.formatError(parsed.error)._errors.join(", ")}`,
     );
   }
   return parsed.data;
-}
-
-function base64ToUint8Array(base64: string): Uint8Array {
-  const binaryString = atob(base64);
-  const len = binaryString.length;
-  const bytes = new Uint8Array(len);
-  for (let i = 0; i < len; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return bytes;
 }
 
 function uint8ArrayToBase64(array: Uint8Array): string {
@@ -32,10 +22,10 @@ function uint8ArrayToBase64(array: Uint8Array): string {
 
 export async function parseFromBase64<Type>(
   base64: string,
-  Type: z.ZodType<Type>
+  Type: z.ZodType<Type>,
 ): Promise<Type> {
   return new Promise((resolve, reject) => {
-    const array = base64ToUint8Array(base64);
+    const array = Uint8Array.fromBase64(base64);
     inflate(array, { consume: true }, (error, result) => {
       try {
         if (error) {

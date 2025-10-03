@@ -1,12 +1,17 @@
 <script setup lang="ts">
-import { CHUB_TAGS_TO_HIDE, type ChubCard } from "./chub";
+import {
+  CHUB_TAGS_TO_HIDE,
+  chubGetCardByFullPath,
+  type ChubCard,
+} from "./chub";
 import { computed, inject } from "vue";
 import { useQuery } from "@tanstack/vue-query";
 import { chubQueryOptions } from "./chubQuery";
 import { chubProviderKey } from "./chubProvider";
 import { useTimeAgo } from "@vueuse/core";
 import { chubMarkdownToHtml } from "./chubMarkdown";
-import { downloadExternalLinkWithoutContentDisposition } from "../../lib/download";
+import { downloadFile } from "../../lib/download";
+import { chubCardToTavernCardFile } from "./chubPngHelpers";
 
 const props = defineProps<{
   card: ChubCard;
@@ -57,10 +62,9 @@ const createdTimeAgo = useTimeAgo(props.card.createdAt);
         <button
           class="chub-card-preview-download-button"
           @click="
-            downloadExternalLinkWithoutContentDisposition(
-              `https://avatars.charhub.io/avatars/${card.fullPath}/chara_card_v2.png`,
-              `main_${card.fullPath.replace(/.+[/]/, '')}_spec_v2.png`,
-            )
+            chubGetCardByFullPath(card.fullPath, { full: true })
+              .then(chubCardToTavernCardFile)
+              .then(downloadFile)
           "
         >
           ⤓

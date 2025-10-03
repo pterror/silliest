@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, ref, toRaw, watchEffect } from "vue";
+import { computed, inject, ref } from "vue";
 import {
   CHUB_TAGS_TO_HIDE,
   chubListForks,
@@ -12,13 +12,10 @@ import { chubQueryOptions } from "./chubQuery";
 import { useEventListener } from "@vueuse/core";
 import { chubMarkdownToHtml } from "./chubMarkdown";
 import { chubProviderKey } from "./chubProvider";
-import { downloadExternalLinkWithoutContentDisposition } from "../../lib/download";
-import {
-  characterCardReplaceMacros,
-  constructMacrosObject,
-  parseExampleMessages,
-} from "./characterCard";
+import { downloadFile } from "../../lib/download";
+import { constructMacrosObject, parseExampleMessages } from "./characterCard";
 import ChubCardPreview from "./ChubCardPreview.vue";
+import { chubCardToTavernCardFile } from "./chubPngHelpers";
 
 const props = defineProps<{
   card: ChubCard<true>;
@@ -113,12 +110,7 @@ const loadForks = async () => {
         </a>
         <button
           class="chub-card-download-button"
-          @click="
-            downloadExternalLinkWithoutContentDisposition(
-              imageUrl,
-              `main_${card.fullPath.replace(/.+[/]/, '')}_spec_v2.png`,
-            )
-          "
+          @click="chubCardToTavernCardFile(card).then(downloadFile)"
         >
           Download
         </button>

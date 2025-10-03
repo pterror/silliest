@@ -1,4 +1,5 @@
 import { filterOutUndefined } from "../../lib/object";
+import type { CharacterBook } from "./types";
 
 const CHUB_PAGE_SIZE = 40;
 const BASE_URL = "https://gateway.chub.ai";
@@ -130,7 +131,7 @@ export interface ChubCardDefinition {
   readonly post_history_instructions: string;
   readonly tavern_personality: string;
   readonly alternate_greetings: readonly string[];
-  readonly embedded_lorebook: unknown | null;
+  readonly embedded_lorebook: CharacterBook | null;
   readonly extensions: ChubCardExtensions;
   readonly bound_preset: string | null;
   readonly is_owner: boolean;
@@ -430,6 +431,7 @@ export async function chubGetCardsByQuery(
     case "search":
       return await chubSearchCards(query.params);
     default:
+      // oxlint-disable-next-line no-unused-expressions
       query satisfies never; // Ensure all cases are handled
       throw new Error(`Unsupported query type: ${widenedQuery.type}`);
   }
