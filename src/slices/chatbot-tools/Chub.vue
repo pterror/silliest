@@ -135,6 +135,7 @@ const nsfw = computedBooleanSearchParameter({
   searchParams,
   name: "nsfw",
   defaultValue: false,
+  hideWhenDefault: false,
   onSet: () => {
     page.value = 1;
   },
@@ -143,6 +144,7 @@ const nsfl = computedBooleanSearchParameter({
   searchParams,
   name: "nsfl",
   defaultValue: false,
+  hideWhenDefault: false,
   onSet: () => {
     page.value = 1;
   },
@@ -330,15 +332,15 @@ function removeTopic(topic: string) {
           <input type="checkbox" v-model="includeForks" />
           <span>Include forks</span>
         </label>
-        <label v-if="nsfw || nsfl">
+        <label v-if="'nsfw' in searchParams || 'nsfl' in searchParams">
           <input type="checkbox" v-model="nsfw" />
           <span>Show NSFW</span>
         </label>
-        <label v-if="nsfl">
+        <label v-if="'nsfl' in searchParams">
           <input type="checkbox" v-model="nsfl" />
           <span>Show NSFL</span>
         </label>
-        <label v-if="nsfw || nsfl">
+        <label v-if="'nsfw' in searchParams || 'nsfl' in searchParams">
           <input type="checkbox" v-model="blurNsfw" />
           <span>Blur NSFW</span>
         </label>

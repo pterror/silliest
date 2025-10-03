@@ -6,6 +6,7 @@ export type ComputedSearchParameterOptions<T> = {
   searchParams: UrlParams;
   name: string;
   defaultValue: T;
+  hideWhenDefault?: boolean | undefined;
   sanitize: (value: string | readonly string[] | undefined) => T;
   onSet?: ((value: T) => void) | undefined;
 };
@@ -16,6 +17,7 @@ export function computedSearchParameter<
   searchParams,
   name,
   defaultValue,
+  hideWhenDefault = true,
   sanitize,
   onSet,
 }: ComputedSearchParameterOptions<T>) {
@@ -25,7 +27,7 @@ export function computedSearchParameter<
       return sanitized === undefined ? defaultValue : sanitized;
     },
     set(value) {
-      if (value === defaultValue) {
+      if (value === defaultValue && hideWhenDefault) {
         delete searchParams[name];
       } else {
         searchParams[name] = String(value);
@@ -74,6 +76,7 @@ export type ComputedBooleanSearchParameterOptions = {
   searchParams: UrlParams;
   name: string;
   defaultValue?: boolean | undefined;
+  hideWhenDefault?: boolean | undefined;
   onSet?: ((value: boolean) => void) | undefined;
 };
 
@@ -81,12 +84,14 @@ export function computedBooleanSearchParameter({
   searchParams,
   name,
   defaultValue = true,
+  hideWhenDefault,
   onSet,
 }: ComputedBooleanSearchParameterOptions) {
   return computedSearchParameter({
     searchParams,
     name,
     defaultValue,
+    hideWhenDefault,
     sanitize: (value) => (value ?? String(defaultValue)) === "true",
     onSet,
   });
