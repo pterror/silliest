@@ -14,19 +14,15 @@ const onFileInput = (event: Event) => {
   ];
 };
 
-const onDropFiles = (event: DragEvent) => {
-  console.log(event, [...(event.dataTransfer?.files ?? [])]);
-  if (!event.dataTransfer) return;
-  files.value = [...files.value, ...(event.dataTransfer.files ?? [])];
-};
-
-const onPaste = (event: ClipboardEvent) => {
-  if (!event.clipboardData) return;
-  files.value = [...files.value, ...(event.clipboardData.files ?? [])];
-  for (const item of event.clipboardData.items) {
+const processDataTransfer = (dataTransfer: DataTransfer) => {
+  files.value = [...files.value, ...(dataTransfer.files ?? [])];
+  const seenUrls = new Set<string>();
+  for (const item of dataTransfer.items) {
     if (item.kind !== "string") continue;
     item.getAsString((s) => {
       for (const url of extractUrls(s)) {
+        if (seenUrls.has(url)) continue;
+        seenUrls.add(url);
         fetch(url)
           .then((response) => response.blob())
           .then((blob) => {
@@ -40,6 +36,16 @@ const onPaste = (event: ClipboardEvent) => {
   }
 };
 
+const onDrop = (event: DragEvent) => {
+  if (!event.dataTransfer) return;
+  processDataTransfer(event.dataTransfer);
+};
+
+const onPaste = (event: ClipboardEvent) => {
+  if (!event.clipboardData) return;
+  processDataTransfer(event.clipboardData);
+};
+
 useEventListener(window, "paste", onPaste);
 </script>
 
@@ -47,7 +53,7 @@ useEventListener(window, "paste", onPaste);
   <div class="SdWebuiInfo">
     <div class="inputs">
       <input type="file" multiple @input="onFileInput" />
-      <div class="drop-target" @dragover.prevent @drop.prevent="onDropFiles">
+      <div class="drop-target" @dragover.prevent @drop.prevent="onDrop">
         Drop files here (or paste images or URLs)
       </div>
     </div>
@@ -64,7 +70,7 @@ useEventListener(window, "paste", onPaste);
       v-if="files.length === 0"
       class="drop-target"
       @dragover.prevent
-      @drop.prevent="onDropFiles"
+      @drop.prevent="onDrop"
     >
       Drop files here (or paste images or URLs)
     </div>
