@@ -8,10 +8,7 @@ const files = ref<File[]>([]);
 
 const onFileInput = (event: Event) => {
   if (!(event.currentTarget instanceof HTMLInputElement)) return;
-  files.value = [
-    ...files.value,
-    ...Array.from(event.currentTarget.files ?? []),
-  ];
+  files.value.push(...(event.currentTarget.files ?? []));
 };
 
 const processDataTransfer = (dataTransfer: DataTransfer) => {
@@ -23,14 +20,13 @@ const processDataTransfer = (dataTransfer: DataTransfer) => {
       for (const url of extractUrls(s)) {
         if (seenUrls.has(url)) continue;
         seenUrls.add(url);
-        fetch(url)
-          .then((response) => response.blob())
-          .then((blob) => {
-            const f = new File([blob], url.replace(/^.+[/]/, ""), {
-              type: blob.type,
-            });
-            files.value = [...files.value, f];
+        fetch(url).then(async (response) => {
+          const blob = await response.blob();
+          const f = new File([blob], url.replace(/^.+[/]/, ""), {
+            type: blob.type,
           });
+          files.value.push(f);
+        });
       }
     });
   }

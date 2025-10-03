@@ -107,7 +107,8 @@ watchEffect(() => {
     console.error(
       `Could not read metadata of card '${props.file.name}'`,
       "Errors:",
-      formatError(metadata.error),
+      formatError(metadata.error)._errors,
+      metadata.error,
       "Value:",
       rawPayload,
     );

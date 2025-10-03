@@ -8,10 +8,7 @@ const files = ref<File[]>([]);
 
 const onFileInput = (event: Event) => {
   if (!(event.currentTarget instanceof HTMLInputElement)) return;
-  files.value = [
-    ...files.value,
-    ...Array.from(event.currentTarget.files ?? []),
-  ];
+  files.value.push(...(event.currentTarget.files ?? []));
 };
 
 const processDataTransfer = (dataTransfer: DataTransfer) => {
@@ -30,21 +27,19 @@ const processDataTransfer = (dataTransfer: DataTransfer) => {
           const [, userName, charName] = chubOrCharhubMatch;
           const avatarUrl = `https://avatars.charhub.io/avatars/${userName}/${charName}/chara_card_v2.png`;
           const fileName = `main_${charName}_spec_v2.png`;
-          fetch(avatarUrl)
-            .then((response) => response.blob())
-            .then((blob) => {
-              const f = new File([blob], fileName, { type: blob.type });
-              files.value = [...files.value, f];
-            });
+          fetch(avatarUrl).then(async (response) => {
+            const blob = await response.blob();
+            const f = new File([blob], fileName, { type: blob.type });
+            files.value.push(f);
+          });
         } else {
-          fetch(url)
-            .then((response) => response.blob())
-            .then((blob) => {
-              const f = new File([blob], url.replace(/^.+[/]/, ""), {
-                type: blob.type,
-              });
-              files.value = [...files.value, f];
+          fetch(url).then(async (response) => {
+            const blob = await response.blob();
+            const f = new File([blob], url.replace(/^.+[/]/, ""), {
+              type: blob.type,
             });
+            files.value.push(f);
+          });
         }
       }
     });

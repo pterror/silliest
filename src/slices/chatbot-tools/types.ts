@@ -11,13 +11,14 @@ export const TavernCardExtensionDepthPrompt = z.object({
 
 export type TavernCardExtensionChub = z.infer<typeof TavernCardExtensionChub>;
 export const TavernCardExtensionChub = z.object({
-  background_image: z.union([z.string(), z.null()]),
-  expressions: z.unknown(),
-  extensions: z.array(z.unknown()),
+  background_image: z.union([z.string(), z.null()]).optional(),
+  expressions: z.union([z.record(z.string(), z.string()), z.null()]).optional(),
+  alt_expressions: z.record(z.string(), z.string()).optional(),
+  extensions: z.array(z.unknown()).optional(),
   full_path: z.string(),
   id: z.number(),
-  preset: z.unknown(),
-  related_lorebooks: z.array(z.unknown()),
+  preset: z.unknown().optional(),
+  related_lorebooks: z.array(z.unknown()).optional(),
 });
 
 export type TavernCardV1 = z.infer<typeof TavernCardV1>;
@@ -58,7 +59,7 @@ export const CharacterBook = z.object({
       secondary_keys: z.optional(z.array(z.string())), // see field `selective`. ignored if selective == false
       constant: z.optional(z.boolean()), // if true, always inserted in the prompt (within budget limit)
       position: z.optional(z.literal(["", "before_char", "after_char"])), // whether the entry is placed before or after the character defs
-    })
+    }),
   ),
 });
 
