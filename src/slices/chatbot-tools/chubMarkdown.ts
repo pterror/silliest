@@ -132,6 +132,6 @@ export function chubMarkdownToHtml(
   const base2 = disableAutoplay ? base.use(rehypeRemoveAutoplay) : base;
   return base2
     .use(rehypeReplaceMacros, macros)
-    .processSync(markdown)
+    .processSync(markdown.replace(/^#+(?=[^#\s])/gm, "$& "))
     .toString();
 }
