@@ -743,6 +743,12 @@ const newFile = (
 
 .chub-card-versions {
   display: grid;
+  grid-template-columns: repeat(4, auto);
+  gap: 0 1em;
+}
+
+.chub-card-version {
+  display: contents;
 }
 
 .chub-card-token-counts {
