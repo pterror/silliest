@@ -144,6 +144,13 @@ const newFile = (
       </div>
       <h1>{{ card.name }}</h1>
       <div class="chub-card-topics">
+        <button
+          v-if="card.topics.includes('NSFW')"
+          class="chub-card-preview-topic"
+          @click="emit('addTopic', 'NSFW')"
+        >
+          🔥
+        </button>
         <template v-for="topic in card.topics" :key="topic">
           <button
             v-if="!CHUB_TAGS_TO_HIDE.includes(topic)"

@@ -107,6 +107,13 @@ const createdTimeAgo = useTimeAgo(props.card.createdAt);
       v-html="chubMarkdownToHtml(card.tagline, { unsafe: true })"
     ></div>
     <div class="chub-card-preview-topics">
+      <button
+        v-if="card.topics.includes('NSFW')"
+        class="chub-card-preview-topic"
+        @click="emit('addTopic', 'NSFW')"
+      >
+        🔥
+      </button>
       <template v-for="topic in card.topics" :key="topic">
         <button
           v-if="!CHUB_TAGS_TO_HIDE.includes(topic)"

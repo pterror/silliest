@@ -8,7 +8,7 @@ const API_URL = `${BASE_URL}/api`;
 
 // TODO: Temporary workaround. Should be user configurable, however this should stay
 // to be able to revert to this as the default.
-export const CHUB_TAGS_TO_HIDE = ["ROOT", "TAVERN", "OAI", "GPT4"];
+export const CHUB_TAGS_TO_HIDE = ["ROOT", "TAVERN", "OAI", "GPT4", "NSFW"];
 
 export type UUID = string & {
   readonly __type: "UUID";
