@@ -1,7 +1,7 @@
 import type { ChubCard } from "./chub";
-import type { TavernCard } from "./types";
+import type { TavernCardV2 } from "./types";
 
-export function chubCardToTavernCard(card: ChubCard<true>): TavernCard {
+export function chubCardToTavernCard(card: ChubCard<true>): TavernCardV2 {
   return {
     spec: "chara_card_v2",
     spec_version: "2.0",

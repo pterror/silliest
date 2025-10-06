@@ -2,10 +2,13 @@
 import { computed, inject, ref } from "vue";
 import {
   CHUB_TAGS_TO_HIDE,
+  chubGetTavernCardAtCommit,
+  chubListCommits,
   chubListForks,
   type ChubCard,
   type ChubCardFullPath,
   type ChubCardId,
+  type ChubCommit,
 } from "./chub";
 import { useQuery } from "@tanstack/vue-query";
 import { chubQueryOptions } from "./chubQuery";
@@ -83,6 +86,19 @@ const loadForks = async () => {
   if (forks.value) return;
   forks.value = await chubListForks(props.card.id);
 };
+
+const versions = ref<readonly ChubCommit[] | null>();
+
+const loadVersions = async () => {
+  if (versions.value) return;
+  versions.value = await chubListCommits(props.card.id);
+};
+
+const newFile = (
+  fileBits: BlobPart[],
+  fileName: string,
+  options?: FilePropertyBag,
+) => new File(fileBits, fileName, options);
 </script>
 
 <template>
@@ -387,6 +403,59 @@ const loadForks = async () => {
             />
           </div>
         </div>
+        <label class="tab-title">
+          <input
+            type="radio"
+            name="chub-card-tab"
+            class="invisible-radio"
+            value="forks"
+            @click="loadVersions()"
+          />
+          Versions
+        </label>
+        <div class="tab-contents">
+          <div v-if="!versions" class="chub-card-no-forks">Loading...</div>
+          <div v-else class="chub-card-versions">
+            <div
+              v-for="version in versions"
+              :key="version.id"
+              class="chub-card-version"
+            >
+              <div>{{ version.short_id }}</div>
+              <div>{{ new Date(version.created_at).toLocaleString() }}</div>
+              <button
+                @click="
+                  chubGetTavernCardAtCommit(card.id, version.id)
+                    .then((tavernCard) =>
+                      chubCardToTavernCardFile(card, tavernCard),
+                    )
+                    .then(downloadFile)
+                "
+              >
+                PNG
+              </button>
+              <button
+                @click="
+                  chubGetTavernCardAtCommit(card.id, version.id).then(
+                    (tavernCard) =>
+                      downloadFile(
+                        newFile(
+                          [JSON.stringify(tavernCard)],
+                          `main_${card.fullPath.replace(
+                            /.+[/]/,
+                            '',
+                          )}_spec_v2.json`,
+                          { type: 'application/json' },
+                        ),
+                      ),
+                  )
+                "
+              >
+                JSON
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -612,6 +681,10 @@ const loadForks = async () => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 1em;
+}
+
+.chub-card-versions {
+  display: grid;
 }
 
 :deep(.chub-card-macro) {

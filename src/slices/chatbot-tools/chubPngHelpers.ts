@@ -1,11 +1,13 @@
 import type { ChubCard } from "./chub";
 import { chubCardToTavernCard } from "./chubHelpers";
 import { decode, encode } from "fast-png";
+import type { TavernCardV2 } from "./types";
 
 export async function chubCardToTavernCardFile(
   card: ChubCard<true>,
+  tavernCard?: TavernCardV2,
 ): Promise<File> {
-  const tavernCard = chubCardToTavernCard(card);
+  tavernCard ??= chubCardToTavernCard(card);
   const url = `https://avatars.charhub.io/avatars/${card.fullPath}/chara_card_v2.png`;
   const imageResponse = await fetch(url);
   const image = await imageResponse.arrayBuffer();

@@ -1,5 +1,5 @@
 import { filterOutUndefined } from "../../lib/object";
-import type { CharacterBook } from "./types";
+import type { CharacterBook, TavernCardV2 } from "./types";
 
 const CHUB_PAGE_SIZE = 40;
 const BASE_URL = "https://gateway.chub.ai";
@@ -863,4 +863,51 @@ export async function chubSetPrompt(prompt: ChubPrompt): Promise<void> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(prompt),
   });
+}
+
+export type ChubCommitId = UUID & {
+  readonly __type2: "ChubCommitId";
+};
+
+export type ChubCommit = {
+  readonly id: ChubCommitId;
+  readonly short_id: string;
+  readonly created_at: IsoDateString;
+  readonly parent_ids: readonly UUID[];
+  readonly title: string;
+  readonly message: string;
+  readonly committed_date: IsoDateString;
+};
+
+export type ChubFilePath = "raw/tavern_raw.json";
+export const CHUB_TAVERN_FILE_PATH: ChubFilePath = "raw/tavern_raw.json";
+
+export async function chubListCommits(
+  projectId: ChubCardId,
+  filePath: ChubFilePath = CHUB_TAVERN_FILE_PATH,
+): Promise<readonly ChubCommit[]> {
+  const params = new URLSearchParams({
+    path: filePath,
+    nocache: Math.random().toString(),
+  }).toString();
+  const response = await fetch(
+    `${API_URL}/v4/projects/${projectId}/repository/commits?${params}`,
+  );
+  return await response.json();
+}
+
+export async function chubGetTavernCardAtCommit(
+  projectId: ChubCardId,
+  commitId: ChubCommitId,
+): Promise<TavernCardV2> {
+  const params = new URLSearchParams({
+    ref: commitId,
+    response_type: "blob",
+  }).toString();
+  const response = await fetch(
+    `${API_URL}/v4/projects/${projectId}/repository/files/${encodeURIComponent(
+      encodeURIComponent(CHUB_TAVERN_FILE_PATH),
+    )}/raw?${params}`,
+  );
+  return await response.json();
 }
