@@ -12,6 +12,7 @@ import { useTimeAgo } from "@vueuse/core";
 import { chubMarkdownToHtml } from "./chubMarkdown";
 import { downloadFile } from "../../lib/download";
 import { chubCardToTavernCardFile } from "./chubPngHelpers";
+import { jsonParse } from "../../lib/json";
 
 const props = defineProps<{
   card: ChubCard;
@@ -26,6 +27,15 @@ const configQuery = useQuery(chubQueryOptions("chubFetchEntireConfig", []));
 const config = configQuery.data;
 const { blurNsfw } = inject(chubProviderKey)!;
 const author = computed(() => props.card.fullPath.replace(/[/][\s\S]+/, ""));
+
+const tokenCounts = computed(() => {
+  const tokenCountsRaw = props.card.labels?.find(
+    (l) => l.title === "TOKEN_COUNTS",
+  )?.description;
+  if (!tokenCountsRaw) return null;
+  const tokenCounts = jsonParse(tokenCountsRaw);
+  return tokenCounts;
+});
 
 const blurred = computed(
   () =>
@@ -49,6 +59,22 @@ const createdTimeAgo = useTimeAgo(props.card.createdAt);
     </div>
     <div class="chub-card-preview-title">
       <h2 :title="card.name">{{ card.name }}</h2>
+    </div>
+    <div class="chub-card-preview-stats">
+      <div>Messages: {{ card.nMessages }}</div>
+      <div>Chats: {{ card.nChats }}</div>
+      <div>Favorites: {{ card.n_favorites }}</div>
+      <div>Public Chats: {{ card.n_public_chats }}</div>
+    </div>
+    <div v-if="tokenCounts" class="chub-card-preview-token-counts">
+      <span class="chub-card-preview-token-count-heading">Tokens:</span>
+      <div class="chub-card-preview-token-counts-details">
+        <div>
+          Perm:
+          {{ tokenCounts.total }}
+        </div>
+        <div>Temp: {{ tokenCounts.first_mes + tokenCounts.mes_example }}</div>
+      </div>
     </div>
     <div class="chub-card-preview-metadata-container">
       <div class="buttons">
@@ -181,6 +207,30 @@ h2 {
 .chub-card-preview-metadata {
   font-size: 0.9em;
   opacity: 0.7;
+}
+
+.chub-card-preview-stats {
+  font-size: 0.9em;
+  opacity: 0.7;
+  display: flex;
+  flex-flow: row wrap;
+  gap: 0.25em 1em;
+  justify-content: center;
+}
+
+.chub-card-preview-token-counts {
+  display: flex;
+  flex-flow: column nowrap;
+  align-items: center;
+  font-size: 0.9em;
+  opacity: 0.8;
+}
+
+.chub-card-preview-token-counts-details {
+  display: flex;
+  flex-flow: row wrap;
+  gap: 1em;
+  justify-content: center;
 }
 
 :deep(img) {

@@ -19,6 +19,7 @@ import { downloadFile } from "../../lib/download";
 import { constructMacrosObject, parseExampleMessages } from "./characterCard";
 import ChubCardPreview from "./ChubCardPreview.vue";
 import { chubCardToTavernCardFile } from "./chubPngHelpers";
+import { jsonParse } from "../../lib/json";
 
 const props = defineProps<{
   card: ChubCard<true>;
@@ -41,6 +42,15 @@ const imageUrl = computed(() =>
     ? `https://avatars.charhub.io/avatars/${props.card.fullPath}/chara_card_v2.png`
     : null,
 );
+
+const tokenCounts = computed(() => {
+  const tokenCountsRaw = props.card.labels?.find(
+    (l) => l.title === "TOKEN_COUNTS",
+  )?.description;
+  if (!tokenCountsRaw) return null;
+  const tokenCounts = jsonParse(tokenCountsRaw);
+  return tokenCounts;
+});
 
 const author = computed(() => props.card.fullPath.replace(/[/][\s\S]+/, ""));
 
@@ -145,6 +155,54 @@ const newFile = (
         </template>
       </div>
       <button @click="emit('searchByAuthor', author)">by {{ author }}</button>
+      <div class="chub-card-stats">
+        <div>Messages: {{ card.nMessages }}</div>
+        <div>Chats: {{ card.nChats }}</div>
+        <div>Favorites: {{ card.n_favorites }}</div>
+        <div>Public Chats: {{ card.n_public_chats }}</div>
+      </div>
+      <div v-if="tokenCounts" class="chub-card-token-counts">
+        <span class="chub-card-token-count-heading">Tokens:</span>
+        <div class="chub-card-token-counts-summary">
+          <div>
+            Permanent:
+            {{ tokenCounts.total }}
+          </div>
+          <div>
+            Temporary: {{ tokenCounts.first_mes + tokenCounts.mes_example }}
+          </div>
+        </div>
+        <div class="chub-card-token-counts-details">
+          <div v-if="tokenCounts.personality">
+            Description:
+            {{ tokenCounts.personality }}
+          </div>
+          <div v-if="tokenCounts.description">
+            Personality:
+            {{ tokenCounts.description }}
+          </div>
+          <div v-if="tokenCounts.scenario">
+            Scenario:
+            {{ tokenCounts.scenario }}
+          </div>
+          <div v-if="tokenCounts.system_prompt">
+            System Prompt:
+            {{ tokenCounts.system_prompt }}
+          </div>
+          <div v-if="tokenCounts.post_history_instructions">
+            Post History Instructions:
+            {{ tokenCounts.post_history_instructions }}
+          </div>
+          <div v-if="tokenCounts.first_mes">
+            First Message:
+            {{ tokenCounts.first_mes }}
+          </div>
+          <div v-if="tokenCounts.mes_example">
+            Example Messages:
+            {{ tokenCounts.mes_example }}
+          </div>
+        </div>
+      </div>
       <label>
         <input type="checkbox" v-model="chatPreview" />
         Preview chat names
@@ -685,6 +743,46 @@ const newFile = (
 
 .chub-card-versions {
   display: grid;
+}
+
+.chub-card-token-counts {
+  display: flex;
+  flex-flow: column nowrap;
+  align-items: center;
+  font-size: 0.9em;
+  opacity: 0.8;
+}
+
+.chub-card-token-counts-summary,
+.chub-card-token-counts-details {
+  display: flex;
+  flex-flow: row wrap;
+  gap: 1em;
+  justify-content: center;
+}
+
+.chub-card-stats {
+  font-size: 0.9em;
+  opacity: 0.7;
+  display: flex;
+  flex-flow: row wrap;
+  gap: 0.25em 1em;
+  justify-content: center;
+}
+
+.chub-card-token-counts {
+  display: flex;
+  flex-flow: column nowrap;
+  align-items: center;
+  font-size: 0.9em;
+  opacity: 0.8;
+}
+
+.chub-card-token-counts-details {
+  display: flex;
+  flex-flow: row wrap;
+  gap: 1em;
+  justify-content: center;
 }
 
 :deep(.chub-card-macro) {
