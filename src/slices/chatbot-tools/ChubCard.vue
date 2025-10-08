@@ -12,7 +12,7 @@ import {
 } from "./chub";
 import { useQuery } from "@tanstack/vue-query";
 import { chubQueryOptions } from "./chubQuery";
-import { useEventListener } from "@vueuse/core";
+import { useEventListener, useTimeAgo } from "@vueuse/core";
 import { chubMarkdownToHtml } from "./chubMarkdown";
 import { chubProviderKey } from "./chubProvider";
 import { downloadFile } from "../../lib/download";
@@ -21,6 +21,7 @@ import ChubCardPreview from "./ChubCardPreview.vue";
 import { chubCardToTavernCardFile } from "./chubPngHelpers";
 import { jsonParse } from "../../lib/json";
 import { getChubFilters } from "./chubFilters";
+import { formatDateTime } from "../../lib/dateTime";
 
 const props = defineProps<{
   card: ChubCard<true>;
@@ -48,7 +49,14 @@ const tokenCounts = computed(() => {
   return tokenCounts;
 });
 
-const { isNsfw, isExplicitNsfw, isShadowNsfw, isNsfl, isExplicitNsfl, isShadowNsfl } = getChubFilters(props.card);
+const {
+  isNsfw,
+  isExplicitNsfw,
+  isShadowNsfw,
+  isNsfl,
+  isExplicitNsfl,
+  isShadowNsfl,
+} = getChubFilters(props.card);
 
 const author = computed(() => props.card.fullPath.replace(/[/][\s\S]+/, ""));
 
@@ -145,7 +153,7 @@ const newFile = (
           @click="emit('addTopic', 'NSFW')"
           :title="isShadowNsfw ? 'Shadow NSFW' : 'NSFW'"
         >
-          {{isShadowNsfw ? '(🔥)' : '🔥'}}
+          {{ isShadowNsfw ? "(🔥)" : "🔥" }}
         </button>
         <button
           v-if="isNsfl"
@@ -153,7 +161,7 @@ const newFile = (
           @click="emit('addTopic', 'NSFL')"
           :title="isShadowNsfl ? 'Shadow NSFL' : 'NSFL'"
         >
-          {{isShadowNsfl ? '(💀)' : '💀'}}
+          {{ isShadowNsfl ? "(💀)" : "💀" }}
         </button>
         <template v-for="topic in card.topics" :key="topic">
           <button
@@ -166,6 +174,18 @@ const newFile = (
         </template>
       </div>
       <button @click="emit('searchByAuthor', author)">by {{ author }}</button>
+      <div class="chub-card-metadata">
+        <span>
+          created {{ formatDateTime(card.createdAt) }} ({{
+            useTimeAgo(card.createdAt)
+          }})
+        </span>
+        <span>
+          updated {{ formatDateTime(card.lastActivityAt) }} ({{
+            useTimeAgo(card.lastActivityAt)
+          }})
+        </span>
+      </div>
       <div class="chub-card-stats">
         <div>Messages: {{ card.nMessages }}</div>
         <div>Chats: {{ card.nChats }}</div>
@@ -800,6 +820,15 @@ const newFile = (
   flex-flow: row wrap;
   gap: 1em;
   justify-content: center;
+}
+
+.chub-card-metadata {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 0.25em;
+  align-items: center;
+  font-size: 0.9em;
+  opacity: 0.7;
 }
 
 :deep(.chub-card-macro) {

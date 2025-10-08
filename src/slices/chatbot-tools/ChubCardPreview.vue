@@ -113,7 +113,10 @@ const createdTimeAgo = useTimeAgo(props.card.createdAt);
           <button @click="emit('searchByAuthor', author)">{{ author }}</button>
         </div>
       </div>
-      <div class="chub-card-preview-metadata">created {{ createdTimeAgo }}</div>
+      <div class="chub-card-preview-metadata">
+        <span>created {{ useTimeAgo(card.createdAt) }}</span>
+        <span>updated {{ useTimeAgo(card.lastActivityAt) }}</span>
+      </div>
     </div>
     <div
       class="chub-card-preview-tagline"
@@ -253,6 +256,15 @@ h2 {
   align-items: center;
   font-size: 0.9em;
   opacity: 0.8;
+}
+
+.chub-card-preview-metadata {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 0.25em;
+  align-items: center;
+  font-size: 0.9em;
+  opacity: 0.7;
 }
 
 .chub-card-preview-token-counts-details {
