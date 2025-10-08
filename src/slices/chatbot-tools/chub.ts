@@ -321,7 +321,24 @@ export interface ChubSearchParams {
   readonly username?: string;
   readonly my_favorites?: boolean;
   readonly min_tokens?: number;
+  readonly max_tokens?: number;
   readonly page?: number;
+  readonly min_tags?: number;
+  readonly min_ai_rating?: number;
+  readonly language?: string;
+  readonly asc?: boolean;
+  readonly recommended_verified?: boolean;
+  readonly require_custom_prompt?: boolean;
+  readonly require_example_dialogues?: boolean;
+  readonly require_images?: boolean;
+  readonly require_expressions?: boolean;
+  readonly require_lore?: boolean;
+  readonly require_lore_embedded?: boolean;
+  readonly require_lore_linked?: boolean;
+  readonly require_alternate_greetings?: boolean;
+  readonly inclusive_or?: boolean;
+  readonly exclude_topics?: string;
+  readonly nsfw_only?: boolean;
 }
 
 export const CHUB_SORT_NAMES = [

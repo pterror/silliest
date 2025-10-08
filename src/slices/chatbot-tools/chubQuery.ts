@@ -1,6 +1,6 @@
 import * as chub from "./chub";
 import type { MethodNamesOf } from "../../lib/object";
-import { queryOptions, type QueryOptions } from "@tanstack/vue-query";
+import { queryOptions, type DefinedInitialQueryOptions, type UndefinedInitialQueryOptions } from "@tanstack/vue-query";
 import { toValue } from "vue";
 import type { MaybeRefs } from "../../lib/vue";
 
@@ -14,7 +14,11 @@ export function chubQueryOptions<
   endpointName: EndpointName,
   args: MaybeRefs<Parameters<(typeof chub)[EndpointName]>>,
   options: Partial<
-    QueryOptions<Awaited<ReturnType<(typeof chub)[EndpointName]>>>
+    UndefinedInitialQueryOptions<
+      Awaited<ReturnType<(typeof chub)[EndpointName]>>
+> | DefinedInitialQueryOptions<
+      Awaited<ReturnType<(typeof chub)[EndpointName]>>
+    >
   > = {}
 ) {
   return queryOptions({

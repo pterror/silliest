@@ -20,6 +20,7 @@ import { constructMacrosObject, parseExampleMessages } from "./characterCard";
 import ChubCardPreview from "./ChubCardPreview.vue";
 import { chubCardToTavernCardFile } from "./chubPngHelpers";
 import { jsonParse } from "../../lib/json";
+import { getChubFilters } from "./chubFilters";
 
 const props = defineProps<{
   card: ChubCard<true>;
@@ -51,6 +52,8 @@ const tokenCounts = computed(() => {
   const tokenCounts = jsonParse(tokenCountsRaw);
   return tokenCounts;
 });
+
+const { isNsfw, isExplicitNsfw, isShadowNsfw, isNsfl, isExplicitNsfl, isShadowNsfl } = getChubFilters(props.card);
 
 const author = computed(() => props.card.fullPath.replace(/[/][\s\S]+/, ""));
 
@@ -145,11 +148,20 @@ const newFile = (
       <h1>{{ card.name }}</h1>
       <div class="chub-card-topics">
         <button
-          v-if="card.topics.includes('NSFW')"
+          v-if="isNsfw"
           class="chub-card-preview-topic"
           @click="emit('addTopic', 'NSFW')"
+          :title="isShadowNsfw ? 'Shadow NSFW' : 'NSFW'"
         >
-          🔥
+          {{isShadowNsfw ? '(🔥)' : '🔥'}}
+        </button>
+        <button
+          v-if="isNsfl"
+          class="chub-card-preview-topic"
+          @click="emit('addTopic', 'NSFL')"
+          :title="isShadowNsfl ? 'Shadow NSFL' : 'NSFL'"
+        >
+          {{isShadowNsfl ? '(💀)' : '💀'}}
         </button>
         <template v-for="topic in card.topics" :key="topic">
           <button

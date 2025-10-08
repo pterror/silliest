@@ -13,6 +13,7 @@ import { chubMarkdownToHtml } from "./chubMarkdown";
 import { downloadFile } from "../../lib/download";
 import { chubCardToTavernCardFile } from "./chubPngHelpers";
 import { jsonParse } from "../../lib/json";
+import { getChubFilters } from "./chubFilters";
 
 const props = defineProps<{
   card: ChubCard;
@@ -27,6 +28,14 @@ const configQuery = useQuery(chubQueryOptions("chubFetchEntireConfig", []));
 const config = configQuery.data;
 const { blurNsfw } = inject(chubProviderKey)!;
 const author = computed(() => props.card.fullPath.replace(/[/][\s\S]+/, ""));
+
+//const { isNsfw, isExplicitNsfw, isShadowNsfw, isNsfl, isExplicitNsfl, isShadowNsfl } = getChubFilters(props.card);
+const isExplicitNsfw = computed(() => props.card.topics.includes("NSFW"));
+const isExplicitNsfl = computed(() => props.card.topics.includes("NSFL"));
+const isShadowNsfw = computed(() => false);
+const isShadowNsfl = computed(() => false);
+const isNsfw = computed(() => isExplicitNsfw.value || isShadowNsfw.value);
+const isNsfl = computed(() => isExplicitNsfl.value || isShadowNsfl.value);
 
 const tokenCounts = computed(() => {
   const tokenCountsRaw = props.card.labels?.find(
@@ -107,13 +116,22 @@ const createdTimeAgo = useTimeAgo(props.card.createdAt);
       v-html="chubMarkdownToHtml(card.tagline, { unsafe: true })"
     ></div>
     <div class="chub-card-preview-topics">
-      <button
-        v-if="card.topics.includes('NSFW')"
-        class="chub-card-preview-topic"
-        @click="emit('addTopic', 'NSFW')"
-      >
-        🔥
-      </button>
+        <button
+          v-if="isNsfw"
+          class="chub-card-preview-topic"
+          @click="emit('addTopic', 'NSFW')"
+          :title="isShadowNsfw ? 'Shadow NSFW' : 'NSFW'"
+        >
+          {{isShadowNsfw ? '(🔥)' : '🔥'}}
+        </button>
+        <button
+          v-if="isNsfl"
+          class="chub-card-preview-topic"
+          @click="emit('addTopic', 'NSFL')"
+          :title="isShadowNsfl ? 'Shadow NSFL' : 'NSFL'"
+        >
+          {{isShadowNsfl ? '(💀)' : '💀'}}
+        </button>
       <template v-for="topic in card.topics" :key="topic">
         <button
           v-if="!CHUB_TAGS_TO_HIDE.includes(topic)"
