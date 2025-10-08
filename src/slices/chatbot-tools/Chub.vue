@@ -160,6 +160,45 @@ const topics = computedArraySearchParameter({
   },
 });
 
+const allowedExtraParams = [
+  "first",
+  "namespace",
+  "chub",
+  "venus",
+  "only_mine",
+  "my_favorites",
+  "min_tokens",
+  "max_tokens",
+  "min_tags",
+  "min_ai_rating",
+  "language",
+  "asc",
+  "recommended_verified",
+  "require_custom_prompt",
+  "require_example_dialogues",
+  "require_images",
+  "require_expressions",
+  "require_lore",
+  "require_lore_embedded",
+  "require_lore_linked",
+  "require_alternate_greetings",
+  "inclusive_or",
+  "excludetopics",
+  "nsfw_only",
+  "max_days_ago",
+  "min_users_chatted",
+  "max_messages",
+  "special_mode"
+];
+const extraParams = computed(() => {
+  const params: Record<string, any> = {};
+  for (const key of Object.keys(searchParams)) {
+    if (!allowedExtraParams.includes(key)) continue;
+    params[key] = searchParams[key];
+  }
+  return params;
+});
+
 const query = computed<ChubCardQuery>(() => {
   switch (queryType.value) {
     case "timeline":
@@ -183,6 +222,7 @@ const query = computed<ChubCardQuery>(() => {
           ...(nsfl.value && { nsfl: nsfl.value }),
           ...(sortType.value !== "default" && { sort: sortType.value }),
           ...(page.value !== 1 && { page: page.value }),
+          ...(extraParams.value),
         },
       };
   }
