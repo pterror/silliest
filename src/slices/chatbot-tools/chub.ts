@@ -444,6 +444,233 @@ export type ChubCardQuery =
   | { type: "timeline"; cursor?: string }
   | { type: "search"; params: ChubSearchParams; cursor?: string };
 
+export type ChubSortOrder = "asc" | "desc";
+export interface ChubSortParameter<T> {
+  readonly _order: ChubSortOrder;
+  readonly _value: T;
+  readonly _project_id: ChubCardId;
+}
+export type ChubCursorVariant<Type extends string, T> = {
+  readonly order: { readonly _value: readonly [Type] };
+} & Readonly<Record<Type, ChubSortParameter<T>>>;
+export type ChubCursor =
+  | {
+      readonly order: {
+        readonly _value: readonly ["project_name_like", "created_at"];
+      };
+      readonly project_name_like: ChubSortParameter<string>;
+      readonly created_at: ChubSortParameter<string>;
+    }
+  | ChubCursorVariant<"n_favorites", number>
+  | ChubCursorVariant<"ai_rating", number>
+  | ChubCursorVariant<"n_messages", number>
+  | ChubCursorVariant<"msgs_chat", number>
+  | ChubCursorVariant<"chats_user", number>
+  | ChubCursorVariant<"msgs_user", number>
+  | {
+      readonly order: { readonly _value: readonly ["random"] };
+      readonly random: ChubSortParameter<number> & {
+        readonly _x: number;
+        readonly _y: number;
+      };
+    }
+  | ChubCursorVariant<"rating", number>
+  | ChubCursorVariant<"last_updated", string>
+  | ChubCursorVariant<"project_name", string>
+  | ChubCursorVariant<"n_tokens", number>
+  | ChubCursorVariant<"n_favorites", number>
+  | ChubCursorVariant<"created_at", string>
+  | ChubCursorVariant<"n_public_chats", number>
+  | ChubCursorVariant<"n_downloads", number>;
+export type ChubEncodedCursor = string & { readonly _type: "ChubCursor" };
+
+export function cursorFromChubCard(
+  card: ChubCard,
+  sortType: ChubSortType,
+): ChubCursor {
+  switch (sortType) {
+    case "default": {
+      return {
+        order: { _value: ["project_name_like", "created_at"] },
+        project_name_like: {
+          _order: "desc",
+          _value: card.name,
+          _project_id: card.id,
+        },
+        created_at: {
+          _order: "desc",
+          _value: card.createdAt.toISOString(),
+          _project_id: card.id,
+        },
+      };
+    }
+    case "trending": {
+      return {
+        order: { _value: ["n_favorites"] },
+        n_favorites: {
+          _order: "desc",
+          _value: card.n_favorites,
+          _project_id: card.id,
+        },
+      };
+    }
+    case "ai_rating": {
+      return {
+        order: { _value: ["ai_rating"] },
+        ai_rating: {
+          _order: "desc",
+          // TODO: not sure whether ai rating is actually exposed by the api
+          _value: 100,
+          _project_id: card.id,
+        },
+      };
+    }
+    case "star_count": {
+      return {
+        order: { _value: ["n_messages"] },
+        n_messages: {
+          _order: "desc",
+          _value: card.nMessages,
+          _project_id: card.id,
+        },
+      };
+    }
+    case "msgs_chat": {
+      return {
+        order: { _value: ["msgs_chat"] },
+        msgs_chat: {
+          _order: "desc",
+          _value: card.nMessages / Math.max(card.nChats, 1),
+          _project_id: card.id,
+        },
+      };
+    }
+    case "chats_user": {
+      return {
+        order: { _value: ["chats_user"] },
+        chats_user: {
+          _order: "desc",
+          // TODO: not sure how to get number of users
+          _value: card.nChats,
+          _project_id: card.id,
+        },
+      };
+    }
+    case "msgs_user": {
+      return {
+        order: { _value: ["msgs_user"] },
+        msgs_user: {
+          _order: "desc",
+          // TODO: not sure how to get number of users
+          _value: card.nMessages / Math.max(card.nChats, 1),
+          _project_id: card.id,
+        },
+      };
+    }
+    case "random": {
+      return {
+        order: { _value: ["random"] },
+        random: {
+          _order: "desc",
+          _value: Math.random() * 100000,
+          _project_id: card.id,
+          _x: Math.floor(Math.random() * 20000) - 10000,
+          _y: Math.floor(Math.random() * 20000) - 10000,
+        },
+      };
+    }
+    case "rating": {
+      return {
+        order: { _value: ["rating"] },
+        rating: {
+          _order: "desc",
+          _value: card.rating,
+          _project_id: card.id,
+        },
+      };
+    }
+    case "last_activity_at": {
+      return {
+        order: { _value: ["last_updated"] },
+        last_updated: {
+          _order: "desc",
+          _value: card.lastActivityAt.toISOString(),
+          _project_id: card.id,
+        },
+      };
+    }
+    case "name": {
+      return {
+        order: { _value: ["project_name"] },
+        project_name: {
+          _order: "desc",
+          _value: card.name,
+          _project_id: card.id,
+        },
+      };
+    }
+    case "n_tokens": {
+      return {
+        order: { _value: ["n_tokens"] },
+        n_tokens: {
+          _order: "desc",
+          _value: card.nTokens,
+          _project_id: card.id,
+        },
+      };
+    }
+    case "n_favorites": {
+      return {
+        order: { _value: ["n_favorites"] },
+        n_favorites: {
+          _order: "desc",
+          _value: card.n_favorites,
+          _project_id: card.id,
+        },
+      };
+    }
+    case "created_at": {
+      return {
+        order: { _value: ["created_at"] },
+        created_at: {
+          _order: "desc",
+          _value: card.createdAt.toISOString(),
+          _project_id: card.id,
+        },
+      };
+    }
+    case "public_chats": {
+      return {
+        order: { _value: ["n_public_chats"] },
+        n_public_chats: {
+          _order: "desc",
+          _value: card.n_public_chats,
+          _project_id: card.id,
+        },
+      };
+    }
+    case "download_count": {
+      return {
+        order: { _value: ["n_downloads"] },
+        n_downloads: {
+          _order: "desc",
+          // TODO: not sure whether download count is exposed
+          _value: 999999,
+          _project_id: card.id,
+        },
+      };
+    }
+  }
+}
+
+export function encodeChubCursor(data: ChubCursor): ChubEncodedCursor {
+  return atob(JSON.stringify(data)) as ChubEncodedCursor;
+}
+
+export function decodeChubCursor(cursor: ChubEncodedCursor): ChubCursor {
+  return JSON.parse(atob(cursor)) as ChubCursor;
+}
+
 export type ChubCardQueryType = ChubCardQuery["type"];
 export const CHUB_CARD_QUERY_TYPES = [
   "timeline",

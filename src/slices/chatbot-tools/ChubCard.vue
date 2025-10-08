@@ -38,11 +38,6 @@ const { username, avatarUrl, blurNsfw, showCustomCss } =
   inject(chubProviderKey)!;
 const fullscreenPreviewImage = ref<string | null>(null);
 const chatPreview = ref(true);
-const imageUrl = computed(() =>
-  props.card
-    ? `https://avatars.charhub.io/avatars/${props.card.fullPath}/chara_card_v2.png`
-    : null,
-);
 
 const tokenCounts = computed(() => {
   const tokenCountsRaw = props.card.labels?.find(
@@ -115,17 +110,14 @@ const newFile = (
 </script>
 
 <template>
-  <div v-if="!card || !imageUrl" class="ChubCard">
-    <span>Loading...</span>
-  </div>
-  <div v-else class="ChubCard">
+  <div class="ChubCard">
     <div class="chub-card-image">
       <img
-        :src="imageUrl"
+        :src="card.max_res_url"
         class="transition-bg darken-on-hover"
         :class="{ blurred }"
         alt="Card Image"
-        @click="fullscreenPreviewImage = imageUrl"
+        @click="fullscreenPreviewImage = card.max_res_url"
       />
     </div>
     <div class="chub-card-content">
@@ -227,11 +219,11 @@ const newFile = (
         Preview chat names
       </label>
       <img
-        :src="imageUrl"
+        :src="card.max_res_url"
         class="chub-card-image-inline transition-bg darken-on-hover"
         :class="{ blurred }"
         alt="Card Image"
-        @click="fullscreenPreviewImage = imageUrl"
+        @click="fullscreenPreviewImage = card.max_res_url"
       />
       <p
         class="chub-card-tagline"
@@ -396,7 +388,7 @@ const newFile = (
                     alt="Character Image"
                     class="chub-card-message-avatar"
                   />
-                  <span>User</span>
+                  <span>{{ username }}</span>
                 </div>
                 <div
                   class="chub-card-message-content"
