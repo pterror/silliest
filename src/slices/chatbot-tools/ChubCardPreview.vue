@@ -31,7 +31,13 @@ const config = configQuery.data;
 const { blurNsfw } = inject(chubProviderKey)!;
 const author = computed(() => props.card.fullPath.replace(/[/][\s\S]+/, ""));
 
-const { isNsfw, isExplicitNsfw, isShadowNsfw, isNsfl, isExplicitNsfl, isShadowNsfl } = getChubFilters(props.card);
+//const { isNsfw, isExplicitNsfw, isShadowNsfw, isNsfl, isExplicitNsfl, isShadowNsfl } = getChubFilters(props.card);
+const isExplicitNsfw = computed(() => props.card.topics.includes("NSFW"));
+const isExplicitNsfl = computed(() => props.card.topics.includes("NSFL"));
+const isShadowNsfw = computed(() => false);
+const isShadowNsfl = computed(() => false);
+const isNsfw = computed(() => isExplicitNsfw.value || isShadowNsfw.value);
+const isNsfl = computed(() => isExplicitNsfl.value || isShadowNsfl.value);
 
 const tokenCounts = computed(() => {
   const tokenCountsRaw = props.card.labels?.find(
