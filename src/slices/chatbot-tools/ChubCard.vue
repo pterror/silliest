@@ -63,18 +63,6 @@ const blurred = computed(
     (config.value?.configs?.theme?.Default?.blur_nsfw ?? blurNsfw.value),
 );
 
-console.log({
-  namespace: props.card.projectSpace,
-  nsfw: props.card.topics.includes("NSFW"),
-  nsfl: false,
-  topics: props.card.topics.join(","),
-  include_forks: true,
-  search: props.card.name,
-  min_tokens: props.card.nTokens,
-  max_tokens: props.card.nTokens,
-  username: author.value.toLowerCase() !== "anonymous" ? author.value : "", // Ensure we only get cards by this author
-});
-
 const shouldShowCustomCss = computed(
   () =>
     config.value?.configs?.theme?.Default?.show_custom_css ??
