@@ -117,7 +117,7 @@ const createdTimeAgo = useTimeAgo(props.card.createdAt);
     </div>
     <div
       class="chub-card-preview-tagline"
-      v-html="chubMarkdownToHtml(card.tagline, { unsafe: shouldShowCustomCss })"
+      v-html="chubMarkdownToHtml(card.tagline, { unsafe: false })"
     ></div>
     <div class="chub-card-preview-topics">
       <button
