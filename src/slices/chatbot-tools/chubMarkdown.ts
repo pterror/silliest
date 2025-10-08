@@ -15,6 +15,7 @@ import {
   rehypeRemoveAutoplay,
   rehypeRemoveInteractiveElements,
   rehypeRemoveScripts,
+  rehypeRemoveStyles,
 } from "../../lib/rehype";
 import { remarkUnindent, type RehypeRoot } from "../../lib/markdown";
 
@@ -86,19 +87,6 @@ function rehypeReplaceMacros(macros: Record<string, string> | undefined) {
   };
 }
 
-const markdownToHtmlProcessor = () =>
-  unified()
-    .use(remarkParse)
-    .use(remarkUnindent)
-    .use(remarkBreaks)
-    .use(remarkGfm)
-    .use(remarkRehype)
-    .use(rehypeRemoveInteractiveElements)
-    .use(rehypeRemoveScripts)
-    .use(rehypeReplaceChubLinks)
-    .use(rehypeParseInlineQuotes)
-    .use(rehypeStringify);
-
 const markdownToHtmlUnsafeProcessor = () =>
   unified()
     .use(remarkParse)
@@ -126,11 +114,10 @@ export function chubMarkdownToHtml(
   markdown: string,
   { unsafe = false, disableAutoplay = true, macros = defaultMacros } = {},
 ): string {
-  const base = unsafe
-    ? markdownToHtmlUnsafeProcessor()
-    : markdownToHtmlProcessor();
-  const base2 = disableAutoplay ? base.use(rehypeRemoveAutoplay) : base;
-  return base2
+  const base = markdownToHtmlUnsafeProcessor();
+  const base2 = unsafe ? base : base.use(rehypeRemoveStyles);
+  const base3 = disableAutoplay ? base2.use(rehypeRemoveAutoplay) : base2;
+  return base3
     .use(rehypeReplaceMacros, macros)
     .processSync(markdown.replace(/^#+(?=[^#\s])/gm, "$& "))
     .toString();

@@ -27,6 +27,29 @@ export function rehypeRemoveScripts() {
   };
 }
 
+export function rehypeRemoveStyles() {
+  return (tree: RehypeRoot) => {
+    visit(tree, "element", (node, index, parent) => {
+      switch (node.tagName) {
+        case "style": {
+          if (parent && index !== undefined) {
+            parent.children.splice(index, 1);
+          }
+          break;
+        }
+        case "link": {
+          if (node.properties?.rel === "stylesheet") {
+            if (parent && index !== undefined) {
+              parent.children.splice(index, 1);
+            }
+          }
+        }
+      }
+      delete node.properties.style;
+    });
+  };
+}
+
 export function rehypeRemoveAutoplay() {
   return (tree: RehypeRoot) => {
     visit(tree, "element", (node) => {
