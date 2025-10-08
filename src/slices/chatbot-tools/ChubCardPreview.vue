@@ -3,9 +3,8 @@ import {
   CHUB_TAGS_TO_HIDE,
   chubGetCardByFullPath,
   type ChubCard,
-  type ChubCardQuery,
 } from "./chub";
-import { computed, inject, ref, watchEffect } from "vue";
+import { computed, inject } from "vue";
 import { useQuery } from "@tanstack/vue-query";
 import { chubQueryOptions } from "./chubQuery";
 import { chubProviderKey } from "./chubProvider";
@@ -14,7 +13,6 @@ import { chubMarkdownToHtml } from "./chubMarkdown";
 import { downloadFile } from "../../lib/download";
 import { chubCardToTavernCardFile } from "./chubPngHelpers";
 import { jsonParse } from "../../lib/json";
-import { fa } from "zod/locales";
 import { getChubFilters } from "./chubFilters";
 
 const props = defineProps<{
