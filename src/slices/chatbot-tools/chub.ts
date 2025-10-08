@@ -151,6 +151,8 @@ export interface ChubCardDefinition {
   readonly voice: unknown | null;
 }
 
+export type ChubNamespace = "characters" | "lorebooks" | "presets" | "extensions";
+
 export interface ChubCard<Full extends boolean = boolean> {
   readonly id: ChubCardId;
   readonly name: string;
@@ -164,7 +166,7 @@ export interface ChubCard<Full extends boolean = boolean> {
   readonly forksCount: number;
   readonly rating: number;
   readonly ratingCount: number;
-  readonly projectSpace: "characters" | "lorebooks";
+  readonly projectSpace: ChubNamespace;
   /** -1 for anonymous */
   readonly creatorId: number;
   readonly nTokens: number;
@@ -307,14 +309,28 @@ export async function chubGetCard<Full extends boolean = false>(
 }
 
 export interface ChubSearchParams {
+  /** Defaults to 40 */
   readonly first?: number;
-  readonly namespace?: "characters" | "lorebooks";
+  /** Defaults to `"*"` for any */
+  readonly namespace?: "*" | ChubNamespace;
   readonly nsfw?: boolean;
   readonly nsfl?: boolean;
+  /** `chub=true` is used for queries made from chub.ai. Effect is unknown. */
   readonly chub?: boolean;
+  /** Used for queries made from characterhub.org and toggled by "include venus projects" filter.
+   * Effect is unknown. */
+  readonly venus?: boolean;
+  /** When set to `true`, the `count` field in the response will total all results
+   * (not just the returned count) instead of just returning the value of `first` */
   readonly count?: boolean;
+  /** Comma-separated list of topics/tags to filter by.
+   * (Tags with commas cannot be searched for.) */
   readonly topics?: string;
+  /** Not sure what this does, but is set to `true` when searching on user profiles.
+   * Unintuitively, this does not exclude the logged-in user's bots. */
   readonly exclude_mine?: boolean;
+  /** Used at https://chub.ai/my_characters */
+  readonly only_mine?: "all" | "public" | "private" | "unlisted";
   readonly include_forks?: boolean;
   readonly sort?: ChubSortType;
   readonly search?: string;
@@ -322,14 +338,19 @@ export interface ChubSearchParams {
   readonly my_favorites?: boolean;
   readonly min_tokens?: number;
   readonly max_tokens?: number;
+  /** Defaults to 1 */
   readonly page?: number;
   readonly min_tags?: number;
+  /** Rating is an integer between 0-100.
+   * It seems to take a varying amount of time before bots receive an AI rating. */
   readonly min_ai_rating?: number;
   readonly language?: string;
   readonly asc?: boolean;
+  /** Only used for presets and stages */
   readonly recommended_verified?: boolean;
   readonly require_custom_prompt?: boolean;
   readonly require_example_dialogues?: boolean;
+  /** Require images in the gallery. */
   readonly require_images?: boolean;
   readonly require_expressions?: boolean;
   readonly require_lore?: boolean;
@@ -337,8 +358,12 @@ export interface ChubSearchParams {
   readonly require_lore_linked?: boolean;
   readonly require_alternate_greetings?: boolean;
   readonly inclusive_or?: boolean;
-  readonly exclude_topics?: string;
+  readonly excludetopics?: string;
   readonly nsfw_only?: boolean;
+  readonly max_days_ago?: number;
+  readonly min_users_chatted?: number;
+  readonly max_messages?: number;
+  readonly special_mode?: "newcomer" | "trending";
 }
 
 export const CHUB_SORT_NAMES = [
