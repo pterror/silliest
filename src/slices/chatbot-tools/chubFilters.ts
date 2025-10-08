@@ -20,7 +20,7 @@ function getChubFilterValues(card: ChubCard, tag: "NSFW" | "NSFL") {
         nsfl: tag !== "NSFL",
         //topics: card.topics.join(","),
         include_forks: true,
-        search: card.name.replace(/-/g, ' '),
+        search: card.name.replace(/[!$^&*()-+[\]'"\+~/\\]/g, ' '),
         min_tokens: card.nTokens,
         max_tokens: card.nTokens,
         username: author.value.toLowerCase() !== "anonymous" ? author.value : "", // Ensure we only get cards by this author
