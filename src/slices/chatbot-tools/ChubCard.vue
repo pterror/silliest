@@ -191,6 +191,7 @@ const newFile = (
         <div>Chats: {{ card.nChats }}</div>
         <div>Favorites: {{ card.n_favorites }}</div>
         <div>Public Chats: {{ card.n_public_chats }}</div>
+        <div>Downloads: {{ card.starCount }}</div>
       </div>
       <div v-if="tokenCounts" class="chub-card-token-counts">
         <span class="chub-card-token-count-heading">Tokens:</span>

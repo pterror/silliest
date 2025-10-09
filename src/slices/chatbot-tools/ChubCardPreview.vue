@@ -78,6 +78,7 @@ const createdTimeAgo = useTimeAgo(props.card.createdAt);
       <div>Chats: {{ card.nChats }}</div>
       <div>Favorites: {{ card.n_favorites }}</div>
       <div>Public Chats: {{ card.n_public_chats }}</div>
+      <div>Downloads: {{ card.starCount }}</div>
     </div>
     <div v-if="tokenCounts" class="chub-card-preview-token-counts">
       <span class="chub-card-preview-token-count-heading">Tokens:</span>
