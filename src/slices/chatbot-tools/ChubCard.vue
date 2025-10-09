@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, ref } from "vue";
+import { computed, inject, ref, watchEffect } from "vue";
 import {
   CHUB_TAGS_TO_HIDE,
   chubGetTavernCardAtCommit,
@@ -12,7 +12,7 @@ import {
 } from "./chub";
 import { useQuery } from "@tanstack/vue-query";
 import { chubQueryOptions } from "./chubQuery";
-import { useEventListener, useTimeAgo } from "@vueuse/core";
+import { useBrowserLocation, useEventListener, useTimeAgo } from "@vueuse/core";
 import { chubMarkdownToHtml } from "./chubMarkdown";
 import { chubProviderKey } from "./chubProvider";
 import { downloadFile } from "../../lib/download";
@@ -115,6 +115,25 @@ const newFile = (
   fileName: string,
   options?: FilePropertyBag,
 ) => new File(fileBits, fileName, options);
+
+const location = useBrowserLocation();
+
+const hash = computed({
+  get() {
+    return location.value.hash?.replace(/^#/, "") ?? "";
+  },
+  set(value) {
+    location.value.hash = value;
+  },
+});
+
+watchEffect(() => {
+  if (hash.value === "chub-card-forks") {
+    loadForks();
+  } else if (hash.value === "chub-card-versions") {
+    loadVersions();
+  }
+});
 </script>
 
 <template>
@@ -149,7 +168,7 @@ const newFile = (
       <div class="chub-card-topics">
         <button
           v-if="isNsfw"
-          class="chub-card-preview-topic"
+          class="chub-card-topic"
           @click="emit('addTopic', 'NSFW')"
           :title="isShadowNsfw ? 'Shadow NSFW' : 'NSFW'"
         >
@@ -157,7 +176,7 @@ const newFile = (
         </button>
         <button
           v-if="isNsfl"
-          class="chub-card-preview-topic"
+          class="chub-card-topic"
           @click="emit('addTopic', 'NSFL')"
           :title="isShadowNsfl ? 'Shadow NSFL' : 'NSFL'"
         >
@@ -262,7 +281,8 @@ const newFile = (
             name="chub-card-tab"
             class="invisible-radio"
             value="description"
-            checked
+            :checked="!hash || hash === 'chub-card-description'"
+            @click="hash = 'chub-card-description'"
           />
           Description
         </label>
@@ -282,6 +302,8 @@ const newFile = (
             name="chub-card-tab"
             class="invisible-radio"
             value="personality"
+            :checked="hash === 'chub-card-personality'"
+            @click="hash = 'chub-card-personality'"
           />
           Personality
         </label>
@@ -300,6 +322,8 @@ const newFile = (
             name="chub-card-tab"
             class="invisible-radio"
             value="scenario"
+            :checked="hash === 'chub-card-scenario'"
+            @click="hash = 'chub-card-scenario'"
           />
           Scenario
         </label>
@@ -319,6 +343,11 @@ const newFile = (
             name="chub-card-tab"
             class="invisible-radio"
             value="greetings"
+            :checked="
+              hash === 'chub-card-greetings' ||
+              hash.startsWith('chub-card-greeting-')
+            "
+            @click="hash = 'chub-card-greetings'"
           />
           Greetings
         </label>
@@ -330,7 +359,11 @@ const newFile = (
                 name="chub-card-greeting"
                 class="invisible-radio"
                 value="1"
-                checked
+                :checked="
+                  !hash.startsWith('chub-card-greeting-') ||
+                  hash === 'chub-card-greeting-1'
+                "
+                @click="hash = 'chub-card-greeting-1'"
               />
               1
             </label>
@@ -352,6 +385,8 @@ const newFile = (
                   name="chub-card-greeting"
                   class="invisible-radio"
                   :value="index + 2"
+                  :checked="hash === `chub-card-greeting-${index + 2}`"
+                  @click="hash = `chub-card-greeting-${index + 2}`"
                 />
                 {{ index + 2 }}
               </label>
@@ -373,6 +408,8 @@ const newFile = (
             name="chub-card-tab"
             class="invisible-radio"
             value="example-messages"
+            :checked="hash === 'chub-card-example-messages'"
+            @click="hash = 'chub-card-example-messages'"
           />
           Example Messages
         </label>
@@ -430,6 +467,8 @@ const newFile = (
             name="chub-card-tab"
             class="invisible-radio"
             value="system-prompt"
+            :checked="hash === 'chub-card-system-prompt'"
+            @click="hash = 'chub-card-system-prompt'"
           />
           System Prompt
         </label>
@@ -452,6 +491,8 @@ const newFile = (
             name="chub-card-tab"
             class="invisible-radio"
             value="post-history-instructions"
+            :checked="hash === 'chub-card-post-history-instructions'"
+            @click="hash = 'chub-card-post-history-instructions'"
           />
           Post History Instructions
         </label>
@@ -471,7 +512,8 @@ const newFile = (
             name="chub-card-tab"
             class="invisible-radio"
             value="forks"
-            @click="loadForks()"
+            :checked="hash === 'chub-card-forks'"
+            @click="hash = 'chub-card-forks'"
           />
           Forks ({{ card.forksCount }})
         </label>
@@ -499,7 +541,8 @@ const newFile = (
             name="chub-card-tab"
             class="invisible-radio"
             value="forks"
-            @click="loadVersions()"
+            :checked="hash === 'chub-card-versions'"
+            @click="hash = 'chub-card-versions'"
           />
           Versions
         </label>

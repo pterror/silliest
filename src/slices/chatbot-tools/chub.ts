@@ -151,7 +151,11 @@ export interface ChubCardDefinition {
   readonly voice: unknown | null;
 }
 
-export type ChubNamespace = "characters" | "lorebooks" | "presets" | "extensions";
+export type ChubNamespace =
+  | "characters"
+  | "lorebooks"
+  | "presets"
+  | "extensions";
 
 export interface ChubCard<Full extends boolean = boolean> {
   readonly id: ChubCardId;
