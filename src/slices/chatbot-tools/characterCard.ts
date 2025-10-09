@@ -81,20 +81,37 @@ export const parseExampleMessages = (
   return conversationsArray
     .map((conversation) => conversation.replace(/<END>/g, "").trim())
     .map((conversation) => {
+      let prefixContent: string | undefined;
       // Messages from the model and user are prefixed with {{char}}: and {{user}}: respectively.
       // We need to extract that information to form a proper chat message.
       const messages = conversation.match(
         /(?:(?<=^|[\r\n])\{\{(char|user)\}\}:|^)[\s\S]*?(?=\{\{(char|user)\}\}:|$)/g,
       );
       return messages
-        ? Array.from(messages, (message): ChatMessage => {
+        ? [...messages].flatMap((message, i): readonly ChatMessage[] => {
             const role = message.startsWith("{{user}}:") ? "user" : "char";
-            const content = message.replace(/^\{\{(char|user)\}\}:/, "").trim();
-            return {
-              role,
-              content,
-              error: role === "char" && !message.startsWith("{{char}}:"),
-            };
+            const content =
+              (prefixContent ? `${prefixContent}\n` : "") +
+              message.replace(/^\{\{(char|user)\}\}:/, "").trim();
+            if (
+              role === "char" &&
+              !message.startsWith("{{char}}:") &&
+              i === 0 &&
+              i !== messages.length - 1
+            ) {
+              prefixContent = content;
+              return [];
+            }
+            if (i > 0) {
+              prefixContent = undefined;
+            }
+            return [
+              {
+                role,
+                content,
+                error: role === "char" && !message.startsWith("{{char}}:"),
+              },
+            ];
           })
         : [];
     });
