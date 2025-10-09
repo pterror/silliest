@@ -49,14 +49,9 @@ const tokenCounts = computed(() => {
   return tokenCounts;
 });
 
-const {
-  isNsfw,
-  isExplicitNsfw,
-  isShadowNsfw,
-  isNsfl,
-  isExplicitNsfl,
-  isShadowNsfl,
-} = getChubFilters(props.card);
+const { isNsfw, isShadowNsfw, isNsfl, isShadowNsfl } = getChubFilters(
+  props.card,
+);
 
 const author = computed(() => props.card.fullPath.replace(/[/][\s\S]+/, ""));
 
