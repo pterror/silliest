@@ -22,11 +22,10 @@ import {
   computedArraySearchParameter,
   computedBooleanSearchParameter,
   computedSearchParameter,
+  useComputedSearchParams,
 } from "../../lib/composables/vueUse";
 
 // TODO: local-only list of topics to hide (e.g. spammy topics like SillyTavern and TAVERN and V2 Alternate greetings)
-
-const searchParams = useUrlSearchParams(undefined, { writeMode: "push" });
 
 const username = useLocalStorage("chub-placeholder-username", "User");
 const avatarUrl = useLocalStorage(
@@ -43,6 +42,56 @@ provide(chubProviderKey, {
   showCustomCss,
 });
 
+const {
+  searchParams,
+  params: {
+    page,
+    search,
+    author,
+    query_type: queryType,
+    sort,
+    max_days_ago: maxDaysAgo,
+    exclude_mine: excludeMine,
+    include_forks: includeForks,
+    nsfw,
+    nsfl,
+    "topic[]": topics,
+  },
+} = useComputedSearchParams(
+  {
+    page: { type: "number", defaultValue: 1 },
+    search: { type: "string" },
+    author: { type: "string" },
+    query_type: {
+      type: "string",
+      defaultValue: "search",
+      sanitize: (value) =>
+        narrowingIncludes(CHUB_CARD_QUERY_TYPES, value) ? value : "search",
+    },
+    sort: {
+      type: "string",
+      defaultValue: "created_at",
+      sanitize: (value) =>
+        narrowingIncludes(CHUB_SORT_TYPES, value) ? value : "created_at",
+    },
+    max_days_ago: { type: "number" },
+    exclude_mine: { type: "boolean", defaultValue: true },
+    include_forks: { type: "boolean", defaultValue: true },
+    nsfw: { type: "boolean", hideWhenDefault: false },
+    nsfl: { type: "boolean", hideWhenDefault: false },
+    "topic[]": { type: "string[]" },
+  },
+  undefined,
+  { writeMode: "push" },
+  {
+    onSet: (param) => {
+      if (param !== "page") {
+        page.value = 1;
+      }
+    },
+  },
+);
+
 const fullscreenCardId = computedSearchParameter({
   searchParams,
   name: "card_id",
@@ -57,47 +106,6 @@ const fullscreenCardId = computedSearchParameter({
   },
 });
 
-const page = computedSearchParameter({
-  searchParams,
-  name: "page",
-  defaultValue: 1,
-  sanitize: (value) => Number(unwrapPossibleSingleton(value)) || 1,
-});
-
-const search = computedSearchParameter({
-  searchParams,
-  name: "search",
-  defaultValue: "",
-  sanitize: (value) => unwrapPossibleSingleton(value) ?? "",
-  onSet: () => {
-    page.value = 1;
-  },
-});
-
-const author = computedSearchParameter({
-  searchParams,
-  name: "author",
-  defaultValue: "",
-  sanitize: (value) => unwrapPossibleSingleton(value) ?? "",
-  onSet: () => {
-    page.value = 1;
-  },
-});
-
-const searchValue = ref(search.value);
-const authorValue = ref(author.value);
-
-const queryType = computedSearchParameter({
-  searchParams,
-  name: "query_type",
-  defaultValue: "search",
-  sanitize: (value) =>
-    narrowingIncludes(CHUB_CARD_QUERY_TYPES, value) ? value : "search",
-  onSet: () => {
-    page.value = 1;
-  },
-});
-
 const isTimeline = computed({
   get() {
     return queryType.value === "timeline";
@@ -107,62 +115,10 @@ const isTimeline = computed({
   },
 });
 
-const sortType = computedSearchParameter({
-  searchParams,
-  name: "sort",
-  defaultValue: "created_at",
-  hideWhenDefault: true,
-  sanitize: (value) =>
-    narrowingIncludes(CHUB_SORT_TYPES, value) ? value : "created_at",
-  onSet: () => {
-    page.value = 1;
-  },
-});
-
-const excludeMine = computedBooleanSearchParameter({
-  searchParams,
-  name: "exclude_mine",
-  onSet: () => {
-    page.value = 1;
-  },
-});
-const includeForks = computedBooleanSearchParameter({
-  searchParams,
-  name: "include_forks",
-  onSet: () => {
-    page.value = 1;
-  },
-});
-const nsfw = computedBooleanSearchParameter({
-  searchParams,
-  name: "nsfw",
-  defaultValue: false,
-  hideWhenDefault: false,
-  onSet: () => {
-    page.value = 1;
-  },
-});
-const nsfl = computedBooleanSearchParameter({
-  searchParams,
-  name: "nsfl",
-  defaultValue: false,
-  hideWhenDefault: false,
-  onSet: () => {
-    page.value = 1;
-  },
-});
-
-const topics = computedArraySearchParameter({
-  searchParams,
-  name: "topics",
-  defaultValue: [],
-  sanitize: (value) => value,
-  onSet: () => {
-    page.value = 1;
-  },
-});
-
-const allowedExtraParams = [
+const allowedParams = [
+  "search",
+  "username",
+  "topics",
   "first",
   "namespace",
   "chub",
@@ -186,16 +142,20 @@ const allowedExtraParams = [
   "require_alternate_greetings",
   "inclusive_or",
   "excludetopics",
+  "include_forks",
+  "exclude_mine",
+  "nsfw",
+  "nsfl",
   "nsfw_only",
   "max_days_ago",
   "min_users_chatted",
   "max_messages",
   "special_mode",
 ];
-const extraParams = computed(() => {
-  const params: Record<string, any> = {};
+const params = computed(() => {
+  const params: Record<string, unknown> = {};
   for (const key of Object.keys(searchParams)) {
-    if (!allowedExtraParams.includes(key)) continue;
+    if (!allowedParams.includes(key)) continue;
     params[key] = searchParams[key];
   }
   return params;
@@ -216,15 +176,8 @@ const query = computed<ChubCardQuery>(() => {
         type: "search",
         params: {
           ...(topics.value.length > 0 && { topics: topics.value.join(",") }),
-          ...(search.value && { search: search.value }),
           ...(author.value && { username: author.value }),
-          ...(!excludeMine.value && { exclude_mine: excludeMine.value }),
-          ...(includeForks.value && { include_forks: includeForks.value }),
-          ...(nsfw.value && { nsfw: nsfw.value }),
-          ...(nsfl.value && { nsfl: nsfl.value }),
-          sort: sortType.value ?? "created_at",
-          ...(page.value !== 1 && { page: page.value }),
-          ...extraParams.value,
+          ...params.value,
         },
       };
   }
@@ -253,22 +206,6 @@ const cards = ref<readonly ChubCardType[]>();
 watchEffect(() => {
   if (cardsQuery.data.value != null) {
     cards.value = cardsQuery.data.value;
-  }
-});
-
-watchEffect(() => {
-  if (search.value) {
-    searchParams["search"] = search.value;
-  } else {
-    delete searchParams["search"];
-  }
-});
-
-watchEffect(() => {
-  if (author.value) {
-    searchParams["author"] = author.value;
-  } else {
-    delete searchParams["author"];
   }
 });
 
@@ -340,8 +277,7 @@ function removeTopic(topic: string) {
       </div>
       <div class="chub-controls">
         <input
-          v-model="searchValue"
-          @change="search = searchValue"
+          v-model="search"
           type="text"
           placeholder="Search cards..."
           class="chub-search-input"
@@ -349,11 +285,20 @@ function removeTopic(topic: string) {
         <label>
           Author
           <input
-            v-model="authorValue"
-            @change="author = authorValue"
+            v-model="author"
             type="text"
             placeholder="Author username"
             class="chub-author-input"
+          />
+        </label>
+        <label>
+          Max Days Ago
+          <input
+            v-model="maxDaysAgo"
+            type="number"
+            min="0"
+            placeholder="Maximum days ago"
+            class="chub-max-days-ago-input"
           />
         </label>
       </div>
@@ -401,10 +346,9 @@ function removeTopic(topic: string) {
             type="radio"
             name="chub-sort-type"
             :value="CHUB_SORT_NAME_TO_TYPE[sortName]"
-            :checked="sortType === CHUB_SORT_NAME_TO_TYPE[sortName]"
+            :checked="sort === CHUB_SORT_NAME_TO_TYPE[sortName]"
             @change="
-              (isTimeline = false),
-                (sortType = CHUB_SORT_NAME_TO_TYPE[sortName])
+              (isTimeline = false), (sort = CHUB_SORT_NAME_TO_TYPE[sortName])
             "
           />
           {{ sortName }}
