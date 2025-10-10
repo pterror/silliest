@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useTimeAgo } from "@vueuse/core";
 import {
   isChubDeletedRating,
   type ChubRating,
@@ -59,19 +60,42 @@ defineProps<{
             <div class="chub-card-rating-comment-user-avatar" v-else></div>
             <span>{{ comment.username }}</span>
           </a>
-          <div class="chub-card-rating-comment-rating">
-            <template v-if="comment.rating" v-for="i in 5" :key="i">
-              <span
-                class="chub-card-rating-comment-rating-star chub-card-rating-comment-rating-star-filled"
-                v-if="i <= (comment.rating ?? 0)"
-                >★</span
-              >
-              <span
-                class="chub-card-rating-comment-rating-star chub-card-rating-comment-rating-star-empty"
-                v-else
-                >☆</span
-              >
-            </template>
+          <div class="chub-card-rating-comment-meta">
+            <div
+              v-if="
+                comment.updatedAt && comment.updatedAt !== comment.createdAt
+              "
+              class="chub-card-rating-comment-date"
+              :title="new Date(comment.updatedAt).toLocaleString()"
+            >
+              (updated {{ useTimeAgo(comment.updatedAt) }})
+            </div>
+            <div
+              v-if="comment.createdAt"
+              class="chub-card-rating-comment-date"
+              :title="new Date(comment.createdAt).toLocaleString()"
+            >
+              {{ useTimeAgo(comment.createdAt) }}
+            </div>
+            <div
+              class="chub-card-rating-comment-rating"
+              :class="
+                !comment.rating ? 'chub-card-rating-comment-rating-none' : ''
+              "
+            >
+              <template v-for="i in 5" :key="i">
+                <span
+                  class="chub-card-rating-comment-rating-star chub-card-rating-comment-rating-star-filled"
+                  v-if="i <= (comment.rating ?? 0)"
+                  >★</span
+                >
+                <span
+                  class="chub-card-rating-comment-rating-star chub-card-rating-comment-rating-star-empty"
+                  v-else
+                  >☆</span
+                >
+              </template>
+            </div>
           </div>
         </div>
         <div class="chub-card-rating-comment-body">
@@ -161,6 +185,18 @@ input:checked ~ .chub-card-rating-comment-children-toggle-open {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.5em;
+}
+
+.chub-card-rating-comment-rating-none {
+  opacity: 0;
+}
+
+.chub-card-rating-comment-meta {
+  display: flex;
+  gap: 1em;
+  align-items: center;
+  font-size: 0.9em;
+  opacity: 70%;
 }
 
 .chub-card-rating-comment-user {
