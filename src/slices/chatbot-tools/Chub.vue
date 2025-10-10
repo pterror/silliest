@@ -8,6 +8,8 @@ import {
   type ChubCardQuery,
   CHUB_SORT_TYPES,
   CHUB_CARD_QUERY_TYPES,
+  CHUB_SORT_NAMES,
+  CHUB_SORT_NAME_TO_TYPE,
 } from "./chub";
 import { useLocalStorage, useUrlSearchParams } from "@vueuse/core";
 import ChubCardPreview from "./ChubCardPreview.vue";
@@ -16,7 +18,6 @@ import { useQuery } from "@tanstack/vue-query";
 import { chubQueryOptions } from "./chubQuery";
 import ChubCard from "./ChubCard.vue";
 import { chubProviderKey } from "./chubProvider";
-import ChubSortDropdown from "./ChubSortDropdown.vue";
 import {
   computedArraySearchParameter,
   computedBooleanSearchParameter,
@@ -355,16 +356,8 @@ function removeTopic(topic: string) {
             class="chub-author-input"
           />
         </label>
-        <label>
-          Sort by
-          <ChubSortDropdown v-model="sortType" />
-        </label>
       </div>
       <div class="chub-checkboxes">
-        <label>
-          <input type="checkbox" v-model="isTimeline" />
-          <span>Show timeline instead of search</span>
-        </label>
         <label>
           <input type="checkbox" v-model="excludeMine" />
           <span>Exclude my cards</span>
@@ -388,6 +381,33 @@ function removeTopic(topic: string) {
         <label>
           <input type="checkbox" v-model="showCustomCss" />
           <span>Show custom CSS</span>
+        </label>
+      </div>
+      <div class="chub-sort-by">
+        <label>
+          <input
+            class="invisible-radio"
+            type="radio"
+            name="chub-sort-type"
+            value="timeline"
+            :checked="isTimeline"
+            @change="isTimeline = true"
+          />
+          Timeline
+        </label>
+        <label v-for="sortName in CHUB_SORT_NAMES.slice(1)" :key="sortName">
+          <input
+            class="invisible-radio"
+            type="radio"
+            name="chub-sort-type"
+            :value="CHUB_SORT_NAME_TO_TYPE[sortName]"
+            :checked="sortType === CHUB_SORT_NAME_TO_TYPE[sortName]"
+            @change="
+              (isTimeline = false),
+                (sortType = CHUB_SORT_NAME_TO_TYPE[sortName])
+            "
+          />
+          {{ sortName }}
         </label>
       </div>
       <div class="chub-topics">
@@ -531,5 +551,22 @@ function removeTopic(topic: string) {
     align-items: center;
     gap: 0.25em;
   }
+}
+
+.chub-sort-by {
+  display: flex;
+  flex-flow: row wrap;
+  gap: 0.25em;
+}
+
+.chub-sort-by label {
+  cursor: pointer;
+  padding: 0.25em;
+  border-radius: 4px;
+}
+
+.chub-sort-by label:has(> :checked) {
+  font-weight: bold;
+  background: var(--bg-tertiary);
 }
 </style>
