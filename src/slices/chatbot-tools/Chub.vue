@@ -109,9 +109,10 @@ const isTimeline = computed({
 const sortType = computedSearchParameter({
   searchParams,
   name: "sort",
-  defaultValue: "default",
+  defaultValue: "created_at",
+  hideWhenDefault: true,
   sanitize: (value) =>
-    narrowingIncludes(CHUB_SORT_TYPES, value) ? value : "default",
+    narrowingIncludes(CHUB_SORT_TYPES, value) ? value : "created_at",
   onSet: () => {
     page.value = 1;
   },
