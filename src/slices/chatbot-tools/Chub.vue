@@ -441,6 +441,7 @@ function removeTopic(topic: string) {
         @close="fullscreenCardId = undefined"
         @openInFullscreen="fullscreenCardId = $event"
         @searchByAuthor="(fullscreenCardId = undefined), (author = $event)"
+        @addTopic="addTopic($event), (fullscreenCardId = undefined)"
       />
     </div>
   </Teleport>
