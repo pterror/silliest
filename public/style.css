@@ -115,7 +115,8 @@ button:not(:disabled):hover,
   background-color: var(--bg-tertiary);
 }
 
-.invisible-radio {
+.invisible-radio,
+.invisible-checkbox {
   clip: rect(1px, 1px, 1px, 1px);
   overflow: hidden;
   position: absolute;

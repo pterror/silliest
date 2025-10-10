@@ -55,8 +55,6 @@ const blurred = computed(
     props.card.nsfw_image &&
     (config.value?.configs?.theme?.Default?.blur_nsfw ?? blurNsfw.value),
 );
-
-const createdTimeAgo = useTimeAgo(props.card.createdAt);
 </script>
 
 <template>

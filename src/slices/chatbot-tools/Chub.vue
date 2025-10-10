@@ -188,7 +188,7 @@ const allowedExtraParams = [
   "max_days_ago",
   "min_users_chatted",
   "max_messages",
-  "special_mode"
+  "special_mode",
 ];
 const extraParams = computed(() => {
   const params: Record<string, any> = {};
@@ -220,9 +220,9 @@ const query = computed<ChubCardQuery>(() => {
           ...(includeForks.value && { include_forks: includeForks.value }),
           ...(nsfw.value && { nsfw: nsfw.value }),
           ...(nsfl.value && { nsfl: nsfl.value }),
-          ...(sortType.value !== "default" && { sort: sortType.value }),
+          sort: sortType.value ?? "created_at",
           ...(page.value !== 1 && { page: page.value }),
-          ...(extraParams.value),
+          ...extraParams.value,
         },
       };
   }

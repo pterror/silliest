@@ -11,7 +11,7 @@ const value = defineModel<ChubSortType>();
 <template>
   <select v-model="value">
     <option
-      v-for="sortName in CHUB_SORT_NAMES"
+      v-for="sortName in CHUB_SORT_NAMES.slice(1)"
       :key="sortName"
       :value="CHUB_SORT_NAME_TO_TYPE[sortName]"
     >

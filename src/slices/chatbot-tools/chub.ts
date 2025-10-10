@@ -1196,3 +1196,107 @@ export async function chubGetTavernCardAtCommit(
   );
   return await response.json();
 }
+
+export type ChubRatingId = number & {
+  readonly __type: "ChubRatingId";
+};
+
+export interface ChubDeletedRating {
+  readonly id: ChubRatingId;
+  readonly projectId: ChubCardId;
+  readonly rating: null;
+  readonly createdAt: null;
+  readonly updatedAt: null;
+  readonly comment: "[Deleted]";
+  readonly commentAt: null;
+  readonly commentUpdatedAt: null;
+  readonly parentId: ChubRatingId | null;
+  readonly children: readonly ChubRatingId[];
+  readonly isMine: boolean;
+  readonly username: null;
+  readonly avatarUrl: null;
+  readonly badge: null;
+}
+
+export function isChubDeletedRating(
+  rating: ChubRating,
+): rating is ChubDeletedRating {
+  return rating.comment === "[Deleted]" && rating.createdAt === null;
+}
+
+export interface ChubNonDeletedRating {
+  readonly id: ChubRatingId;
+  readonly projectId: ChubCardId;
+  readonly rating: number | null;
+  readonly createdAt: IsoDateString;
+  readonly updatedAt: IsoDateString;
+  readonly comment: string;
+  readonly commentAt: IsoDateString;
+  readonly commentUpdatedAt: IsoDateString;
+  readonly parentId: ChubRatingId | null;
+  readonly children: readonly ChubRatingId[];
+  readonly isMine: boolean;
+  readonly username: string;
+  readonly avatarUrl: string;
+  readonly badge: string | null;
+}
+
+export type ChubRating = ChubDeletedRating | ChubNonDeletedRating;
+
+export interface ChubRatingsResponse {
+  readonly ratings: readonly ChubRating[];
+  readonly enabled: boolean;
+  readonly ratings_map: Record<ChubRatingId, ChubRating>;
+  readonly parents: readonly ChubRatingId[];
+}
+
+export async function chubGetRatings(
+  projectId: ChubCardId,
+): Promise<ChubRatingsResponse> {
+  const params = new URLSearchParams({
+    nocache: Math.random().toString(),
+  });
+  const response = await fetch(
+    `${API_URL}/project/${projectId}/ratings?${params.toString()}`,
+  );
+  return await response.json();
+}
+
+export function chubGetAvatarUrl(username: ChubUsername): string {
+  return `https://avatars.charhub.io/avatars/users/avatars/plain/${encodeURIComponent(
+    username,
+  )}.png`;
+}
+
+export interface ChubPostRatingResponse {
+  readonly message: string;
+  readonly success: boolean;
+}
+
+export interface ChubPostRatingError {
+  /** Human-readable error message. */
+  readonly error: string;
+  /** HTTP error. */
+  readonly errorCode: number;
+  readonly code: null | unknown;
+}
+
+export async function chubPostRating(
+  projectId: ChubCardId,
+  rating: number,
+  comment: string,
+  parentId: number | null = null,
+): Promise<ChubPostRatingResponse | ChubPostRatingError> {
+  const response = await fetch(
+    `https://gateway.chub.ai/api/project/${projectId}/rate`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rating, comment, parentId }),
+    },
+  );
+  if (!response.ok) {
+    throw new Error("Failed to post rating");
+  }
+  return await response.json();
+}

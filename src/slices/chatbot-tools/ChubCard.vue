@@ -2,6 +2,7 @@
 import { computed, inject, ref, watchEffect } from "vue";
 import {
   CHUB_TAGS_TO_HIDE,
+  chubGetRatings,
   chubGetTavernCardAtCommit,
   chubListCommits,
   chubListForks,
@@ -9,6 +10,7 @@ import {
   type ChubCardFullPath,
   type ChubCardId,
   type ChubCommit,
+  type ChubRatingsResponse,
 } from "./chub";
 import { useQuery } from "@tanstack/vue-query";
 import { chubQueryOptions } from "./chubQuery";
@@ -22,6 +24,7 @@ import { chubCardToTavernCardFile } from "./chubPngHelpers";
 import { jsonParse } from "../../lib/json";
 import { getChubFilters } from "./chubFilters";
 import { formatDateTime } from "../../lib/dateTime";
+import ChubCardComment from "./ChubCardComment.vue";
 
 const props = defineProps<{
   card: ChubCard<true>;
@@ -91,6 +94,13 @@ const exampleDialogs = computed(() =>
   parseExampleMessages(props.card.definition.example_dialogs),
 );
 
+const comments = ref<ChubRatingsResponse>();
+
+const loadComments = async () => {
+  if (comments.value) return;
+  comments.value = await chubGetRatings(props.card.id);
+};
+
 const forks = ref<readonly ChubCard[] | null>();
 
 const loadForks = async () => {
@@ -123,7 +133,9 @@ const hash = computed({
 });
 
 watchEffect(() => {
-  if (hash.value === "chub-card-forks") {
+  if (hash.value === "chub-card-comments") {
+    loadComments();
+  } else if (hash.value === "chub-card-forks") {
     loadForks();
   } else if (hash.value === "chub-card-versions") {
     loadVersions();
@@ -276,7 +288,11 @@ watchEffect(() => {
             name="chub-card-tab"
             class="invisible-radio"
             value="description"
-            :checked="!hash || hash === 'chub-card-description'"
+            :checked="
+              !hash ||
+              hash === 'chub-card-description' ||
+              !hash.startsWith('chub-card-')
+            "
             @click="hash = 'chub-card-description'"
           />
           Description
@@ -501,6 +517,40 @@ watchEffect(() => {
             })
           "
         ></div>
+        <label class="tab-title">
+          <input
+            type="radio"
+            name="chub-card-tab"
+            class="invisible-radio"
+            value="forks"
+            :checked="hash === 'chub-card-comments'"
+            @click="hash = 'chub-card-comments'"
+          />
+          Comments
+        </label>
+        <div class="tab-contents">
+          <div
+            v-if="!comments"
+            class="chub-card-loading-comments chub-card-loading"
+          >
+            Loading...
+          </div>
+          <div
+            class="chub-card-no-comments chub-card-no-results"
+            v-else-if="comments?.ratings.length === 0"
+          >
+            No comments yet.
+          </div>
+          <div v-else class="chub-card-comments">
+            <template v-for="commentId in comments.parents" :key="commentId">
+              <ChubCardComment
+                v-if="comments.ratings_map[commentId]"
+                :comment="comments.ratings_map[commentId]"
+                :ratings_map="comments.ratings_map"
+              />
+            </template>
+          </div>
+        </div>
         <label v-if="card.forksCount > 0" class="tab-title">
           <input
             type="radio"
@@ -513,7 +563,13 @@ watchEffect(() => {
           Forks ({{ card.forksCount }})
         </label>
         <div v-if="card.forksCount > 0" class="tab-contents">
-          <div v-if="forks?.length === 0" class="chub-card-no-forks">
+          <div v-if="!forks" class="chub-card-forks-loading chub-card-loading">
+            Loading...
+          </div>
+          <div
+            v-else-if="forks.length === 0"
+            class="chub-card-no-forks chub-card-no-results"
+          >
             No public forks.
           </div>
           <div v-else class="chub-card-forks">
@@ -542,7 +598,12 @@ watchEffect(() => {
           Versions
         </label>
         <div class="tab-contents">
-          <div v-if="!versions" class="chub-card-no-forks">Loading...</div>
+          <div
+            v-if="!versions"
+            class="chub-card-loading-versions chub-card-loading"
+          >
+            Loading...
+          </div>
           <div v-else class="chub-card-versions">
             <div
               v-for="version in versions"
@@ -799,7 +860,8 @@ watchEffect(() => {
   color: oklch(80% 30% 20);
 }
 
-.chub-card-no-forks {
+.chub-card-loading,
+.chub-card-no-results {
   place-items: center;
   font-size: 1.25em;
   text-align: center;
@@ -868,6 +930,13 @@ watchEffect(() => {
   align-items: center;
   font-size: 0.9em;
   opacity: 0.7;
+}
+
+.chub-card-comments {
+  display: flex;
+  flex-flow: column-reverse nowrap;
+  gap: 1em;
+  padding: 0 1em;
 }
 
 :deep(.chub-card-macro) {
