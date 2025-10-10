@@ -57,7 +57,9 @@ export type TavernCardExtensionChub = z.infer<typeof TavernCardExtensionChub>;
 export const TavernCardExtensionChub = z.object({
   background_image: z.union([z.string(), z.null()]).optional(),
   custom_css: z.union([z.string(), z.null()]).optional(),
-  expressions: TavernCardExtensionChubExpressions.optional(),
+  expressions: z
+    .union([TavernCardExtensionChubExpressions, z.null()])
+    .optional(),
   alt_expressions: z.record(z.string(), z.string()).optional(),
   extensions: z.array(z.unknown()).optional(),
   full_path: z.string(),
