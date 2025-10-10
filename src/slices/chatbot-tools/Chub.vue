@@ -277,18 +277,26 @@ function removeTopic(topic: string) {
       </div>
       <div class="chub-controls">
         <input
-          v-model="search"
           type="text"
           placeholder="Search cards..."
           class="chub-search-input"
+          :value="search"
+          @change="
+            // @ts-expect-error event targets are not well typed in vue
+            search = $event.target.value.trim()
+          "
         />
         <label>
           Author
           <input
-            v-model="author"
             type="text"
             placeholder="Author username"
             class="chub-author-input"
+            :value="author"
+            @change="
+              // @ts-expect-error event targets are not well typed in vue
+              author = $event.target.value.trim()
+            "
           />
         </label>
         <label>
