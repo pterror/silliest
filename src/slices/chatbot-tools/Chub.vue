@@ -11,7 +11,7 @@ import {
   CHUB_SORT_NAMES,
   CHUB_SORT_NAME_TO_TYPE,
 } from "./chub";
-import { useLocalStorage, useUrlSearchParams } from "@vueuse/core";
+import { useLocalStorage } from "@vueuse/core";
 import ChubCardPreview from "./ChubCardPreview.vue";
 import { narrowingIncludes, unwrapPossibleSingleton } from "../../lib/array";
 import { useQuery } from "@tanstack/vue-query";
@@ -19,8 +19,6 @@ import { chubQueryOptions } from "./chubQuery";
 import ChubCard from "./ChubCard.vue";
 import { chubProviderKey } from "./chubProvider";
 import {
-  computedArraySearchParameter,
-  computedBooleanSearchParameter,
   computedSearchParameter,
   useComputedSearchParams,
 } from "../../lib/composables/vueUse";
@@ -175,6 +173,7 @@ const query = computed<ChubCardQuery>(() => {
       return {
         type: "search",
         params: {
+          sort: sort.value ?? "created_at",
           ...(topics.value.length > 0 && { topics: topics.value.join(",") }),
           ...(author.value && { username: author.value }),
           ...params.value,

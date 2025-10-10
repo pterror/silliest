@@ -76,31 +76,6 @@ export function computedArraySearchParameter<
   });
 }
 
-export type ComputedBooleanSearchParameterOptions = {
-  searchParams: UrlParams;
-  name: string;
-  defaultValue?: boolean | undefined;
-  hideWhenDefault?: boolean | undefined;
-  onSet?: ((value: boolean) => void) | undefined;
-};
-
-export function computedBooleanSearchParameter({
-  searchParams,
-  name,
-  defaultValue = true,
-  hideWhenDefault,
-  onSet,
-}: ComputedBooleanSearchParameterOptions) {
-  return computedSearchParameter({
-    searchParams,
-    name,
-    defaultValue,
-    hideWhenDefault,
-    sanitize: (value) => (value ?? String(defaultValue)) === "true",
-    onSet,
-  });
-}
-
 interface ComputedSearchParameterMetaOptionsBase<Type extends string, T> {
   readonly type: Type;
   readonly hideWhenDefault?: boolean | undefined;
