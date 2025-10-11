@@ -224,7 +224,13 @@ watchEffect(() => {
         <div class="chub-card-token-counts-summary">
           <div>
             Permanent:
-            {{ tokenCounts.total }}
+            {{
+              tokenCounts.personality +
+              tokenCounts.description +
+              tokenCounts.scenario +
+              tokenCounts.system_prompt +
+              tokenCounts.post_history_instructions
+            }}
           </div>
           <div>
             Temporary: {{ tokenCounts.first_mes + tokenCounts.mes_example }}

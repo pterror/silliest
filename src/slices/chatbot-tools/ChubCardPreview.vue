@@ -83,7 +83,13 @@ const blurred = computed(
       <div class="chub-card-preview-token-counts-details">
         <div>
           Perm:
-          {{ tokenCounts.total }}
+          {{
+            tokenCounts.personality +
+            tokenCounts.description +
+            tokenCounts.scenario +
+            tokenCounts.system_prompt +
+            tokenCounts.post_history_instructions
+          }}
         </div>
         <div>Temp: {{ tokenCounts.first_mes + tokenCounts.mes_example }}</div>
       </div>
