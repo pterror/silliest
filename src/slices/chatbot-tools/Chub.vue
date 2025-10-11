@@ -49,6 +49,8 @@ const {
     query_type: queryType,
     sort,
     max_days_ago: maxDaysAgo,
+    min_tokens: minTokens,
+    max_tokens: maxTokens,
     exclude_mine: excludeMine,
     include_forks: includeForks,
     nsfw,
@@ -73,6 +75,8 @@ const {
         narrowingIncludes(CHUB_SORT_TYPES, value) ? value : "created_at",
     },
     max_days_ago: { type: "number" },
+    min_tokens: { type: "number", defaultValue: 200 },
+    max_tokens: { type: "number", defaultValue: 100_000 },
     exclude_mine: { type: "boolean", defaultValue: true },
     include_forks: { type: "boolean", defaultValue: true },
     nsfw: { type: "boolean", hideWhenDefault: false },
@@ -300,13 +304,33 @@ function removeTopic(topic: string) {
           />
         </label>
         <label>
-          Max Days Ago
+          Max days ago
           <input
             v-model="maxDaysAgo"
             type="number"
             min="0"
             placeholder="Maximum days ago"
             class="chub-max-days-ago-input"
+          />
+        </label>
+        <label>
+          Min tokens
+          <input
+            v-model="minTokens"
+            type="number"
+            min="0"
+            placeholder="Minimum tokens"
+            class="chub-min-tokens-input"
+          />
+        </label>
+        <label>
+          Max tokens
+          <input
+            v-model="maxTokens"
+            type="number"
+            min="0"
+            placeholder="Maximum tokens"
+            class="chub-max-tokens-input"
           />
         </label>
       </div>
