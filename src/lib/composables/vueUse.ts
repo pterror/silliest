@@ -173,6 +173,7 @@ export function useComputedSearchParams<
           searchParams,
           name: key,
           defaultValue: defaultValue as never,
+          hideWhenDefault: options.hideWhenDefault,
           sanitize: sanitize as never,
           onSet: (value) => {
             onSet?.(key, value);
