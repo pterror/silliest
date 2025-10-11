@@ -114,6 +114,7 @@ const isTimeline = computed({
 });
 
 const allowedParams = [
+  "page",
   "search",
   "username",
   "topics",
