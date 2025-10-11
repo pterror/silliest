@@ -53,9 +53,11 @@ const {
     max_tokens: maxTokens,
     exclude_mine: excludeMine,
     include_forks: includeForks,
+    nsfw_only: nsfwOnly,
     nsfw,
     nsfl,
     "topic[]": topics,
+    "exclude_topic[]": excludedTopics,
   },
 } = useComputedSearchParams(
   {
@@ -79,9 +81,11 @@ const {
     max_tokens: { type: "number", defaultValue: 100_000 },
     exclude_mine: { type: "boolean", defaultValue: true },
     include_forks: { type: "boolean", defaultValue: true },
+    nsfw_only: { type: "boolean" },
     nsfw: { type: "boolean", hideWhenDefault: false },
     nsfl: { type: "boolean", hideWhenDefault: false },
     "topic[]": { type: "string[]" },
+    "exclude_topic[]": { type: "string[]" },
   },
   undefined,
   { writeMode: "push" },
@@ -180,6 +184,9 @@ const query = computed<ChubCardQuery>(() => {
         params: {
           sort: sort.value ?? "created_at",
           ...(topics.value.length > 0 && { topics: topics.value.join(",") }),
+          ...(excludedTopics.value.length > 0 && {
+            excludetopics: excludedTopics.value.join(","),
+          }),
           ...(author.value && { username: author.value }),
           ...params.value,
         },
@@ -222,26 +229,47 @@ const fullscreenCard = fullscreenCardQuery.data;
 
 const newTopic = ref("");
 
-function addNewTopic() {
+const addNewTopic = () => {
   const topic = newTopic.value.trim();
   if (topic === "") return;
   addTopic(newTopic.value);
   newTopic.value = "";
-}
+};
 
-function addTopic(topic: string) {
+const addTopic = (topic: string) => {
   if (topics.value.includes(topic)) return;
   topics.value.push(topic);
   topics.value = [...topics.value];
-}
+};
 
-function removeTopic(topic: string) {
+const removeTopic = (topic: string) => {
   if (!topics.value.includes(topic)) return;
   const index = topics.value.indexOf(topic);
   if (index === -1) return;
   topics.value.splice(index, 1);
   topics.value = [...topics.value];
-}
+};
+
+const addNewExcludedTopic = () => {
+  const topic = newTopic.value.trim();
+  if (topic === "") return;
+  addExcludedTopic(newTopic.value);
+  newTopic.value = "";
+};
+
+const addExcludedTopic = (topic: string) => {
+  if (excludedTopics.value.includes(topic)) return;
+  excludedTopics.value.push(topic);
+  excludedTopics.value = [...excludedTopics.value];
+};
+
+const removeExcludedTopic = (topic: string) => {
+  if (!excludedTopics.value.includes(topic)) return;
+  const index = excludedTopics.value.indexOf(topic);
+  if (index === -1) return;
+  excludedTopics.value.splice(index, 1);
+  excludedTopics.value = [...excludedTopics.value];
+};
 </script>
 
 <template>
@@ -352,6 +380,10 @@ function removeTopic(topic: string) {
           <span>Show NSFL</span>
         </label>
         <label v-if="'nsfw' in searchParams || 'nsfl' in searchParams">
+          <input type="checkbox" v-model="nsfwOnly" />
+          <span>NSFW only</span>
+        </label>
+        <label v-if="'nsfw' in searchParams || 'nsfl' in searchParams">
           <input type="checkbox" v-model="blurNsfw" />
           <span>Blur NSFW</span>
         </label>
@@ -403,6 +435,25 @@ function removeTopic(topic: string) {
             class="chub-topic-input"
           />
           <button @click="addNewTopic">Add</button>
+        </div>
+      </div>
+      <div class="chub-excluded-topics">
+        <label>Excluded topics</label>
+        <div v-for="topic in excludedTopics" class="chub-topic">
+          <span>
+            {{ topic }}
+          </span>
+          <button @click="removeExcludedTopic(topic)">&times;</button>
+        </div>
+        <div>
+          <input
+            v-model="newTopic"
+            @keyup.enter="addNewExcludedTopic"
+            placeholder="Add topic"
+            :size="1"
+            class="chub-topic-input"
+          />
+          <button @click="addNewExcludedTopic">Add</button>
         </div>
       </div>
       <div v-if="cards.length === 0" class="chub-no-results">
@@ -476,11 +527,11 @@ function removeTopic(topic: string) {
   gap: 0.5em;
 }
 
-.chub-topics > label {
+:is(.chub-topics, .chub-excluded-topics) > label {
   font-weight: bold;
 }
 
-.chub-topics {
+:is(.chub-topics, .chub-excluded-topics) {
   display: flex;
   flex-flow: row wrap;
   align-items: center;
