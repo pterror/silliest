@@ -417,6 +417,7 @@ watchEffect(() => {
                 "
               ></div>
             </template>
+            <div class="tab-title chub-card-tab-bar-spacer"></div>
           </div>
         </div>
         <label v-if="exampleDialogs.length" class="tab-title">
@@ -651,6 +652,7 @@ watchEffect(() => {
             </div>
           </div>
         </div>
+        <div class="tab-title chub-card-tab-bar-spacer"></div>
       </div>
     </div>
   </div>
@@ -693,8 +695,9 @@ watchEffect(() => {
   transition-duration: 150ms;
 }
 
-.chub-card-info {
-  width: 100%;
+.chub-card-tab-bar-spacer {
+  flex: 1 0 100%;
+  padding: 0;
 }
 
 .chub-card-info :deep(hr) {
