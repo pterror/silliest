@@ -578,6 +578,10 @@ const removeExcludedTopic = (topic: string) => {
   height: 100%;
 }
 
+body:has(.fullscreen) .Chub {
+  opacity: 0;
+}
+
 .chub-content {
   flex: 1 0 auto;
   display: flex;
