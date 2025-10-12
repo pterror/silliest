@@ -389,7 +389,8 @@ watchEffect(() => {
                 value="1"
                 :checked="
                   !hash.startsWith('chub-card-greeting-') ||
-                  hash === 'chub-card-greeting-1'
+                  hash === 'chub-card-greeting-1' ||
+                  card.definition.alternate_greetings.length === 0
                 "
                 @click="hash = 'chub-card-greeting-1'"
               />
