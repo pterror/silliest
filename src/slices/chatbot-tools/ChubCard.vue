@@ -188,6 +188,12 @@ watchEffect(() => {
         <button class="close-button" @click="emit('close')">&times;</button>
       </div>
       <h1>{{ card.name }}</h1>
+      <h2
+        v-if="card.definition.name !== card.name"
+        class="chub-card-macro-char"
+      >
+        {{ card.definition.name }}
+      </h2>
       <div class="chub-card-topics">
         <button
           v-if="isNsfw"
