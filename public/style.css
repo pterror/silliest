@@ -1,6 +1,7 @@
 :root {
   font-family: sans-serif;
   color-scheme: light dark;
+  --fg-primary: light-dark(#000000, #ffffff);
   --bg-primary: light-dark(#ffffff, #222222);
   --bg-secondary-opaque: light-dark(#eeeeee, #333333);
   --bg-secondary: light-dark(#22222222, #ffffff22);
@@ -102,11 +103,19 @@ button:disabled {
   cursor: not-allowed;
 }
 
+a.button {
+  text-decoration: none;
+}
+
 button,
 .button {
+  font-family: sans-serif;
+  font-size: 1em;
+  color: var(--fg-primary);
   background-color: var(--bg-secondary);
   border-radius: 0.5em;
   border: none;
+  padding: 0.2em 0.5em;
 }
 
 button:not(:disabled):hover,

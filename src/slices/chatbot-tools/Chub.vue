@@ -327,16 +327,19 @@ const removeExcludedTopic = (topic: string) => {
         <button @click="page += 1">&rsaquo;</button>
       </div>
       <div class="chub-controls">
-        <input
-          type="text"
-          placeholder="Search cards..."
-          class="chub-search-input"
-          :value="search"
-          @change="
-            // @ts-expect-error event targets are not well typed in vue
-            search = $event.target.value.trim()
-          "
-        />
+        <label>
+          Search
+          <input
+            type="text"
+            placeholder="Search cards..."
+            class="chub-search-input"
+            :value="search"
+            @change="
+              // @ts-expect-error event targets are not well typed in vue
+              search = $event.target.value.trim()
+            "
+          />
+        </label>
         <label>
           Author
           <input

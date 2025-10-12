@@ -13,6 +13,7 @@ import { chubMarkdownToHtml } from "./chubMarkdown";
 import { downloadFile } from "../../lib/download";
 import { chubCardToTavernCardFile } from "./chubPngHelpers";
 import { jsonParse } from "../../lib/json";
+import { chubAddAuthorToUrl, chubAddTopicToUrl } from "./chubHelpers";
 
 const props = defineProps<{
   card: ChubCard;
@@ -25,7 +26,7 @@ const emit = defineEmits<{
 
 const configQuery = useQuery(chubQueryOptions("chubFetchEntireConfig", []));
 const config = configQuery.data;
-const { blurNsfw, showCustomCss } = inject(chubProviderKey)!;
+const { blurNsfw } = inject(chubProviderKey)!;
 const author = computed(() => props.card.fullPath.replace(/[/][\s\S]+/, ""));
 
 const isExplicitNsfw = computed(() => props.card.topics.includes("NSFW"));
@@ -34,12 +35,6 @@ const isShadowNsfw = computed(() => false);
 const isShadowNsfl = computed(() => false);
 const isNsfw = computed(() => isExplicitNsfw.value || isShadowNsfw.value);
 const isNsfl = computed(() => isExplicitNsfl.value || isShadowNsfl.value);
-
-const shouldShowCustomCss = computed(
-  () =>
-    config.value?.configs?.theme?.Default?.show_custom_css ??
-    showCustomCss.value,
-);
 
 const tokenCounts = computed(() => {
   const tokenCountsRaw = props.card.labels?.find(
@@ -106,7 +101,13 @@ const blurred = computed(
         </button>
         <div>
           by
-          <button @click="emit('searchByAuthor', author)">{{ author }}</button>
+          <a
+            :href="chubAddAuthorToUrl(author)"
+            class="button"
+            @click="$event.ctrlKey ? false : emit('searchByAuthor', author)"
+          >
+            {{ author }}
+          </a>
         </div>
       </div>
       <div class="chub-card-preview-metadata">
@@ -119,30 +120,33 @@ const blurred = computed(
       v-html="chubMarkdownToHtml(card.tagline, { unsafe: false })"
     ></div>
     <div class="chub-card-preview-topics">
-      <button
+      <a
         v-if="isNsfw"
-        class="chub-card-preview-topic"
-        @click="emit('addTopic', 'NSFW')"
+        class="button chub-card-preview-topic"
+        :href="chubAddTopicToUrl('NSFW')"
+        @click="$event.ctrlKey ? emit('addTopic', 'NSFW') : false"
         :title="isShadowNsfw ? 'Shadow NSFW' : 'NSFW'"
       >
         {{ isShadowNsfw ? "(🔥)" : "🔥" }}
-      </button>
-      <button
+      </a>
+      <a
         v-if="isNsfl"
-        class="chub-card-preview-topic"
-        @click="emit('addTopic', 'NSFL')"
+        class="button chub-card-preview-topic"
+        :href="chubAddTopicToUrl('NSFL')"
+        @click="$event.ctrlKey ? emit('addTopic', 'NSFL') : false"
         :title="isShadowNsfl ? 'Shadow NSFL' : 'NSFL'"
       >
         {{ isShadowNsfl ? "(💀)" : "💀" }}
-      </button>
+      </a>
       <template v-for="topic in card.topics" :key="topic">
-        <button
+        <a
           v-if="!CHUB_TAGS_TO_HIDE.includes(topic)"
-          class="chub-card-preview-topic"
-          @click="emit('addTopic', topic)"
+          class="button chub-card-preview-topic"
+          :href="chubAddTopicToUrl(topic)"
+          @click="$event.ctrlKey ? emit('addTopic', topic) : false"
         >
           {{ topic }}
-        </button>
+        </a>
       </template>
     </div>
   </div>

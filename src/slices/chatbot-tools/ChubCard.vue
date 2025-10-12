@@ -27,6 +27,7 @@ import { jsonParse } from "../../lib/json";
 import { getChubFilters } from "./chubFilters";
 import { formatDateTime } from "../../lib/dateTime";
 import ChubCardComment from "./ChubCardComment.vue";
+import { chubAddTopicToUrl } from "./chubHelpers";
 
 const props = defineProps<{
   card: ChubCard<true>;
@@ -195,30 +196,33 @@ watchEffect(() => {
         {{ card.definition.name }}
       </h2>
       <div class="chub-card-topics">
-        <button
+        <a
           v-if="isNsfw"
           class="chub-card-topic"
-          @click="emit('addTopic', 'NSFW')"
+          :href="chubAddTopicToUrl('NSFW')"
+          @click="$event.ctrlKey ? emit('addTopic', 'NSFW') : false"
           :title="isShadowNsfw ? 'Shadow NSFW' : 'NSFW'"
         >
           {{ isShadowNsfw ? "(🔥)" : "🔥" }}
-        </button>
-        <button
+        </a>
+        <a
           v-if="isNsfl"
           class="chub-card-topic"
-          @click="emit('addTopic', 'NSFL')"
+          :href="chubAddTopicToUrl('NSFL')"
+          @click="$event.ctrlKey ? emit('addTopic', 'NSFL') : false"
           :title="isShadowNsfl ? 'Shadow NSFL' : 'NSFL'"
         >
           {{ isShadowNsfl ? "(💀)" : "💀" }}
-        </button>
+        </a>
         <template v-for="topic in card.topics" :key="topic">
-          <button
+          <a
             v-if="!CHUB_TAGS_TO_HIDE.includes(topic)"
             class="chub-card-topic"
-            @click="emit('addTopic', topic)"
+            :href="chubAddTopicToUrl(topic)"
+            @click="$event.ctrlKey ? emit('addTopic', topic) : false"
           >
             {{ topic }}
-          </button>
+          </a>
         </template>
       </div>
       <button @click="emit('searchByAuthor', author)">by {{ author }}</button>

@@ -24,3 +24,19 @@ export function chubCardToTavernCard(card: ChubCard<true>): TavernCardV2 {
     },
   };
 }
+
+export function chubAddAuthorToUrl(author: string) {
+  const url = new URL(location.href);
+  url.searchParams.set("author", author);
+  return url.toString();
+}
+
+export function chubAddTopicToUrl(topic: string) {
+  const url = new URL(location.href);
+  const existingTopics = url.searchParams.getAll("topic[]");
+  if (existingTopics.includes(topic)) {
+    return location.href;
+  }
+  url.searchParams.append("topic[]", topic);
+  return url.toString();
+}
