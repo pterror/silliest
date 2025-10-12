@@ -28,15 +28,16 @@ export function chubCardToTavernCard(card: ChubCard<true>): TavernCardV2 {
 export function chubAddAuthorToUrl(author: string) {
   const url = new URL(location.href);
   url.searchParams.set("author", author);
+  url.searchParams.delete("page");
   return url.toString();
 }
 
 export function chubAddTopicToUrl(topic: string) {
   const url = new URL(location.href);
   const existingTopics = url.searchParams.getAll("topic[]");
-  if (existingTopics.includes(topic)) {
-    return location.href;
+  if (!existingTopics.includes(topic)) {
+    url.searchParams.append("topic[]", topic);
   }
-  url.searchParams.append("topic[]", topic);
+  url.searchParams.delete("page");
   return url.toString();
 }
