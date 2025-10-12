@@ -413,7 +413,12 @@ watchEffect(() => {
                   name="chub-card-greeting"
                   class="invisible-radio"
                   :value="index + 2"
-                  :checked="hash === `chub-card-greeting-${index + 2}`"
+                  :checked="
+                    hash === `chub-card-greeting-${index + 2}` ||
+                    (index === card.definition.alternate_greetings.length - 1 &&
+                      Number(hash.replace('chub-card-greeting-', '')) >
+                        index + 2)
+                  "
                   @click="hash = `chub-card-greeting-${index + 2}`"
                 />
                 {{ index + 2 }}
