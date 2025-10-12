@@ -81,16 +81,7 @@ const blurred = computed(
     <div v-if="tokenCounts" class="chub-card-preview-token-counts">
       <span class="chub-card-preview-token-count-heading">Tokens:</span>
       <div class="chub-card-preview-token-counts-details">
-        <div>
-          Perm:
-          {{
-            tokenCounts.personality +
-            tokenCounts.description +
-            tokenCounts.scenario +
-            tokenCounts.system_prompt +
-            tokenCounts.post_history_instructions
-          }}
-        </div>
+        <div>Perm: {{ card.nTokens }}</div>
         <div>Temp: {{ tokenCounts.first_mes + tokenCounts.mes_example }}</div>
       </div>
     </div>

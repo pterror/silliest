@@ -344,10 +344,16 @@ export interface ChubSearchParams {
   readonly only_mine?: "all" | "public" | "private" | "unlisted";
   readonly include_forks?: boolean;
   readonly sort?: ChubSortType;
+  /** Search multiple fields */
   readonly search?: string;
+  /** Search only in the name */
+  readonly name_like?: string;
+  /** Search by author */
   readonly username?: string;
   readonly my_favorites?: boolean;
+  /** Minimum permanent tokens */
   readonly min_tokens?: number;
+  /** Maximum permanent tokens */
   readonly max_tokens?: number;
   /** Defaults to 1 */
   readonly page?: number;
@@ -361,7 +367,7 @@ export interface ChubSearchParams {
   readonly recommended_verified?: boolean;
   readonly require_custom_prompt?: boolean;
   readonly require_example_dialogues?: boolean;
-  /** Require images in the gallery. */
+  /** Require images in the gallery */
   readonly require_images?: boolean;
   readonly require_expressions?: boolean;
   readonly require_lore?: boolean;

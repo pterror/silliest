@@ -46,6 +46,7 @@ const {
     page,
     search,
     author,
+    name_like: nameLike,
     query_type: queryType,
     sort,
     max_days_ago: maxDaysAgo,
@@ -72,6 +73,7 @@ const {
     page: { type: "number", defaultValue: 1 },
     search: { type: "string" },
     author: { type: "string" },
+    name_like: { type: "string" },
     query_type: {
       type: "string",
       defaultValue: "search",
@@ -346,6 +348,29 @@ const removeExcludedTopic = (topic: string) => {
               // @ts-expect-error event targets are not well typed in vue
               author = $event.target.value.trim()
             "
+          />
+        </label>
+        <label>
+          Name
+          <input
+            type="text"
+            placeholder="Character name"
+            class="chub-name-input"
+            :value="nameLike"
+            @change="
+              // @ts-expect-error event targets are not well typed in vue
+              nameLike = $event.target.value.trim()
+            "
+          />
+        </label>
+        <label>
+          Max days ago
+          <input
+            v-model="maxDaysAgo"
+            type="number"
+            min="0"
+            placeholder="Maximum days ago"
+            class="chub-max-days-ago-input"
           />
         </label>
         <label>
