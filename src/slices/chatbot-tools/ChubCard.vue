@@ -268,15 +268,18 @@ watchEffect(() => {
         alt="Card Image"
         @click="fullscreenPreviewImage = card.max_res_url"
       />
-      <p
-        class="chub-card-tagline"
-        v-html="
-          chubMarkdownToHtml(card.tagline, {
-            unsafe: shouldShowCustomCss,
-            macros,
-          })
-        "
-      ></p>
+      <details v-if="card.tagline" open class="chub-card-tagline-container">
+        <summary>Tagline</summary>
+        <p
+          class="chub-card-tagline"
+          v-html="
+            chubMarkdownToHtml(card.tagline, {
+              unsafe: shouldShowCustomCss,
+              macros,
+            })
+          "
+        ></p>
+      </details>
       <div class="chub-card-info tab-container">
         <label class="tab-title">
           <input
@@ -434,7 +437,7 @@ watchEffect(() => {
                 "
               ></div>
             </template>
-            <div class="tab-title chub-card-tab-bar-spacer"></div>
+            <div class="chub-card-tab-bar-spacer"></div>
           </div>
         </div>
         <label v-if="exampleDialogs.length" class="tab-title">
@@ -669,7 +672,7 @@ watchEffect(() => {
             </div>
           </div>
         </div>
-        <div class="tab-title chub-card-tab-bar-spacer"></div>
+        <div class="chub-card-tab-bar-spacer"></div>
       </div>
     </div>
   </div>
@@ -720,6 +723,7 @@ watchEffect(() => {
 .chub-card-info :deep(hr) {
   width: calc(100% - 2em);
   margin: 0 1em;
+  justify-content: space-around;
 }
 
 .chub-card-content {
@@ -802,6 +806,7 @@ watchEffect(() => {
 .chub-card-post-history-instructions {
   max-width: 100ch;
   overflow-wrap: break-word;
+  margin: 0 auto;
 }
 
 :is(
@@ -816,6 +821,10 @@ watchEffect(() => {
   )
   :deep(p) {
   margin: 0;
+}
+
+.chub-card-tagline-container {
+  width: 100%;
 }
 
 :deep(code) {
