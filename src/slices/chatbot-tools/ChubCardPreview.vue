@@ -122,7 +122,7 @@ const blurred = computed(
     <div class="chub-card-preview-topics">
       <a
         v-if="isNsfw"
-        class="button chub-card-preview-topic"
+        class="chub-card-preview-topic button"
         :href="chubAddTopicToUrl('NSFW')"
         @click="$event.ctrlKey ? emit('addTopic', 'NSFW') : false"
         :title="isShadowNsfw ? 'Shadow NSFW' : 'NSFW'"
@@ -131,7 +131,7 @@ const blurred = computed(
       </a>
       <a
         v-if="isNsfl"
-        class="button chub-card-preview-topic"
+        class="chub-card-preview-topic button"
         :href="chubAddTopicToUrl('NSFL')"
         @click="$event.ctrlKey ? emit('addTopic', 'NSFL') : false"
         :title="isShadowNsfl ? 'Shadow NSFL' : 'NSFL'"
@@ -141,7 +141,7 @@ const blurred = computed(
       <template v-for="topic in card.topics" :key="topic">
         <a
           v-if="!CHUB_TAGS_TO_HIDE.includes(topic)"
-          class="button chub-card-preview-topic"
+          class="chub-card-preview-topic button"
           :href="chubAddTopicToUrl(topic)"
           @click="$event.ctrlKey ? emit('addTopic', topic) : false"
         >

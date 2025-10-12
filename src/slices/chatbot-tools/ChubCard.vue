@@ -175,7 +175,7 @@ watchEffect(() => {
       <div class="top-right-buttons buttons">
         <a
           :href="`https://chub.ai/characters/${card.fullPath}`"
-          class="open-in-chub-button button"
+          class="chub-card-open-in-chub-button button"
           target="_blank"
         >
           Open in Chub
@@ -198,7 +198,7 @@ watchEffect(() => {
       <div class="chub-card-topics">
         <a
           v-if="isNsfw"
-          class="chub-card-topic"
+          class="chub-card-topic button"
           :href="chubAddTopicToUrl('NSFW')"
           @click="$event.ctrlKey ? emit('addTopic', 'NSFW') : false"
           :title="isShadowNsfw ? 'Shadow NSFW' : 'NSFW'"
@@ -207,7 +207,7 @@ watchEffect(() => {
         </a>
         <a
           v-if="isNsfl"
-          class="chub-card-topic"
+          class="chub-card-topic button"
           :href="chubAddTopicToUrl('NSFL')"
           @click="$event.ctrlKey ? emit('addTopic', 'NSFL') : false"
           :title="isShadowNsfl ? 'Shadow NSFL' : 'NSFL'"
@@ -217,7 +217,7 @@ watchEffect(() => {
         <template v-for="topic in card.topics" :key="topic">
           <a
             v-if="!CHUB_TAGS_TO_HIDE.includes(topic)"
-            class="chub-card-topic"
+            class="chub-card-topic button"
             :href="chubAddTopicToUrl(topic)"
             @click="$event.ctrlKey ? emit('addTopic', topic) : false"
           >
@@ -819,7 +819,7 @@ watchEffect(() => {
   font-size: 1.5em;
 }
 
-.open-in-chub-button {
+.chub-card-open-in-chub-button {
   padding: 0.2em 0.5em;
 }
 
