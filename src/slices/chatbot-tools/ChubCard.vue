@@ -235,10 +235,6 @@ watchEffect(() => {
             Description:
             {{ tokenCounts.personality }}
           </div>
-          <div v-if="tokenCounts.description">
-            Personality:
-            {{ tokenCounts.description }}
-          </div>
           <div v-if="tokenCounts.scenario">
             Scenario:
             {{ tokenCounts.scenario }}
@@ -327,7 +323,7 @@ watchEffect(() => {
             })
           "
         ></div>
-        <label class="tab-title">
+        <label v-if="card.definition.tavern_personality" class="tab-title">
           <input
             type="radio"
             name="chub-card-tab"
@@ -339,6 +335,7 @@ watchEffect(() => {
           Personality
         </label>
         <div
+          v-if="card.definition.tavern_personality"
           class="chub-card-personality tab-contents"
           v-html="
             chubMarkdownToHtml(card.definition.tavern_personality, {
