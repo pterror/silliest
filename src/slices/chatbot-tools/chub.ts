@@ -92,6 +92,10 @@ export type ChubCardId = number & {
   readonly __type: "ChubCardId";
 };
 
+export type ChubLorebookId = number & {
+  readonly __type: "ChubLorebookId";
+};
+
 export type ChubCardFullPath = string & {
   readonly __type: "ChubCardFullPath";
 };
@@ -1300,16 +1304,74 @@ export async function chubPostRating(
   comment: string,
   parentId: number | null = null,
 ): Promise<ChubPostRatingResponse | ChubPostRatingError> {
-  const response = await fetch(
-    `https://gateway.chub.ai/api/project/${projectId}/rate`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ rating, comment, parentId }),
-    },
-  );
+  const response = await fetch(`${API_URL}/project/${projectId}/rate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ rating, comment, parentId }),
+  });
   if (!response.ok) {
     throw new Error("Failed to post rating");
   }
   return await response.json();
 }
+
+/*
+{"count":48,"nodes":[{"generation_uuid":null,"cost":null,"queue_length":null,"primary_character_id":4897091,"secondary_character_ids":[],"lorebook_id":null,"primary_image_path":"https://avatars.charhub.io/avatars/uploads/images/gallery/file/e706ff23-522a-4fcc-8372-ab84b75c7c05/24e03ff5-ec7f-4797-a280-1b2e716f6298.png","user_owned":false,"nsfw_image":true,"description":"","prompt":{"width":2432,"height":3328},"is_published":false,"comments_enabled":true,"is_done":true,"is_failed":false,"parent_image":null,"item_id":null,"uuid":"24e03ff5-ec7f-4797-a280-1b2e716f6298","info":null,"name":null,"preview":null},{"generation_uuid":null,"cost":null,"queue_length":null,"primary_character_id":4897091,"secondary_character_ids":[],"lorebook_id":null,"primary_image_path":"https://avatars.charhub.io/avatars/uploads/images/gallery/file/16955868-1e07-46bf-ae43-772835618ce4/c8ad3c1f-f4ea-4c2d-a3f0-859df8d223e2.png","user_owned":false,"nsfw_image":true,"description":"","prompt":{"width":2432,"height":3328},"is_published":false,"comments_enabled":true,"is_done":true,"is_failed":false,"parent_image":null,"item_id":null,"uuid":"c8ad3c1f-f4ea-4c2d-a3f0-859df8d223e2","info":null,"name":null,"preview":null},{"generation_uuid":null,"cost":null,"queue_length":null,"primary_character_id":4897091,"secondary_character_ids":[],"lorebook_id":null,"primary_image_path":"https://avatars.charhub.io/avatars/uploads/images/gallery/file/44aaa9b3-9a85-4ed3-9d10-ecbac1017e4b/26c807a1-2f31-4b8b-b0b4-452f0caeba27.png","user_owned":false,"nsfw_image":true,"description":"","prompt":{"width":2432,"height":3328},"is_published":false,"comments_enabled":true,"is_done":true,"is_failed":false,"parent_image":null,"item_id":null,"uuid":"26c807a1-2f31-4b8b-b0b4-452f0caeba27","info":null,"name":null,"preview":null}],"page":1}
+*/
+
+export type ChubImageGenerationId = UUID & {
+  readonly __type2: "ChubImageGenerationId";
+};
+
+export type ChubGalleryImageId = UUID & {
+  readonly __type2: "ChubGalleryImageId";
+};
+
+export interface ChubGalleryImage {
+  readonly generation_uuid: null | ChubImageGenerationId;
+  readonly cost: null | number;
+  readonly queue_length: null | number;
+  readonly primary_character_id: ChubCardId;
+  readonly secondary_character_ids: readonly ChubCardId[];
+  readonly lorebook_id: null | ChubLorebookId;
+  readonly primary_image_path: string; // URL to the image
+  readonly user_owned: boolean;
+  readonly nsfw_image: boolean;
+  readonly description: string;
+  readonly prompt: {
+    readonly width: number;
+    readonly height: number;
+    // Possibly more fields
+    readonly [key: string]: unknown;
+  };
+  readonly is_published: boolean;
+  readonly comments_enabled: boolean;
+  readonly is_done: boolean;
+  readonly is_failed: boolean;
+  readonly parent_image: null | string; // URL to the parent image
+  readonly item_id: null | number;
+  readonly uuid: ChubGalleryImageId;
+  readonly info: null | string; // Possibly more info
+  readonly name: null | string;
+  readonly preview: null | string; // URL to the preview image
+}
+
+export async function chubListGalleryImages(
+  projectId: ChubCardId,
+  limit: number = 48,
+  page: number = 1,
+): Promise<readonly ChubGalleryImage[]> {
+  const params = new URLSearchParams({
+    limit: limit.toString(),
+    count: "false",
+    time: Math.random().toString(),
+    page: page.toString(),
+  }).toString();
+  const response = await fetch(
+    `${API_URL}/gallery/project/${projectId}?${params}`,
+  );
+  const result: ChubPageRaw<ChubGalleryImage> = await response.json();
+  return result.nodes;
+}
+
+// TODO: 'upload image' endpoint

@@ -2,6 +2,7 @@
 import { computed, inject, ref, watchEffect } from "vue";
 import {
   CHUB_TAGS_TO_HIDE,
+  chubListGalleryImages,
   chubGetRatings,
   chubGetTavernCardAtCommit,
   chubListCommits,
@@ -10,6 +11,7 @@ import {
   type ChubCardFullPath,
   type ChubCardId,
   type ChubCommit,
+  type ChubGalleryImage,
   type ChubRatingsResponse,
 } from "./chub";
 import { useQuery } from "@tanstack/vue-query";
@@ -95,21 +97,24 @@ const exampleDialogs = computed(() =>
 );
 
 const comments = ref<ChubRatingsResponse>();
-
 const loadComments = async () => {
   if (comments.value) return;
   comments.value = await chubGetRatings(props.card.id);
 };
 
-const forks = ref<readonly ChubCard[] | null>();
+const gallery = ref<readonly ChubGalleryImage[]>();
+const loadGallery = async () => {
+  if (gallery.value) return;
+  gallery.value = await chubListGalleryImages(props.card.id);
+};
 
+const forks = ref<readonly ChubCard[] | null>();
 const loadForks = async () => {
   if (forks.value) return;
   forks.value = await chubListForks(props.card.id);
 };
 
 const versions = ref<readonly ChubCommit[] | null>();
-
 const loadVersions = async () => {
   if (versions.value) return;
   versions.value = await chubListCommits(props.card.id);
@@ -133,12 +138,23 @@ const hash = computed({
 });
 
 watchEffect(() => {
-  if (hash.value === "chub-card-comments") {
-    loadComments();
-  } else if (hash.value === "chub-card-forks") {
-    loadForks();
-  } else if (hash.value === "chub-card-versions") {
-    loadVersions();
+  switch (hash.value) {
+    case "chub-card-comments": {
+      loadComments();
+      break;
+    }
+    case "chub-card-gallery": {
+      loadGallery();
+      break;
+    }
+    case "chub-card-forks": {
+      loadForks();
+      break;
+    }
+    case "chub-card-versions": {
+      loadVersions();
+      break;
+    }
   }
 });
 </script>
@@ -578,6 +594,42 @@ watchEffect(() => {
             </template>
           </div>
         </div>
+        <label class="tab-title">
+          <input
+            type="radio"
+            name="chub-card-tab"
+            class="invisible-radio"
+            value="gallery"
+            :checked="hash === 'chub-card-gallery'"
+            @click="hash = 'chub-card-gallery'"
+          />
+          Gallery
+        </label>
+        <div class="tab-contents">
+          <div
+            v-if="!gallery"
+            class="chub-card-gallery-loading chub-card-loading"
+          >
+            Loading...
+          </div>
+          <div
+            v-else-if="gallery.length === 0"
+            class="chub-card-no-gallery chub-card-no-results"
+          >
+            No images found.
+          </div>
+          <div v-else class="chub-card-gallery">
+            <img
+              v-for="image in gallery"
+              :key="image.uuid"
+              :src="image.preview ?? image.primary_image_path"
+              class="transition-bg darken-on-hover"
+              :class="{ blurred }"
+              alt="Gallery Image"
+              @click="fullscreenPreviewImage = image.primary_image_path"
+            />
+          </div>
+        </div>
         <label v-if="card.forksCount > 0" class="tab-title">
           <input
             type="radio"
@@ -905,6 +957,12 @@ watchEffect(() => {
 .chub-card-forks.chub-card-forks {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1em;
+}
+
+.chub-card-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 1em;
 }
 
