@@ -293,12 +293,33 @@ watchEffect(() => {
             type="radio"
             name="chub-card-tab"
             class="invisible-radio"
-            value="description"
+            value="creators-notes"
             :checked="
               !hash ||
-              hash === 'chub-card-description' ||
+              hash === 'chub-card-creators-notes' ||
               !hash.startsWith('chub-card-')
             "
+            @click="hash = 'chub-card-creators-notes'"
+          />
+          Creator's Notes
+        </label>
+        <div
+          class="chub-card-creators-notes tab-contents"
+          v-html="
+            chubMarkdownToHtml(card.description, {
+              unsafe: shouldShowCustomCss,
+              macros,
+              disableAutoplay: false,
+            })
+          "
+        ></div>
+        <label class="tab-title">
+          <input
+            type="radio"
+            name="chub-card-tab"
+            class="invisible-radio"
+            value="description"
+            :checked="hash === 'chub-card-description'"
             @click="hash = 'chub-card-description'"
           />
           Description
@@ -306,10 +327,9 @@ watchEffect(() => {
         <div
           class="chub-card-description tab-contents"
           v-html="
-            chubMarkdownToHtml(card.description, {
+            chubMarkdownToHtml(card.definition.personality, {
               unsafe: shouldShowCustomCss,
               macros,
-              disableAutoplay: false,
             })
           "
         ></div>
@@ -327,7 +347,7 @@ watchEffect(() => {
         <div
           class="chub-card-personality tab-contents"
           v-html="
-            chubMarkdownToHtml(card.definition.personality, {
+            chubMarkdownToHtml(card.definition.tavern_personality, {
               unsafe: shouldShowCustomCss,
               macros,
             })

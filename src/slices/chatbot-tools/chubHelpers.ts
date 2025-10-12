@@ -8,7 +8,7 @@ export function chubCardToTavernCard(card: ChubCard<true>): TavernCardV2 {
     data: {
       name: card.definition.name,
       description: card.definition.personality,
-      personality: "",
+      personality: card.definition.tavern_personality,
       scenario: card.definition.scenario,
       first_mes: card.definition.first_message,
       mes_example: card.definition.example_dialogs,
