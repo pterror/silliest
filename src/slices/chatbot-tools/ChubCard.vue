@@ -200,7 +200,10 @@ watchEffect(() => {
           v-if="isNsfw"
           class="chub-card-topic button"
           :href="chubAddTopicToUrl('NSFW')"
-          @click="$event.ctrlKey ? emit('addTopic', 'NSFW') : false"
+          @click="
+            !$event.ctrlKey &&
+              (emit('addTopic', 'NSFW'), $event.preventDefault())
+          "
           :title="isShadowNsfw ? 'Shadow NSFW' : 'NSFW'"
         >
           {{ isShadowNsfw ? "(🔥)" : "🔥" }}
@@ -209,7 +212,10 @@ watchEffect(() => {
           v-if="isNsfl"
           class="chub-card-topic button"
           :href="chubAddTopicToUrl('NSFL')"
-          @click="$event.ctrlKey ? emit('addTopic', 'NSFL') : false"
+          @click="
+            !$event.ctrlKey &&
+              (emit('addTopic', 'NSFL'), $event.preventDefault())
+          "
           :title="isShadowNsfl ? 'Shadow NSFL' : 'NSFL'"
         >
           {{ isShadowNsfl ? "(💀)" : "💀" }}
@@ -219,7 +225,10 @@ watchEffect(() => {
             v-if="!CHUB_TAGS_TO_HIDE.includes(topic)"
             class="chub-card-topic button"
             :href="chubAddTopicToUrl(topic)"
-            @click="$event.ctrlKey ? emit('addTopic', topic) : false"
+            @click="
+              !$event.ctrlKey &&
+                (emit('addTopic', topic), $event.preventDefault())
+            "
           >
             {{ topic }}
           </a>

@@ -13,7 +13,11 @@ import { chubMarkdownToHtml } from "./chubMarkdown";
 import { downloadFile } from "../../lib/download";
 import { chubCardToTavernCardFile } from "./chubPngHelpers";
 import { jsonParse } from "../../lib/json";
-import { chubAddAuthorToUrl, chubAddTopicToUrl } from "./chubHelpers";
+import {
+  chubAddAuthorToUrl,
+  chubAddCardFullPathToUrl,
+  chubAddTopicToUrl,
+} from "./chubHelpers";
 
 const props = defineProps<{
   card: ChubCard;
@@ -55,13 +59,19 @@ const blurred = computed(
 <template>
   <div class="ChubCardPreview">
     <div class="chub-card-preview-image-container">
-      <img
-        :src="card.avatar_url"
-        class="chub-card-preview-image transition-filter"
-        :class="{ 'blurred-medium': blurred }"
-        alt="Card Image"
-        @click="emit('openInFullscreen')"
-      />
+      <a
+        :href="chubAddCardFullPathToUrl(card.fullPath)"
+        @click="
+          !$event.ctrlKey && (emit('openInFullscreen'), $event.preventDefault())
+        "
+      >
+        <img
+          :src="card.avatar_url"
+          class="chub-card-preview-image transition-filter"
+          :class="{ 'blurred-medium': blurred }"
+          alt="Card Image"
+        />
+      </a>
     </div>
     <div class="chub-card-preview-title">
       <h2 :title="card.name">{{ card.name }}</h2>
@@ -104,7 +114,10 @@ const blurred = computed(
           <a
             :href="chubAddAuthorToUrl(author)"
             class="button"
-            @click="$event.ctrlKey ? false : emit('searchByAuthor', author)"
+            @click="
+              !$event.ctrlKey &&
+                (emit('searchByAuthor', author), $event.preventDefault())
+            "
           >
             {{ author }}
           </a>
@@ -124,7 +137,9 @@ const blurred = computed(
         v-if="isNsfw"
         class="chub-card-preview-topic button"
         :href="chubAddTopicToUrl('NSFW')"
-        @click="$event.ctrlKey ? emit('addTopic', 'NSFW') : false"
+        @click="
+          !$event.ctrlKey && (emit('addTopic', 'NSFW'), $event.preventDefault())
+        "
         :title="isShadowNsfw ? 'Shadow NSFW' : 'NSFW'"
       >
         {{ isShadowNsfw ? "(🔥)" : "🔥" }}
@@ -133,7 +148,9 @@ const blurred = computed(
         v-if="isNsfl"
         class="chub-card-preview-topic button"
         :href="chubAddTopicToUrl('NSFL')"
-        @click="$event.ctrlKey ? emit('addTopic', 'NSFL') : false"
+        @click="
+          !$event.ctrlKey && (emit('addTopic', 'NSFL'), $event.preventDefault())
+        "
         :title="isShadowNsfl ? 'Shadow NSFL' : 'NSFL'"
       >
         {{ isShadowNsfl ? "(💀)" : "💀" }}
@@ -143,7 +160,10 @@ const blurred = computed(
           v-if="!CHUB_TAGS_TO_HIDE.includes(topic)"
           class="chub-card-preview-topic button"
           :href="chubAddTopicToUrl(topic)"
-          @click="$event.ctrlKey ? emit('addTopic', topic) : false"
+          @click="
+            !$event.ctrlKey &&
+              (emit('addTopic', topic), $event.preventDefault())
+          "
         >
           {{ topic }}
         </a>

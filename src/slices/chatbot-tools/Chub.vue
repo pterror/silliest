@@ -213,7 +213,17 @@ const query = computed<ChubCardQuery>(() => {
   }
 });
 
+const fullscreenCardQuery = useQuery({
+  queryKey: ["chubGetCard", fullscreenCardId] as const,
+  queryFn: ({ queryKey: [, id] }) =>
+    id != null ? chubGetCard(id, { full: true }) : null,
+});
+const fullscreenCard = fullscreenCardQuery.data;
+
 const title = computed(() => {
+  if (fullscreenCard.value?.name) {
+    return `${fullscreenCard.value.name} | chub`;
+  }
   if (query.value.type === "search") {
     const authorString = author.value ? ` by ${author.value}` : "";
     const topicsString = topics.value.length
@@ -238,13 +248,6 @@ watchEffect(() => {
     cards.value = cardsQuery.data.value;
   }
 });
-
-const fullscreenCardQuery = useQuery({
-  queryKey: ["chubGetCard", fullscreenCardId] as const,
-  queryFn: ({ queryKey: [, id] }) =>
-    id != null ? chubGetCard(id, { full: true }) : null,
-});
-const fullscreenCard = fullscreenCardQuery.data;
 
 const newTopic = ref("");
 

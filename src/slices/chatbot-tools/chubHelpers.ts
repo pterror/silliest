@@ -1,4 +1,4 @@
-import type { ChubCard } from "./chub";
+import type { ChubCard, ChubCardFullPath } from "./chub";
 import type { TavernCardV2 } from "./types";
 
 export function chubCardToTavernCard(card: ChubCard<true>): TavernCardV2 {
@@ -23,6 +23,12 @@ export function chubCardToTavernCard(card: ChubCard<true>): TavernCardV2 {
       extensions: card.definition.extensions as any,
     },
   };
+}
+
+export function chubAddCardFullPathToUrl(fullPath: ChubCardFullPath) {
+  const url = new URL(location.href);
+  url.searchParams.set("card_id", fullPath);
+  return url.toString();
 }
 
 export function chubAddAuthorToUrl(author: string) {
