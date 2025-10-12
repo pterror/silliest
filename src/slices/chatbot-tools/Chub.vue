@@ -53,6 +53,14 @@ const {
     max_tokens: maxTokens,
     exclude_mine: excludeMine,
     include_forks: includeForks,
+    require_custom_prompt: requireCustomPrompt,
+    require_example_dialogues: requireExampleDialogues,
+    require_images: requireImages,
+    require_expressions: requireExpressions,
+    require_lore: requireLore,
+    require_lore_embedded: requireLoreEmbedded,
+    require_lore_linked: requireLoreLinked,
+    require_alternate_greetings: requireAlternateGreetings,
     nsfw_only: nsfwOnly,
     nsfw,
     nsfl,
@@ -81,6 +89,14 @@ const {
     max_tokens: { type: "number", defaultValue: 100_000 },
     exclude_mine: { type: "boolean", defaultValue: true },
     include_forks: { type: "boolean", defaultValue: true },
+    require_custom_prompt: { type: "boolean" },
+    require_example_dialogues: { type: "boolean" },
+    require_images: { type: "boolean" },
+    require_expressions: { type: "boolean" },
+    require_lore: { type: "boolean" },
+    require_lore_embedded: { type: "boolean" },
+    require_lore_linked: { type: "boolean" },
+    require_alternate_greetings: { type: "boolean" },
     nsfw_only: { type: "boolean" },
     nsfw: { type: "boolean", hideWhenDefault: false },
     nsfl: { type: "boolean", hideWhenDefault: false },
@@ -151,6 +167,7 @@ const allowedParams = [
   "excludetopics",
   "include_forks",
   "exclude_mine",
+  "name_like",
   "nsfw",
   "nsfl",
   "nsfw_only",
@@ -392,6 +409,40 @@ const removeExcludedTopic = (topic: string) => {
           <span>Show custom CSS</span>
         </label>
       </div>
+      <div class="chub-require-checkboxes">
+        <label>
+          <input type="checkbox" v-model="requireCustomPrompt" />
+          Require custom prompt
+        </label>
+        <label>
+          <input type="checkbox" v-model="requireExampleDialogues" />
+          Require example dialogues
+        </label>
+        <label>
+          <input type="checkbox" v-model="requireImages" />
+          Require images
+        </label>
+        <label>
+          <input type="checkbox" v-model="requireExpressions" />
+          Require expressions
+        </label>
+        <label>
+          <input type="checkbox" v-model="requireLore" />
+          Require lore
+        </label>
+        <label>
+          <input type="checkbox" v-model="requireLoreEmbedded" />
+          Require embedded lorebook
+        </label>
+        <label>
+          <input type="checkbox" v-model="requireLoreLinked" />
+          Require linked lorebook(s)
+        </label>
+        <label>
+          <input type="checkbox" v-model="requireAlternateGreetings" />
+          Require alternate greetings
+        </label>
+      </div>
       <div class="chub-sort-by">
         <label>
           <input
@@ -568,7 +619,8 @@ const removeExcludedTopic = (topic: string) => {
   gap: 1em;
 }
 
-.chub-checkboxes {
+.chub-checkboxes,
+.chub-require-checkboxes {
   display: flex;
   flex-flow: row wrap;
   gap: 0.5em;
