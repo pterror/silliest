@@ -2,7 +2,7 @@
 import { decode } from "fast-png";
 import exifr from "exifr";
 import { computedAsync } from "@vueuse/core";
-import { onMounted, onUnmounted, ref, Teleport, Text } from "vue";
+import { onMounted, onUnmounted, ref, Teleport } from "vue";
 import { fileType } from "../../lib/filetype";
 
 const props = defineProps<{
@@ -56,8 +56,9 @@ const metadata = computedAsync(() =>
             ? new TextDecoder().decode(userCommentRaw.slice("UNICODE\0".length))
             : undefined;
         }
-        default:
+        default: {
           throw new Error(`Unsupported file type: ${mimetype ?? "unknown"}`);
+        }
       }
     })
     .catch((error) => {

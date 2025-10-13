@@ -1,5 +1,6 @@
 import type { JsonString } from "../../lib/json";
 import { filterOutUndefined } from "../../lib/object";
+import type { UUID } from "../../lib/types";
 import type { CharacterBook, TavernCardV2 } from "./types";
 
 const CHUB_PAGE_SIZE = 40;
@@ -16,10 +17,6 @@ export const CHUB_TAGS_TO_HIDE = [
   "NSFW",
   "NSFL",
 ];
-
-export type UUID = string & {
-  readonly __type: "UUID";
-};
 
 export interface ChubPageRaw<T> {
   readonly count: number;
