@@ -194,14 +194,14 @@ watchEffect(() => {
             src="https://tools.theworkshop.team/favicon.ico"
             alt="The Workshop"
           />
-          <span>Open in Workshop</span>
+          <span>Open on Workshop</span>
         </a>
         <a
           :href="`https://chub.ai/characters/${card.fullPath}`"
           class="chub-card-open-in-chub-button button"
           target="_blank"
         >
-          Open in Chub
+          Open on Chub
         </a>
         <button
           class="chub-card-download-button"
