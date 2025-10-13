@@ -32,12 +32,16 @@ const avatarUrl = useLocalStorage(
 );
 const blurNsfw = useLocalStorage("chub-blur-nsfw", true);
 const showCustomCss = useLocalStorage("chub-show-custom-css", true);
+const showWorkshopLink = useLocalStorage("chub-show-workshop-link", false, {
+  writeDefaults: false,
+});
 
 provide(chubProviderKey, {
   username,
   avatarUrl,
   blurNsfw,
   showCustomCss,
+  showWorkshopLink,
 });
 
 const {
@@ -115,6 +119,12 @@ const {
     },
   },
 );
+
+watchEffect(() => {
+  if (!("workshop" in searchParams)) return;
+  showWorkshopLink.value = searchParams.workshop === "true";
+  delete searchParams.workshop;
+});
 
 const fullscreenCardId = computedSearchParameter({
   searchParams,
@@ -380,16 +390,6 @@ const removeExcludedTopic = (topic: string) => {
           />
         </label>
         <label>
-          Max days ago
-          <input
-            v-model="maxDaysAgo"
-            type="number"
-            min="0"
-            placeholder="Maximum days ago"
-            class="chub-max-days-ago-input"
-          />
-        </label>
-        <label>
           Min tokens
           <input
             v-model="minTokens"
@@ -611,6 +611,7 @@ body:has(.fullscreen) .Chub {
 .chub-controls {
   display: flex;
   gap: 0.5em;
+  flex-flow: row wrap;
 }
 
 :is(.chub-topics, .chub-excluded-topics) > label {

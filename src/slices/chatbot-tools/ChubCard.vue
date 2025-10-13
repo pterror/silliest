@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, ref, watchEffect } from "vue";
+import { computed, inject, ref, useTemplateRef, watchEffect } from "vue";
 import {
   CHUB_TAGS_TO_HIDE,
   chubListGalleryImages,
@@ -39,9 +39,11 @@ const emit = defineEmits<{
   addTopic: [topic: string];
 }>();
 
+const COLLAPSIBLE_TAGLINE_HEIGHT_THRESHOLD = 200;
+
 const configQuery = useQuery(chubQueryOptions("chubFetchEntireConfig", []));
 const config = configQuery.data;
-const { username, avatarUrl, blurNsfw, showCustomCss } =
+const { username, avatarUrl, blurNsfw, showCustomCss, showWorkshopLink } =
   inject(chubProviderKey)!;
 const fullscreenPreviewImage = ref<string | null>(null);
 const chatPreview = ref(true);
@@ -53,6 +55,15 @@ const tokenCounts = computed(() => {
   if (!tokenCountsRaw) return null;
   const tokenCounts = jsonParse(tokenCountsRaw);
   return tokenCounts;
+});
+
+const makeTaglineCollapsible = ref(true);
+const taglineDetails = useTemplateRef<HTMLDetailsElement>("taglineDetails");
+
+watchEffect(() => {
+  if (!taglineDetails.value) return;
+  makeTaglineCollapsible.value =
+    taglineDetails.value.scrollHeight > COLLAPSIBLE_TAGLINE_HEIGHT_THRESHOLD;
 });
 
 const { isNsfw, isShadowNsfw, isNsfl, isShadowNsfl } = getChubFilters(
@@ -174,6 +185,14 @@ watchEffect(() => {
     <div class="chub-card-content">
       <div class="top-right-buttons buttons">
         <a
+          v-if="showWorkshopLink"
+          class="chub-card-open-in-workshop-button button"
+          :href="`https://tools.theworkshop.team/cardStats/${card.id}`"
+          target="_blank"
+        >
+          Open in Workshop
+        </a>
+        <a
           :href="`https://chub.ai/characters/${card.fullPath}`"
           class="chub-card-open-in-chub-button button"
           target="_blank"
@@ -186,7 +205,17 @@ watchEffect(() => {
         >
           Download
         </button>
-        <button class="close-button" @click="emit('close')">&times;</button>
+        <button class="close-button" @click="emit('close')">
+          <svg viewBox="0 0 16 16" height="16" width="16">
+            <path
+              d="M3 3l10 10M3 13l10-10"
+              stroke="currentColor"
+              stroke-width="3"
+              stroke-linecap="round"
+              fill="none"
+            />
+          </svg>
+        </button>
       </div>
       <h1>{{ card.name }}</h1>
       <h2
@@ -303,9 +332,26 @@ watchEffect(() => {
         alt="Card Image"
         @click="fullscreenPreviewImage = card.max_res_url"
       />
-      <details v-if="card.tagline" open class="chub-card-tagline-container">
-        <summary>Tagline</summary>
+      <template v-if="card.tagline">
+        <details
+          ref="taglineDetails"
+          v-if="makeTaglineCollapsible"
+          open
+          class="chub-card-tagline-container"
+        >
+          <summary>Tagline</summary>
+          <p
+            class="chub-card-tagline"
+            v-html="
+              chubMarkdownToHtml(card.tagline, {
+                unsafe: shouldShowCustomCss,
+                macros,
+              })
+            "
+          ></p>
+        </details>
         <p
+          v-else
           class="chub-card-tagline"
           v-html="
             chubMarkdownToHtml(card.tagline, {
@@ -314,7 +360,7 @@ watchEffect(() => {
             })
           "
         ></p>
-      </details>
+      </template>
       <div class="chub-card-info tab-container">
         <label class="tab-title">
           <input
@@ -825,10 +871,16 @@ watchEffect(() => {
 .close-button {
   cursor: pointer;
   border-radius: 50%;
-  font-size: 1.5em;
+  padding: 0;
+  padding-top: 3px;
+  height: calc(1lh + 0.5em);
+  width: calc(1lh + 0.5em);
 }
 
-.chub-card-open-in-chub-button {
+.chub-card-open-in-chub-button,
+.chub-card-open-in-workshop-button {
+  display: flex;
+  align-items: center;
   padding: 0.2em 0.5em;
 }
 
@@ -892,6 +944,10 @@ watchEffect(() => {
   )
   :deep(p) {
   margin: 0;
+}
+
+.tab-contents > :deep(img) {
+  align-self: center;
 }
 
 .chub-card-tagline-container {

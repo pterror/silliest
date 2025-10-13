@@ -30,7 +30,7 @@ const emit = defineEmits<{
 
 const configQuery = useQuery(chubQueryOptions("chubFetchEntireConfig", []));
 const config = configQuery.data;
-const { blurNsfw } = inject(chubProviderKey)!;
+const { blurNsfw, showWorkshopLink } = inject(chubProviderKey)!;
 const author = computed(() => props.card.fullPath.replace(/[/][\s\S]+/, ""));
 
 const isExplicitNsfw = computed(() => props.card.topics.includes("NSFW"));
@@ -98,6 +98,14 @@ const blurred = computed(
           target="_blank"
         >
           Chub
+        </a>
+        <a
+          v-if="showWorkshopLink"
+          class="chub-card-workshop"
+          :href="`https://tools.theworkshop.team/cardStats/${card.id}`"
+          target="_blank"
+        >
+          Workshop
         </a>
         <button
           class="chub-card-preview-download-button"

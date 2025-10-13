@@ -5,4 +5,5 @@ export const chubProviderKey = Symbol("chub provider") as InjectionKey<{
   avatarUrl: Ref<string>;
   blurNsfw: Ref<boolean>;
   showCustomCss: Ref<boolean>;
+  showWorkshopLink: Ref<boolean>;
 }>;
