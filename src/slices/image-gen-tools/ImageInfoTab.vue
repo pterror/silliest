@@ -32,7 +32,6 @@ const metadata = computedAsync(() =>
     .arrayBuffer()
     .then(async (buffer) => {
       const [, mimetype] = fileType(new Uint8Array(buffer)) ?? [];
-      console.log(mimetype);
       switch (mimetype) {
         case "image/png": {
           const png = decode(buffer);
