@@ -190,7 +190,11 @@ watchEffect(() => {
           :href="`https://tools.theworkshop.team/cardStats/${card.id}`"
           target="_blank"
         >
-          Open in Workshop
+          <img
+            src="https://tools.theworkshop.team/favicon.ico"
+            alt="The Workshop"
+          />
+          <span>Open in Workshop</span>
         </a>
         <a
           :href="`https://chub.ai/characters/${card.fullPath}`"
@@ -882,6 +886,12 @@ watchEffect(() => {
   display: flex;
   align-items: center;
   padding: 0.2em 0.5em;
+}
+
+.chub-card-open-in-workshop-button img {
+  height: 1em;
+  width: 1em;
+  margin-right: 0.5em;
 }
 
 .chub-card-image {

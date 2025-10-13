@@ -94,18 +94,22 @@ const blurred = computed(
       <div class="buttons">
         <a
           :href="`https://chub.ai/characters/${card.fullPath}`"
-          class="open-in-chub"
+          class="chub-card-preview-open-in-chub"
           target="_blank"
         >
           Chub
         </a>
         <a
           v-if="showWorkshopLink"
-          class="chub-card-workshop"
+          class="chub-card-preview-open-in-workshop"
           :href="`https://tools.theworkshop.team/cardStats/${card.id}`"
           target="_blank"
         >
-          Workshop
+          <img
+            src="https://tools.theworkshop.team/favicon.ico"
+            alt="The Workshop"
+          />
+          <span>Workshop</span>
         </a>
         <button
           class="chub-card-preview-download-button"
@@ -300,6 +304,16 @@ h2 {
   flex-flow: row wrap;
   gap: 1em;
   justify-content: center;
+}
+
+.chub-card-preview-open-in-workshop img {
+  height: 1lh;
+  width: 1lh;
+  margin-right: 0.5em;
+}
+
+.chub-card-preview-open-in-workshop span {
+  vertical-align: top;
 }
 
 :deep(img) {
