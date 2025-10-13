@@ -3,14 +3,14 @@ import type {
   ComfyuiPromptNodeData,
   ComfyuiWorkflow,
   ComfyuiWorkflowLink,
-  ComfyuiWorkflowNode,
+  ComfyuiWorkflowNodeData,
 } from "./comfyuiTypes";
 
 defineProps<{
-  node: ComfyuiWorkflowNode;
+  node: ComfyuiWorkflowNodeData;
   prompt: Record<string, ComfyuiPromptNodeData>;
   workflow: ComfyuiWorkflow;
-  nodes: Record<string, ComfyuiWorkflowNode>;
+  nodes: Record<string, ComfyuiWorkflowNodeData>;
   links: Record<string, ComfyuiWorkflowLink>;
 }>();
 </script>

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import SdWebuiInfoTab from "./SdWebuiInfoTab.vue";
 import { useEventListener } from "@vueuse/core";
 import { extractUrls } from "../../lib/url";
+import ImageInfoTab from "./ImageInfoTab.vue";
 
 const files = ref<File[]>([]);
 
@@ -56,7 +56,7 @@ useEventListener(window, "paste", onPaste);
     </div>
     <div class="tab-container">
       <template v-for="file in files" :key="file.name">
-        <SdWebuiInfoTab
+        <ImageInfoTab
           :file="file"
           :default-checked="file === files[0]"
           @close="files.splice(files.indexOf(file), 1)"

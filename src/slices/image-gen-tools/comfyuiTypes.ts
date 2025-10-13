@@ -24,7 +24,7 @@ export interface ComfyuiPromptNodeData {
   };
 }
 
-export interface ComfyuiWorkflowNode {
+export interface ComfyuiWorkflowNodeData {
   readonly id: ComfyuiWorkflowNodeId;
   readonly type: string;
   readonly pos: readonly [x: number, y: number];
@@ -88,7 +88,7 @@ export interface ComfyuiWorkflow {
   readonly revision: number;
   readonly last_node_id: ComfyuiWorkflowNodeId;
   readonly last_link_id: ComfyuiWorkflowLinkId;
-  readonly nodes: readonly ComfyuiWorkflowNode[];
+  readonly nodes: readonly ComfyuiWorkflowNodeData[];
   readonly links: readonly ComfyuiWorkflowLink[];
   readonly groups: readonly ComfyuiWorkflowGroup[];
   readonly config: Record<string, unknown>;

@@ -1,114 +1,44 @@
 <script setup lang="ts">
-import { decode } from "fast-png";
-import { computedAsync } from "@vueuse/core";
-import { computed, onMounted, onUnmounted, ref, Teleport } from "vue";
-import { fileType } from "../../lib/filetype";
-import type { ComfyuiPromptNodeData, ComfyuiWorkflow } from "./comfyuiTypes";
+import { computed, ref, Teleport } from "vue";
+import type {
+  ComfyuiPromptNodeData,
+  ComfyuiWorkflow,
+  ComfyuiWorkflowLink,
+  ComfyuiWorkflowNodeData,
+} from "./comfyuiTypes";
 import ComfyuiPromptNode from "./ComfyuiPromptNode.vue";
 import ComfyuiWorkflowNode from "./ComfyuiWorkflowNode.vue";
 import { hashString } from "../../lib/hash";
 
 const props = defineProps<{
-  file: File;
+  fileName: string;
+  metadata: {
+    positivePrompt: string;
+    negativePrompt: string;
+    prompt: Record<string, ComfyuiPromptNodeData>;
+    workflow: ComfyuiWorkflow;
+    nodes: Record<string, ComfyuiWorkflowNodeData>;
+    links: Record<string, ComfyuiWorkflowLink>;
+    promptJson: string;
+    workflowJson: string;
+    value?: never;
+  };
+  imageUrl: string | undefined;
   defaultChecked: boolean;
 }>();
 const emit = defineEmits<{
   close: [];
 }>();
 
-const title = props.file.name;
-
 const fullscreenPreviewVisible = ref(false);
 
-const imageUrl = ref<string | undefined>(undefined);
-
-onMounted(() => {
-  imageUrl.value = URL.createObjectURL(props.file);
-});
-
-onUnmounted(() => {
-  if (!imageUrl.value) return;
-  URL.revokeObjectURL(imageUrl.value);
-});
-
-function copy(text: string) {
+const copy = (text: string) => {
   navigator.clipboard.writeText(text);
-}
-
-function copyPrompt() {
-  if (!metadata.value) return;
-  copy(metadata.value.promptJson);
-}
-
-function copyWorkflow() {
-  if (!metadata.value) return;
-  copy(metadata.value.workflowJson);
-}
-
-const metadata = computedAsync(() =>
-  props.file
-    .arrayBuffer()
-    .then(async (buffer) => {
-      const [, mimetype] = fileType(new Uint8Array(buffer)) ?? [];
-      switch (mimetype) {
-        case "image/png": {
-          const png = decode(buffer);
-          if (!png.text.prompt && !png.text.workflow) {
-            return null;
-          }
-          const promptJson = png.text.prompt ?? "{}";
-          const workflowJson = png.text.workflow ?? "{}";
-          const prompt = JSON.parse(
-            promptJson.replace(/\bNaN\b/g, "null"),
-          ) as Record<string, ComfyuiPromptNodeData>;
-          const workflow = JSON.parse(
-            workflowJson.replace(/\bNaN\b/g, "null"),
-          ) as ComfyuiWorkflow;
-          const nodes = Object.fromEntries(
-            workflow.nodes.map((node, index) => [node.id, node]),
-          );
-          const links = Object.fromEntries(
-            workflow.links.map((link) => [link[0], link]),
-          );
-          const positivePrompt = String(
-            Object.values(prompt).find((node) =>
-              node._meta.title.includes("Positive Prompt"),
-            )?.inputs.text,
-          );
-          const negativePrompt = String(
-            Object.values(prompt).find((node) =>
-              node._meta.title.includes("Negative Prompt"),
-            )?.inputs.text,
-          );
-          return {
-            positivePrompt,
-            negativePrompt,
-            prompt,
-            workflow,
-            nodes,
-            links,
-            promptJson,
-            workflowJson,
-          };
-        }
-        default: {
-          throw new Error(`Unsupported file type: ${mimetype ?? "unknown"}`);
-        }
-      }
-    })
-    .catch((error) => {
-      console.error(
-        `Could not decode PNG file '${props.file.name}'`,
-        "Error:",
-        error,
-      );
-      throw new Error("Could not decode PNG file");
-    }),
-);
+};
 
 const typeColors = computed(() => {
   const allTypes = new Set(
-    metadata.value?.workflow.nodes.flatMap((n) => [
+    props.metadata.workflow.nodes.flatMap((n) => [
       ...n.inputs.map((i) => i.type),
       ...n.outputs.map((o) => o.type),
     ]) ?? [],
@@ -135,7 +65,7 @@ const typeColors = computed(() => {
       class="invisible-radio"
       :checked="defaultChecked"
     />
-    {{ title }}
+    {{ fileName }}
     <button class="transition-bg" @click="emit('close')">&times;</button>
   </label>
   <div v-if="metadata" class="SdWebuiInfoTabContents tab-contents">
