@@ -1,15 +1,17 @@
 <script setup lang="ts">
-import { computed, provide, ref, Teleport, watchEffect } from "vue";
+import { computed, provide, ref, Teleport, toRaw, watchEffect } from "vue";
 import {
   chubGetCard,
-  type ChubCard as ChubCardType,
-  type ChubCardFullPath,
-  type ChubCardId,
-  type ChubCardQuery,
   CHUB_SORT_TYPES,
   CHUB_CARD_QUERY_TYPES,
   CHUB_SORT_NAMES,
   CHUB_SORT_NAME_TO_TYPE,
+  chubGetCardsByQuery,
+  type ChubCard as ChubCardType,
+  type ChubCardFullPath,
+  type ChubCardId,
+  type ChubCardQuery,
+  type ChubEncodedCursor,
 } from "./chub";
 import { useLocalStorage } from "@vueuse/core";
 import ChubCardPreview from "./ChubCardPreview.vue";
@@ -48,6 +50,7 @@ const {
   searchParams,
   params: {
     page,
+    cursor,
     search,
     author,
     name_like: nameLike,
@@ -75,6 +78,7 @@ const {
 } = useComputedSearchParams(
   {
     page: { type: "number", defaultValue: 1 },
+    cursor: { type: "string", hideWhenDefault: false },
     search: { type: "string" },
     author: { type: "string" },
     name_like: { type: "string" },
@@ -113,8 +117,8 @@ const {
   { writeMode: "push" },
   {
     onSet: (param) => {
-      if (param !== "page") {
-        page.value = 1;
+      if (param !== "page" && param !== "cursor") {
+        cursor.value = "";
       }
     },
   },
@@ -151,6 +155,7 @@ const isTimeline = computed({
 
 const allowedParams = [
   "page",
+  "cursor",
   "search",
   "username",
   "topics",
@@ -200,14 +205,18 @@ const params = computed(() => {
 const query = computed<ChubCardQuery>(() => {
   switch (queryType.value) {
     case "timeline":
-      return { type: "timeline" };
+      return {
+        type: "timeline",
+        params: { page: page.value, cursor: cursor.value },
+      };
     case "search":
-    default:
+    default: {
       if (queryType.value !== "search") {
         console.warn(
           `Unexpected query type: ${queryType.value}. Defaulting to 'search'.`,
         );
       }
+      const { cursor, ...rest } = params.value;
       return {
         type: "search",
         params: {
@@ -217,9 +226,25 @@ const query = computed<ChubCardQuery>(() => {
             excludetopics: excludedTopics.value.join(","),
           }),
           ...(author.value && { username: author.value }),
-          ...params.value,
+          ...rest,
+          ...(cursor ? { cursor: cursor as ChubEncodedCursor } : undefined),
         },
       };
+    }
+  }
+});
+
+watchEffect(async () => {
+  if ("cursor" in searchParams && page.value && page.value > 1) {
+    const clonedQuery = structuredClone(toRaw(query.value));
+    if (!clonedQuery.params?.page) return;
+    clonedQuery.params = {
+      ...clonedQuery.params,
+      page: clonedQuery.params.page - 1,
+    };
+    const results = await chubGetCardsByQuery(clonedQuery);
+    page.value = 1; // Clear page parameter if using cursor pagination
+    cursor.value = results.cursor ?? "";
   }
 });
 
@@ -252,12 +277,59 @@ watchEffect(() => {
 const cardsQuery = useQuery(chubQueryOptions("chubGetCardsByQuery", [query]));
 // Avoid loading by keeping the previous data
 const cards = ref<readonly ChubCardType[]>();
-
 watchEffect(() => {
   if (cardsQuery.data.value != null) {
-    cards.value = cardsQuery.data.value;
+    cards.value = cardsQuery.data.value.nodes;
   }
 });
+
+// For shadow nsfw detection
+const withoutNsfwQuery = computed((): ChubCardQuery => {
+  if (!nsfw.value && !nsfl.value) return query.value;
+  if (query.value.type !== "search") return query.value;
+  const firstCard = cardsQuery.data.value?.nodes[0];
+  if (!firstCard) return query.value;
+  const { page, ...params } = query.value.params;
+  const needsCursor = page && page > 1;
+  if (needsCursor && !("cursor" in params)) return query.value;
+  return {
+    type: "search",
+    params: { ...params, nsfw: false, nsfl: true },
+  };
+});
+
+// For shadow nsfl detection
+const withoutNsflQuery = computed((): ChubCardQuery => {
+  if (!nsfl.value) return query.value;
+  if (query.value.type !== "search") return query.value;
+  const firstCard = cardsQuery.data.value?.nodes[0];
+  if (!firstCard) return query.value;
+  const { page, ...params } = query.value.params;
+  const needsCursor = page && page > 1;
+  if (needsCursor && !("cursor" in params)) return query.value;
+  return {
+    type: "search",
+    params: { ...params, nsfw: true, nsfl: false },
+  };
+});
+
+const cardsQueryWithoutNsfw = useQuery(
+  chubQueryOptions("chubGetCardsByQuery", [withoutNsfwQuery], {
+    enabled: computed(
+      () => toRaw(withoutNsfwQuery.value) !== toRaw(query.value),
+    ),
+  }),
+);
+
+const cardsQueryWithoutNsfl = useQuery(
+  chubQueryOptions("chubGetCardsByQuery", [withoutNsflQuery], {
+    enabled: computed(
+      () =>
+        withoutNsflQuery.value != null &&
+        toRaw(withoutNsflQuery.value) !== toRaw(query.value),
+    ),
+  }),
+);
 
 const newTopic = ref("");
 
@@ -281,6 +353,8 @@ const removeTopic = (topic: string) => {
   topics.value.splice(index, 1);
   topics.value = [...topics.value];
 };
+
+const newExcludedTopic = ref("");
 
 const addNewExcludedTopic = () => {
   const topic = newTopic.value.trim();
@@ -331,13 +405,42 @@ const removeExcludedTopic = (topic: string) => {
         </label>
       </div>
       <div class="chub-page-controls buttons">
-        <button @click="page = 1">«</button>
-        <button @click="page -= 1">&lsaquo;</button>
-        <label>
-          Page
-          <input type="number" v-model="page" />
-        </label>
-        <button @click="page += 1">&rsaquo;</button>
+        <template v-if="'cursor' in searchParams">
+          <button @click="cursor = ''">«</button>
+          <span>
+            Page
+            <input
+              type="number"
+              @change="
+                // @ts-expect-error event targets are not well typed in vue
+                page = $event.target.valueAsNumber
+              "
+            />
+          </span>
+          <button @click="cursor = cardsQuery.data.value.cursor ?? ''">
+            &rsaquo;
+          </button>
+          <button @click="delete searchParams.cursor">
+            To normal pagination
+          </button>
+        </template>
+        <template v-else>
+          <button @click="page = 1">«</button>
+          <button @click="page -= 1">&lsaquo;</button>
+          <label>
+            Page
+            <input
+              type="number"
+              :value="page"
+              @change="
+                // @ts-expect-error event targets are not well typed in vue
+                page = $event.target.valueAsNumber
+              "
+            />
+          </label>
+          <button @click="page += 1">&rsaquo;</button>
+          <button @click="cursor = ''">To cursor pagination</button>
+        </template>
       </div>
       <div class="chub-controls">
         <label>
@@ -529,7 +632,7 @@ const removeExcludedTopic = (topic: string) => {
         </div>
         <div>
           <input
-            v-model="newTopic"
+            v-model="newExcludedTopic"
             @keyup.enter="addNewExcludedTopic"
             placeholder="Add topic"
             :size="1"
@@ -546,7 +649,16 @@ const removeExcludedTopic = (topic: string) => {
           v-for="card in cards"
           :key="card.id"
           :card="card"
-          :focused="card.id === fullscreenCardId"
+          :isHiddenInNsfw="
+            cardsQueryWithoutNsfw.data.value?.nodes.every(
+              (c) => c.id !== card.id,
+            ) ?? false
+          "
+          :isHiddenInNsfl="
+            cardsQueryWithoutNsfl.data.value?.nodes.every(
+              (c) => c.id !== card.id,
+            ) ?? false
+          "
           @openInFullscreen="fullscreenCardId = card.fullPath"
           @addTopic="addTopic"
           @searchByAuthor="author = $event"
@@ -554,13 +666,42 @@ const removeExcludedTopic = (topic: string) => {
       </div>
     </div>
     <div class="chub-page-controls buttons">
-      <button @click="page = 1">«</button>
-      <button @click="page -= 1">&lsaquo;</button>
-      <label>
-        Page
-        <input type="number" v-model="page" />
-      </label>
-      <button @click="page += 1">&rsaquo;</button>
+      <template v-if="'cursor' in searchParams">
+        <button @click="cursor = ''">«</button>
+        <span>
+          Page
+          <input
+            type="number"
+            @change="
+              // @ts-expect-error event targets are not well typed in vue
+              page = $event.target.valueAsNumber
+            "
+          />
+        </span>
+        <button @click="cursor = cardsQuery.data.value.cursor ?? ''">
+          &rsaquo;
+        </button>
+        <button @click="delete searchParams.cursor">
+          To normal pagination
+        </button>
+      </template>
+      <template v-else>
+        <button @click="page = 1">«</button>
+        <button @click="page -= 1">&lsaquo;</button>
+        <label>
+          Page
+          <input
+            type="number"
+            :value="page"
+            @change="
+              // @ts-expect-error event targets are not well typed in vue
+              page = $event.target.valueAsNumber
+            "
+          />
+        </label>
+        <button @click="page += 1">&rsaquo;</button>
+        <button @click="cursor = ''">To cursor pagination</button>
+      </template>
     </div>
   </div>
   <Teleport v-if="fullscreenCard" to="body">

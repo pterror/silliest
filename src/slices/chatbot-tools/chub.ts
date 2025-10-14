@@ -358,6 +358,7 @@ export interface ChubSearchParams {
   readonly max_tokens?: number;
   /** Defaults to 1 */
   readonly page?: number;
+  readonly cursor?: ChubEncodedCursor;
   readonly min_tags?: number;
   /** Rating is an integer between 0-100.
    * It seems to take a varying amount of time before bots receive an AI rating. */
@@ -445,14 +446,14 @@ export const CHUB_SORT_NAME_TO_TYPE = {
 
 export async function chubSearchCards(
   params: ChubSearchParams,
-): Promise<readonly ChubCard[]> {
+): Promise<ChubPageRaw<ChubCard>> {
   const query = new URLSearchParams(
     params as Record<string, string>,
   ).toString();
   const response = await fetch(`${BASE_URL}/search?${query}`);
   const data: { readonly data: ChubPageRaw<ChubCardRaw> } =
     await response.json();
-  return data.data.nodes.map(chubCardRawToChubCard);
+  return { ...data.data, nodes: data.data.nodes.map(chubCardRawToChubCard) };
 }
 
 export type ChubTimelineParams = {
@@ -463,14 +464,14 @@ export type ChubTimelineParams = {
 
 export async function chubGetTimelinePage(
   params: ChubTimelineParams = {},
-): Promise<readonly ChubCard[]> {
+): Promise<ChubPageRaw<ChubCard>> {
   const query = new URLSearchParams(
     filterOutUndefined(params) as Record<string, string>,
   ).toString();
   const response = await fetch(`${API_URL}/timeline/v1?${query}`);
   const { data }: { readonly data: ChubPageRaw<ChubCardRaw> } =
     await response.json();
-  return data.nodes.map(chubCardRawToChubCard);
+  return { ...data, nodes: data.nodes.map(chubCardRawToChubCard) };
 }
 
 export async function chubGetSelfUser(): Promise<ChubSelfUser> {
@@ -484,8 +485,8 @@ export async function chubGetUserById(username: string): Promise<ChubUser> {
 }
 
 export type ChubCardQuery =
-  | { type: "timeline"; cursor?: string }
-  | { type: "search"; params: ChubSearchParams; cursor?: string };
+  | { type: "timeline"; params?: ChubTimelineParams }
+  | { type: "search"; params: ChubSearchParams };
 
 export type ChubSortOrder = "asc" | "desc";
 export interface ChubSortParameter<T> {
@@ -707,7 +708,7 @@ export function cursorFromChubCard(
 }
 
 export function encodeChubCursor(data: ChubCursor): ChubEncodedCursor {
-  return atob(JSON.stringify(data)) as ChubEncodedCursor;
+  return btoa(JSON.stringify(data)) as ChubEncodedCursor;
 }
 
 export function decodeChubCursor(cursor: ChubEncodedCursor): ChubCursor {
@@ -722,17 +723,20 @@ export const CHUB_CARD_QUERY_TYPES = [
 
 export async function chubGetCardsByQuery(
   query: ChubCardQuery,
-): Promise<readonly ChubCard[]> {
+): Promise<ChubPageRaw<ChubCard>> {
   const widenedQuery = query;
   switch (query.type) {
-    case "timeline":
-      return await chubGetTimelinePage({ cursor: query.cursor });
-    case "search":
+    case "timeline": {
+      return await chubGetTimelinePage(query.params);
+    }
+    case "search": {
       return await chubSearchCards(query.params);
-    default:
+    }
+    default: {
       // oxlint-disable-next-line no-unused-expressions
       query satisfies never; // Ensure all cases are handled
       throw new Error(`Unsupported query type: ${widenedQuery.type}`);
+    }
   }
 }
 
@@ -1355,8 +1359,8 @@ export interface ChubGalleryImage {
 
 export async function chubListGalleryImages(
   projectId: ChubCardId,
-  limit: number = 48,
-  page: number = 1,
+  limit = 48,
+  page = 1,
 ): Promise<readonly ChubGalleryImage[]> {
   const params = new URLSearchParams({
     limit: limit.toString(),

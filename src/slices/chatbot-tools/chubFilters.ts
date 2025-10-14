@@ -34,11 +34,11 @@ function getChubFilterValues(card: ChubCard, tag: "NSFW" | "NSFL") {
 
   const isShadowFiltered = computed(() => {
     if (isExplicitFiltered.value) return false;
-    if (!isShadowFilteredQuery?.data?.value) return false;
+    if (!isShadowFilteredQuery?.data?.value?.nodes) return false;
     // If we have no results, it's definitely NSFW
-    if (isShadowFilteredQuery.data.value.length === 0) return true;
+    if (isShadowFilteredQuery.data.value.nodes.length === 0) return true;
     // If we have results, check if our card is among them
-    return !isShadowFilteredQuery.data.value.some(
+    return !isShadowFilteredQuery.data.value.nodes.some(
       (c) => c.fullPath === card.fullPath,
     );
   });

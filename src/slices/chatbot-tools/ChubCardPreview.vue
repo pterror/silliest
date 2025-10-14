@@ -21,6 +21,8 @@ import {
 
 const props = defineProps<{
   card: ChubCard;
+  isHiddenInNsfw?: boolean;
+  isHiddenInNsfl?: boolean;
 }>();
 const emit = defineEmits<{
   openInFullscreen: [];
@@ -30,15 +32,19 @@ const emit = defineEmits<{
 
 const configQuery = useQuery(chubQueryOptions("chubFetchEntireConfig", []));
 const config = configQuery.data;
-const { blurNsfw, showWorkshopLink } = inject(chubProviderKey)!;
+const { blurNsfw } = inject(chubProviderKey)!;
 const author = computed(() => props.card.fullPath.replace(/[/][\s\S]+/, ""));
 
 const isExplicitNsfw = computed(() => props.card.topics.includes("NSFW"));
 const isExplicitNsfl = computed(() => props.card.topics.includes("NSFL"));
-const isShadowNsfw = computed(() => false);
-const isShadowNsfl = computed(() => false);
-const isNsfw = computed(() => isExplicitNsfw.value || isShadowNsfw.value);
-const isNsfl = computed(() => isExplicitNsfl.value || isShadowNsfl.value);
+const isNsfw = computed(
+  () => isExplicitNsfw.value || (props.isHiddenInNsfw ?? false),
+);
+const isNsfl = computed(
+  () => isExplicitNsfl.value || (props.isHiddenInNsfl ?? false),
+);
+const isShadowNsfw = computed(() => isNsfw.value && !isExplicitNsfw.value);
+const isShadowNsfl = computed(() => isNsfl.value && !isExplicitNsfl.value);
 
 const tokenCounts = computed(() => {
   const tokenCountsRaw = props.card.labels?.find(
@@ -98,18 +104,6 @@ const blurred = computed(
           target="_blank"
         >
           Chub
-        </a>
-        <a
-          v-if="showWorkshopLink"
-          class="chub-card-preview-open-in-workshop"
-          :href="`https://tools.theworkshop.team/cardStats/${card.id}`"
-          target="_blank"
-        >
-          <img
-            src="https://tools.theworkshop.team/favicon.ico"
-            alt="The Workshop"
-          />
-          <span>Workshop</span>
         </a>
         <button
           class="chub-card-preview-download-button"
