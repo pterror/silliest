@@ -24,6 +24,25 @@ export interface ComfyuiPromptNodeData {
   };
 }
 
+export interface ComfyuiWorkflowNodeInput {
+  readonly name: string;
+  readonly nameLocked?: boolean;
+  readonly type: string | number;
+  readonly shape?: number;
+  readonly link: ComfyuiWorkflowLinkId | null;
+  readonly dir?: number;
+  readonly widget?: { readonly name: "seed" };
+}
+
+export interface ComfyuiWorkflowNodeOutput {
+  readonly name: string;
+  readonly nameLocked?: boolean;
+  readonly type: string | number;
+  readonly shape?: number;
+  readonly slot_index?: number;
+  readonly links: readonly ComfyuiWorkflowLinkId[] | null;
+}
+
 export interface ComfyuiWorkflowNodeData {
   readonly id: ComfyuiWorkflowNodeId;
   readonly type: string;
@@ -32,23 +51,8 @@ export interface ComfyuiWorkflowNodeData {
   readonly flags: Record<string, unknown>;
   readonly order: number;
   readonly mode: number;
-  readonly inputs: readonly {
-    readonly name: string;
-    readonly nameLocked?: boolean;
-    readonly type: string | number;
-    readonly shape?: number;
-    readonly link: number | null;
-    readonly dir?: number;
-    readonly widget?: { readonly name: "seed" };
-  }[];
-  readonly outputs: readonly {
-    readonly name: string;
-    readonly nameLocked?: boolean;
-    readonly type: string | number;
-    readonly shape?: number;
-    readonly slot_index?: number;
-    readonly links: readonly number[] | null;
-  }[];
+  readonly inputs: readonly ComfyuiWorkflowNodeInput[];
+  readonly outputs: readonly ComfyuiWorkflowNodeOutput[];
   readonly properties: {
     readonly cnr_id?: string;
     readonly ver?: string;
@@ -104,4 +108,80 @@ export interface ComfyuiWorkflow {
   readonly version: number;
   readonly widget_idx_map: Record<string, Record<string, number>>;
   readonly seed_widgets: Record<string, number>;
+}
+
+export function inputNodeNameFromLink(
+  [, nodeId]: ComfyuiWorkflowLink,
+  nodes: Record<ComfyuiWorkflowNodeId, ComfyuiWorkflowNodeData>,
+  prompt: Record<ComfyuiWorkflowNodeId, ComfyuiPromptNodeData>,
+) {
+  const node = nodes[nodeId];
+  return (
+    prompt[node?.id ?? (0 as ComfyuiWorkflowNodeId)]?._meta.title ?? node?.type
+  );
+}
+
+export function inputNodeOutputFromLink(
+  [, nodeId, outputIndex]: ComfyuiWorkflowLink,
+  nodes: Record<ComfyuiWorkflowNodeId, ComfyuiWorkflowNodeData>,
+) {
+  return nodes[nodeId]?.outputs[outputIndex];
+}
+
+export function outputNodeNameFromLink(
+  [, , , nodeId]: ComfyuiWorkflowLink,
+  nodes: Record<ComfyuiWorkflowNodeId, ComfyuiWorkflowNodeData>,
+) {
+  return nodes[nodeId]?.type;
+}
+
+export function outputNodeInputFromLink(
+  [, , , nodeId, inputIndex]: ComfyuiWorkflowLink,
+  nodes: Record<ComfyuiWorkflowNodeId, ComfyuiWorkflowNodeData>,
+) {
+  return nodes[nodeId]?.inputs[inputIndex];
+}
+
+export function promptContent(
+  nodes: Record<ComfyuiWorkflowNodeId, ComfyuiWorkflowNodeData>,
+  links: Record<ComfyuiWorkflowLinkId, ComfyuiWorkflowLink>,
+  promptType: "positive" | "negative",
+  samplerNode?: ComfyuiWorkflowNodeData,
+): string | undefined {
+  // If the sampler node is undefined, search for a node with Sampler in its type
+  if (!samplerNode) {
+    for (const node of Object.values(nodes)) {
+      if (node.type.includes("Sampler")) {
+        samplerNode = node;
+        break;
+      }
+    }
+  }
+  if (!samplerNode) return;
+  let prompt = samplerNode.inputs.find((input) => input.name === promptType);
+  if (!prompt?.link) {
+    // Some workflows have a few nodes in between the sampler and the prompt.
+    // They should be handled individually as more workflows are analyzed.
+    const pipeNode = samplerNode.inputs.find((input) =>
+      input.name.includes("pipe"),
+    );
+    if (!pipeNode?.link) return;
+    const pipeLink = links[pipeNode.link];
+    if (!pipeLink) return;
+    const [, nodeId] = pipeLink;
+    const node = nodes[nodeId];
+    if (!node) return;
+    prompt = node.inputs.find((input) => input.name === promptType);
+    if (!prompt?.link) return;
+  }
+  const link = links[prompt.link];
+  if (!link) return;
+  // Search through linked nodes to find the prompt string
+  const [, nodeId] = link;
+  let node = nodes[nodeId];
+  if (!node) return;
+  // For now assume the workflow is simple and the prompt is directly connected
+  if (!/clip/i.test(node.type)) return;
+  const value = node.widgets_values[0];
+  if (typeof value === "string") return value;
 }

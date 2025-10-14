@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, ref, Teleport } from "vue";
-import type {
-  ComfyuiPromptNodeData,
-  ComfyuiWorkflow,
-  ComfyuiWorkflowLink,
-  ComfyuiWorkflowNodeData,
+import {
+  promptContent,
+  type ComfyuiPromptNodeData,
+  type ComfyuiWorkflow,
+  type ComfyuiWorkflowLink,
+  type ComfyuiWorkflowNodeData,
 } from "./comfyuiTypes";
 import ComfyuiPromptNode from "./ComfyuiPromptNode.vue";
 import ComfyuiWorkflowNode from "./ComfyuiWorkflowNode.vue";
@@ -13,8 +14,6 @@ import { hashString } from "../../lib/hash";
 const props = defineProps<{
   fileName: string;
   metadata: {
-    positivePrompt: string;
-    negativePrompt: string;
     prompt: Record<string, ComfyuiPromptNodeData>;
     workflow: ComfyuiWorkflow;
     nodes: Record<string, ComfyuiWorkflowNodeData>;
@@ -29,6 +28,14 @@ const props = defineProps<{
 const emit = defineEmits<{
   close: [];
 }>();
+
+const positivePrompt = computed(() =>
+  promptContent(props.metadata.nodes, props.metadata.links, "positive"),
+);
+
+const negativePrompt = computed(() =>
+  promptContent(props.metadata.nodes, props.metadata.links, "negative"),
+);
 
 const fullscreenPreviewVisible = ref(false);
 
@@ -81,7 +88,7 @@ const typeColors = computed(() => {
         <input
           type="radio"
           class="invisible-radio"
-          name="metadata-tab"
+          :name="`metadata-tab-${imageUrl}`"
           value="prompts"
           checked
         />
@@ -89,21 +96,23 @@ const typeColors = computed(() => {
       </label>
       <div class="comfyui-info-prompts tab-contents">
         <h3>Positive Prompt</h3>
-        <div class="buttons">
-          <button @click="copy(metadata.positivePrompt)">Copy</button>
+        <div v-if="positivePrompt" class="buttons">
+          <button @click="copy(positivePrompt)">Copy</button>
         </div>
-        {{ metadata.positivePrompt }}
+        <span v-if="positivePrompt">{{ positivePrompt }}</span>
+        <span v-else>No positive prompt found.</span>
         <h3>Negative Prompt</h3>
-        <div class="buttons">
-          <button @click="copy(metadata.negativePrompt)">Copy</button>
+        <div v-if="negativePrompt" class="buttons">
+          <button @click="copy(negativePrompt)">Copy</button>
         </div>
-        {{ metadata.negativePrompt }}
+        <span v-if="negativePrompt">{{ negativePrompt }}</span>
+        <span v-else>No negative prompt found.</span>
       </div>
       <label class="tab-title">
         <input
           type="radio"
           class="invisible-radio"
-          name="metadata-tab"
+          :name="`metadata-tab-${imageUrl}`"
           value="prompt"
         />
         Prompt (nodes)
@@ -120,7 +129,7 @@ const typeColors = computed(() => {
         <input
           type="radio"
           class="invisible-radio"
-          name="metadata-tab"
+          :name="`metadata-tab-${imageUrl}`"
           value="workflow"
         />
         Workflow (nodes)
@@ -140,7 +149,7 @@ const typeColors = computed(() => {
         <input
           type="radio"
           class="invisible-radio"
-          name="metadata-tab"
+          :name="`metadata-tab-${imageUrl}`"
           value="prompt-raw"
         />
         Prompt (raw)
@@ -155,7 +164,7 @@ const typeColors = computed(() => {
         <input
           type="radio"
           class="invisible-radio"
-          name="metadata-tab"
+          :name="`metadata-tab-${imageUrl}`"
           value="workflow-raw"
         />
         Workflow (raw)

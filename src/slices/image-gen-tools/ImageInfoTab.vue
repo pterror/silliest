@@ -53,21 +53,9 @@ const metadata = computedAsync(() =>
             const links = Object.fromEntries(
               workflow.links.map((link) => [link[0], link]),
             );
-            const positivePrompt = String(
-              Object.values(prompt).find((node) =>
-                node._meta.title.includes("Positive Prompt"),
-              )?.inputs.text,
-            );
-            const negativePrompt = String(
-              Object.values(prompt).find((node) =>
-                node._meta.title.includes("Negative Prompt"),
-              )?.inputs.text,
-            );
             return {
               type: "comfyui" as const,
               value: {
-                positivePrompt,
-                negativePrompt,
                 prompt,
                 workflow,
                 nodes,

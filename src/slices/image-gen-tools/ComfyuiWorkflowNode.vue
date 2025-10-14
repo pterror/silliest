@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import type {
-  ComfyuiPromptNodeData,
-  ComfyuiWorkflow,
-  ComfyuiWorkflowLink,
-  ComfyuiWorkflowNodeData,
+import {
+  inputNodeOutputFromLink,
+  inputNodeNameFromLink,
+  outputNodeInputFromLink,
+  outputNodeNameFromLink,
+  type ComfyuiPromptNodeData,
+  type ComfyuiWorkflow,
+  type ComfyuiWorkflowLink,
+  type ComfyuiWorkflowNodeData,
 } from "./comfyuiTypes";
 
 defineProps<{
@@ -24,7 +28,7 @@ defineProps<{
     <div class="comfyui-workflow-node-values">
       <div class="comfyui-workflow-node-inputs">
         <h4>Inputs</h4>
-        <div v-for="input in node.inputs" :key="input.name">
+        <div v-for="(input, i) in node.inputs" :key="input.name">
           <span
             :class="`comfyui-workflow-node-type-${String(
               input.type,
@@ -35,17 +39,16 @@ defineProps<{
           </span>
           <a
             v-if="input.link"
+            class="comfyui-workflow-node-value"
             :href="`#comfyui-workflow-node-${nodes[links[input.link]![1]]?.id!}`"
           >
-            {{
-              prompt[nodes[links[input.link]![1]]?.id ?? 0]?._meta.title ??
-              nodes[links[input.link]![1]]?.type
-            }}
+            {{ inputNodeNameFromLink(links[input.link]!, nodes, prompt) }}
             >
-            {{
-              nodes[links[input.link]![1]]?.outputs[links[input.link]![2]]?.name
-            }}
+            {{ inputNodeOutputFromLink(links[input.link]!, nodes)?.name }}
           </a>
+          <span v-else class="comfyui-workflow-node-value">{{
+            node.widgets_values[i]
+          }}</span>
         </div>
       </div>
       <div class="comfyui-workflow-node-outputs">
@@ -63,14 +66,12 @@ defineProps<{
             <a
               v-for="link in output.links"
               :key="link"
+              class="comfyui-workflow-node-value"
               :href="`#comfyui-workflow-node-${nodes[links[link]![3]]?.id!}`"
             >
-              {{
-                prompt[nodes[links[link]![3]]?.id ?? 0]?._meta.title ??
-                nodes[links[link]![3]]?.type
-              }}
+              {{ outputNodeNameFromLink(links[link]!, nodes) }}
               >
-              {{ nodes[links[link]![3]]?.inputs[links[link]![4]]?.name }}
+              {{ outputNodeInputFromLink(links[link]!, nodes)?.name }}
             </a>
           </div>
         </template>
@@ -94,8 +95,7 @@ defineProps<{
   flex-flow: row wrap;
 }
 
-.comfyui-workflow-node-inputs a,
-.comfyui-workflow-node-outputs a {
+.comfyui-workflow-node-value {
   display: block;
   padding-left: 1em;
 }

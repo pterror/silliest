@@ -58,7 +58,7 @@ useEventListener(window, "paste", onPaste);
       <template v-for="file in files" :key="file.name">
         <ImageInfoTab
           :file="file"
-          :default-checked="file === files[0]"
+          :default-checked="file === files.at(-1)"
           @close="files.splice(files.indexOf(file), 1)"
         />
       </template>
