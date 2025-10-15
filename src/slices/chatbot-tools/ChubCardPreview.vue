@@ -115,19 +115,19 @@ const blurred = computed(
         >
           ⤓
         </button>
-        <div>
-          by
-          <a
-            :href="chubAddAuthorToUrl(author)"
-            class="button"
-            @click="
-              !$event.ctrlKey &&
-                (emit('searchByAuthor', author), $event.preventDefault())
-            "
-          >
-            {{ author }}
-          </a>
-        </div>
+      </div>
+      <div>
+        by
+        <a
+          :href="chubAddAuthorToUrl(author)"
+          class="button"
+          @click="
+            !$event.ctrlKey &&
+              (emit('searchByAuthor', author), $event.preventDefault())
+          "
+        >
+          {{ author }}
+        </a>
       </div>
       <div class="chub-card-preview-metadata">
         <span>created {{ useTimeAgo(card.createdAt) }}</span>
@@ -260,6 +260,7 @@ h2 {
   display: flex;
   flex-flow: column nowrap;
   place-items: center;
+  gap: 0.3em;
 }
 
 .chub-card-preview-metadata {
