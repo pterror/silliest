@@ -479,7 +479,7 @@ watchEffect(() => {
             "
             @click="hash = 'chub-card-greetings'"
           />
-          Greetings
+          Greetings ({{ 1 + card.definition.alternate_greetings.length }})
         </label>
         <div class="chub-card-greetings tab-contents">
           <div class="tab-container">
