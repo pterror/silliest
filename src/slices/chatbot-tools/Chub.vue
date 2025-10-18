@@ -118,7 +118,11 @@ const {
   {
     onSet: (param) => {
       if (param !== "page" && param !== "cursor") {
-        cursor.value = "";
+        if ("cursor" in searchParams) {
+          cursor.value = "";
+        } else {
+          page.value = 1;
+        }
       }
     },
   },
