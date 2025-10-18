@@ -199,7 +199,7 @@
       ) as HTMLInputElement;
       function onFileInput() {
         if (filesInput.files?.length) {
-          setFiles([...filesInput.files]);
+          setFiles(Array.from(filesInput.files));
         }
       }
       filesInput.addEventListener("input", onFileInput);
@@ -297,7 +297,7 @@
       function handleFilesDrop(event: DragEvent) {
         event.preventDefault();
         if (event.dataTransfer?.files.length) {
-          setFiles([...event.dataTransfer.files]);
+          setFiles(Array.from(event.dataTransfer.files));
         }
       }
       dropTarget.addEventListener("dragover", handleFilesDrag);
