@@ -358,6 +358,7 @@ watchEffect(() => {
               chubMarkdownToHtml(card.tagline, {
                 unsafe: shouldShowCustomCss,
                 macros,
+                raw: viewRawText,
               })
             "
           ></p>
@@ -503,6 +504,7 @@ watchEffect(() => {
                 chubMarkdownToHtml(card.definition.first_message, {
                   unsafe: shouldShowCustomCss,
                   macros,
+                  raw: viewRawText,
                 })
               "
             ></div>
@@ -531,6 +533,7 @@ watchEffect(() => {
                   chubMarkdownToHtml(msg, {
                     unsafe: shouldShowCustomCss,
                     macros,
+                    raw: viewRawText,
                   })
                 "
               ></div>
@@ -593,6 +596,7 @@ watchEffect(() => {
                     chubMarkdownToHtml(message.content, {
                       unsafe: shouldShowCustomCss,
                       macros,
+                      raw: viewRawText,
                     })
                   "
                 ></div>
@@ -1133,6 +1137,10 @@ watchEffect(() => {
   flex-flow: column-reverse nowrap;
   gap: 1em;
   padding: 0 1em;
+}
+
+:deep(.raw-text) {
+  white-space: pre-wrap;
 }
 
 :deep(.chub-card-macro) {
