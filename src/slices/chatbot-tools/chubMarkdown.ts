@@ -18,6 +18,7 @@ import {
   rehypeRemoveStyles,
 } from "../../lib/rehype";
 import { remarkUnindent, type RehypeRoot } from "../../lib/markdown";
+import { escapeHTML } from "astro/runtime/server/escape.js";
 
 function rehypeReplaceChubLinks() {
   return (tree: RehypeRoot) => {
@@ -112,8 +113,14 @@ const defaultMacros: Record<string, string> = {};
 
 export function chubMarkdownToHtml(
   markdown: string,
-  { unsafe = false, disableAutoplay = true, macros = defaultMacros } = {},
+  {
+    raw = false,
+    unsafe = false,
+    disableAutoplay = true,
+    macros = defaultMacros,
+  } = {},
 ): string {
+  if (raw) return escapeHTML(markdown);
   const base = markdownToHtmlUnsafeProcessor();
   const base2 = unsafe ? base : base.use(rehypeRemoveStyles);
   const base3 = disableAutoplay ? base2.use(rehypeRemoveAutoplay) : base2;

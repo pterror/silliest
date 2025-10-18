@@ -28,6 +28,7 @@ import { getChubFilters } from "./chubFilters";
 import { formatDateTime } from "../../lib/dateTime";
 import ChubCardComment from "./ChubCardComment.vue";
 import { chubAddTopicToUrl } from "./chubHelpers";
+import { escapeHTML } from "astro/runtime/server/escape.js";
 
 const props = defineProps<{
   card: ChubCard<true>;
@@ -47,6 +48,7 @@ const { username, avatarUrl, blurNsfw, showCustomCss, showWorkshopLink } =
   inject(chubProviderKey)!;
 const fullscreenPreviewImage = ref<string | null>(null);
 const chatPreview = ref(true);
+const viewRawText = ref(false);
 
 const tokenCounts = computed(() => {
   const tokenCountsRaw = props.card.labels?.find(
@@ -325,10 +327,16 @@ watchEffect(() => {
           </div>
         </div>
       </div>
-      <label>
-        <input type="checkbox" v-model="chatPreview" />
-        Preview chat names
-      </label>
+      <div>
+        <label>
+          <input type="checkbox" v-model="chatPreview" />
+          Preview chat names
+        </label>
+        <label>
+          <input type="checkbox" v-model="viewRawText" />
+          View raw text
+        </label>
+      </div>
       <img
         :src="card.max_res_url"
         class="chub-card-image-inline transition-bg darken-on-hover"
@@ -361,6 +369,7 @@ watchEffect(() => {
             chubMarkdownToHtml(card.tagline, {
               unsafe: shouldShowCustomCss,
               macros,
+              raw: viewRawText,
             })
           "
         ></p>
@@ -387,6 +396,7 @@ watchEffect(() => {
             chubMarkdownToHtml(card.description, {
               unsafe: shouldShowCustomCss,
               macros,
+              raw: viewRawText,
               disableAutoplay: false,
             })
           "
@@ -408,6 +418,7 @@ watchEffect(() => {
             chubMarkdownToHtml(card.definition.personality, {
               unsafe: shouldShowCustomCss,
               macros,
+              raw: viewRawText,
             })
           "
         ></div>
@@ -429,6 +440,7 @@ watchEffect(() => {
             chubMarkdownToHtml(card.definition.tavern_personality, {
               unsafe: shouldShowCustomCss,
               macros,
+              raw: viewRawText,
             })
           "
         ></div>
@@ -450,6 +462,7 @@ watchEffect(() => {
             chubMarkdownToHtml(card.definition.scenario, {
               unsafe: shouldShowCustomCss,
               macros,
+              raw: viewRawText,
             })
           "
         ></div>
@@ -540,7 +553,10 @@ watchEffect(() => {
           v-if="exampleDialogs.length"
           class="chub-card-conversations tab-contents"
         >
-          <template v-for="(conversation, i) in exampleDialogs" :key="i">
+          <div v-if="viewRawText">
+            {{ escapeHTML(card.definition.example_dialogs) }}
+          </div>
+          <template v-else v-for="(conversation, i) in exampleDialogs" :key="i">
             <hr v-if="i > 0" />
             <div class="chub-card-conversation">
               <div
@@ -602,6 +618,7 @@ watchEffect(() => {
             chubMarkdownToHtml(card.definition.system_prompt, {
               unsafe: shouldShowCustomCss,
               macros,
+              raw: viewRawText,
             })
           "
         ></div>
@@ -626,6 +643,7 @@ watchEffect(() => {
             chubMarkdownToHtml(card.definition.post_history_instructions, {
               unsafe: shouldShowCustomCss,
               macros,
+              raw: viewRawText,
             })
           "
         ></div>
