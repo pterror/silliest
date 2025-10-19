@@ -74,7 +74,7 @@ const {
     nsfl,
     "topic[]": topics,
     "exclude_topic[]": excludedTopics,
-  },
+},
 } = useComputedSearchParams(
   {
     page: { type: "number", defaultValue: 1 },

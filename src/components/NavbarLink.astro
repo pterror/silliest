@@ -1,10 +1,10 @@
 ---
 interface Props {
   href: string;
-  label: string;
 }
 
-const { href, label } = Astro.props;
+const { href } = Astro.props;
+console.log(Astro.routePattern, href);
 ---
 
-<a href={Astro.routePattern === href ? undefined : href}>{label}</a>
+<a href={Astro.routePattern === href ? undefined : href}><slot /></a>
