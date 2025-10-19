@@ -230,8 +230,9 @@ const query = computed<ChubCardQuery>(() => {
             excludetopics: excludedTopics.value.join(","),
           }),
           ...(author.value && { username: author.value }),
-          ...rest,
+          ...(includeForks.value && { include_forks: true }),
           ...(cursor ? { cursor: cursor as ChubEncodedCursor } : undefined),
+          ...rest,
         },
       };
     }
