@@ -1,4 +1,5 @@
 ---
+import Navbar from "../../../components/Navbar.astro";
 import DesloppifyComponent from "../../../slices/chatbot-tools/Desloppify.vue";
 ---
 
@@ -18,6 +19,7 @@ import DesloppifyComponent from "../../../slices/chatbot-tools/Desloppify.vue";
     <link rel="stylesheet" href="/style.css" />
   </head>
   <body class="fullscreen-body">
+    <Navbar />
     <DesloppifyComponent client:only />
   </body>
 </html>

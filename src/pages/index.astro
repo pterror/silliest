@@ -1,5 +1,5 @@
 ---
-
+import Navbar from "../components/Navbar.astro";
 ---
 
 <html lang="en">
@@ -14,30 +14,27 @@
     <link rel="shortcut icon" href="/3c.png" />
     <title>sillie.st</title>
     <link rel="stylesheet" href="/style.css" />
-    <style is:global>
-      html {
-        display: grid;
-        place-items: center;
-      }
-    </style>
   </head>
-  <body>
-    <h1>hi sillies :3</h1>
-    <h2>tools</h2>
-    <ul>
-      <li><a href="/files">file uploader</a></li>
-      <li><a href="/gallery/create">image gallery creator</a></li>
-    </ul>
-    <h2>chatbot tools</h2>
-    <ul>
-      <li><a href="/tools/chatbot/chub">chub search</a></li>
-      <li><a href="/tools/chatbot/desloppify">desloppify</a></li>
-    </ul>
-    <h2>image generation tools</h2>
-    <ul>
-      <li>
-        <a href="/tools/image-gen/image-info">image metadata viewer</a>
-      </li>
-    </ul>
+  <body class="fullscreen-body">
+    <Navbar />
+    <div>
+      <h1>hi sillies :3</h1>
+      <h2>tools</h2>
+      <ul>
+        <li><a href="/files">file uploader</a></li>
+        <li><a href="/gallery/create">image gallery creator</a></li>
+      </ul>
+      <h2>chatbot tools</h2>
+      <ul>
+        <li><a href="/tools/chatbot/chub">chub search</a></li>
+        <li><a href="/tools/chatbot/desloppify">desloppify</a></li>
+      </ul>
+      <h2>image generation tools</h2>
+      <ul>
+        <li>
+          <a href="/tools/image-gen/image-info">image metadata viewer</a>
+        </li>
+      </ul>
+    </div>
   </body>
 </html>

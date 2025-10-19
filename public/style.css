@@ -24,6 +24,14 @@ html {
 
 body {
   margin: 0;
+  display: flex;
+  flex-flow: column;
+  flex: 1 0 auto;
+}
+
+body > :not(.Navbar) {
+  flex: 1 0 auto;
+  padding: 1em;
 }
 
 h1,
@@ -41,12 +49,6 @@ summary {
 
 .has-tooltip {
   cursor: help;
-}
-
-.fullscreen-body {
-  display: flex;
-  flex: 1 0 0;
-  padding: 1em;
 }
 
 .fullscreen {
@@ -88,7 +90,6 @@ summary {
 .navbar {
   position: sticky;
   top: 0;
-  background-color: var(--bg-primary);
   display: flex;
   flex-flow: row wrap;
   gap: 0.5em;
@@ -225,4 +226,38 @@ a[target="_blank"]::after {
   max-height: 95vh;
   max-width: 95vw;
   border-radius: var(--radius-default);
+}
+
+.Navbar {
+  display: flex;
+  flex-flow: row wrap;
+  gap: 1em;
+  align-items: center;
+  justify-items: space-between;
+
+  a {
+    text-decoration: none;
+    color: var(--fg-primary);
+
+    &:hover {
+      text-decoration: underline;
+    }
+
+    &:not([href]) {
+      cursor: default;
+      text-decoration: none;
+      background: var(--bg-tertiary);
+    }
+  }
+}
+
+.Navbar__logo > img {
+  height: 4em;
+  width: 4em;
+}
+
+.Navbar__links {
+  display: flex;
+  flex-flow: row wrap;
+  gap: 0.5em;
 }

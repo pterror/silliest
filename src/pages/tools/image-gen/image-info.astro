@@ -1,4 +1,5 @@
 ---
+import Navbar from "../../../components/Navbar.astro";
 import ImageInfoComponent from "../../../slices/image-gen-tools/ImageInfo.vue";
 ---
 
@@ -18,6 +19,7 @@ import ImageInfoComponent from "../../../slices/image-gen-tools/ImageInfo.vue";
     <link rel="stylesheet" href="/style.css" />
   </head>
   <body class="fullscreen-body">
+    <Navbar />
     <ImageInfoComponent client:only />
   </body>
 </html>
