@@ -301,8 +301,12 @@ watchEffect(() => {
           </div>
         </div>
         <div class="chub-card-token-counts-details">
-          <div v-if="tokenCounts.personality">
+          <div v-if="tokenCounts.description">
             Description:
+            {{ tokenCounts.description }}
+          </div>
+          <div v-if="tokenCounts.personality">
+            Personality:
             {{ tokenCounts.personality }}
           </div>
           <div v-if="tokenCounts.scenario">

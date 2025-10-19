@@ -29,9 +29,13 @@ body {
   flex: 1 0 auto;
 }
 
-body > :not(.Navbar) {
+body > :not(:is(#oneko, .Navbar)) {
   flex: 1 0 auto;
   padding: 1em;
+}
+
+body:has(.fullscreen) > :not(:is(.fullscreen, :has(.fullscreen))) {
+  opacity: 0;
 }
 
 h1,
@@ -93,11 +97,6 @@ summary {
   display: flex;
   flex-flow: row wrap;
   gap: 0.5em;
-}
-
-body.fullscreen .navbar {
-  margin: -1em -1em 0 -1em;
-  padding: 1em;
 }
 
 button:disabled {
