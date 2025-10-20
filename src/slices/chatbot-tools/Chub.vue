@@ -373,10 +373,10 @@ const removeTopic = (topic: string) => {
 const newExcludedTopic = ref("");
 
 const addNewExcludedTopic = () => {
-  const topic = newTopic.value.trim();
+  const topic = newExcludedTopic.value.trim();
   if (topic === "") return;
-  addExcludedTopic(newTopic.value);
-  newTopic.value = "";
+  addExcludedTopic(newExcludedTopic.value);
+  newExcludedTopic.value = "";
 };
 
 const addExcludedTopic = (topic: string) => {
