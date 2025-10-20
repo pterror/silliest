@@ -74,7 +74,7 @@ const {
     nsfl,
     "topic[]": topics,
     "exclude_topic[]": excludedTopics,
-},
+  },
 } = useComputedSearchParams(
   {
     page: { type: "number", defaultValue: 1 },
@@ -258,7 +258,18 @@ const fullscreenCardQuery = useQuery({
   queryFn: ({ queryKey: [, id] }) =>
     id != null ? chubGetCard(id, { full: true }) : null,
 });
-const fullscreenCard = fullscreenCardQuery.data;
+const fullscreenCard = ref(fullscreenCardQuery.data.value);
+
+watchEffect(() => {
+  if (
+    fullscreenCardId.value != null &&
+    fullscreenCardQuery.data.value == null
+  ) {
+    // The data is just loading.
+    return;
+  }
+  fullscreenCard.value = fullscreenCardQuery.data.value;
+});
 
 const title = computed(() => {
   if (fullscreenCard.value?.name) {
@@ -664,7 +675,7 @@ const removeExcludedTopic = (topic: string) => {
               (c) => c.id !== card.id,
             ) ?? false
           "
-          @openInFullscreen="fullscreenCardId = card.fullPath"
+          @openInFullscreen="fullscreenCardId = $event"
           @addTopic="addTopic"
           @searchByAuthor="author = $event"
         />

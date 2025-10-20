@@ -97,6 +97,10 @@ export type ChubCardFullPath = string & {
   readonly __type: "ChubCardFullPath";
 };
 
+export type ChubVoiceId = string & {
+  readonly __type: "ChubVoiceId";
+};
+
 export interface ChubTokenCounts {
   readonly description: number;
   readonly personality: number;
@@ -108,10 +112,15 @@ export interface ChubTokenCounts {
   readonly total: number;
 }
 
-export type ChubLabel = {
-  readonly title: "TOKEN_COUNTS";
-  readonly description: JsonString<ChubTokenCounts>;
-};
+export type ChubLabel =
+  | {
+      readonly title: "TOKEN_COUNTS";
+      readonly description: JsonString<ChubTokenCounts>;
+    }
+  | {
+      readonly title: "Forked";
+      readonly description: ChubCardFullPath;
+    };
 
 export interface ChubExtension {
   readonly id: ChubCardId;
@@ -155,7 +164,7 @@ export interface ChubCardDefinition {
   readonly extensions: ChubCardExtensions;
   readonly bound_preset: string | null;
   readonly is_owner: boolean;
-  readonly voice_id: string | null;
+  readonly voice_id: ChubVoiceId | null;
   readonly voice: unknown | null;
 }
 
@@ -203,7 +212,7 @@ export interface ChubCard<Full extends boolean = boolean> {
   readonly max_res_url: string;
   readonly bound_preset: string | null;
   readonly project_uuid: string | null;
-  readonly voice_id: string | null;
+  readonly voice_id: ChubVoiceId | null;
   readonly verified: boolean;
   readonly recommended: boolean;
   readonly ratings_disabled: boolean;

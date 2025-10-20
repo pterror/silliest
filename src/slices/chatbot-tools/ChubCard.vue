@@ -27,7 +27,7 @@ import { jsonParse } from "../../lib/json";
 import { getChubFilters } from "./chubFilters";
 import { formatDateTime } from "../../lib/dateTime";
 import ChubCardComment from "./ChubCardComment.vue";
-import { chubAddTopicToUrl } from "./chubHelpers";
+import { chubAddCardFullPathToUrl, chubAddTopicToUrl } from "./chubHelpers";
 import { escapeHTML } from "astro/runtime/server/escape.js";
 
 const props = defineProps<{
@@ -57,6 +57,14 @@ const tokenCounts = computed(() => {
   if (!tokenCountsRaw) return null;
   const tokenCounts = jsonParse(tokenCountsRaw);
   return tokenCounts;
+});
+
+const parent = computed(() => {
+  const parentRaw = props.card.labels?.find(
+    (l) => l.title === "Forked",
+  )?.description;
+  if (!parentRaw) return null;
+  return parentRaw;
 });
 
 const makeTaglineCollapsible = ref(true);
@@ -270,6 +278,19 @@ watchEffect(() => {
         </template>
       </div>
       <button @click="emit('searchByAuthor', author)">by {{ author }}</button>
+      <div v-if="parent">
+        Forked from
+        <a
+          :href="chubAddCardFullPathToUrl(parent)"
+          class="button"
+          @click="
+            !$event.ctrlKey &&
+              (emit('openInFullscreen', parent), $event.preventDefault())
+          "
+        >
+          {{ parent.replace(/[/][\s\S]+/, "") }}
+        </a>
+      </div>
       <div class="chub-card-metadata">
         <span>
           created {{ formatDateTime(card.createdAt) }} ({{

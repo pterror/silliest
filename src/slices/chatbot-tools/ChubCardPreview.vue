@@ -3,6 +3,7 @@ import {
   CHUB_TAGS_TO_HIDE,
   chubGetCardByFullPath,
   type ChubCard,
+  type ChubCardFullPath,
 } from "./chub";
 import { computed, inject } from "vue";
 import { useQuery } from "@tanstack/vue-query";
@@ -25,7 +26,7 @@ const props = defineProps<{
   isHiddenInNsfl?: boolean;
 }>();
 const emit = defineEmits<{
-  openInFullscreen: [];
+  openInFullscreen: [fullPath: ChubCardFullPath];
   searchByAuthor: [name: string];
   addTopic: [topic: string];
 }>();
@@ -55,6 +56,14 @@ const tokenCounts = computed(() => {
   return tokenCounts;
 });
 
+const parent = computed(() => {
+  const parentRaw = props.card.labels?.find(
+    (l) => l.title === "Forked",
+  )?.description;
+  if (!parentRaw) return null;
+  return parentRaw;
+});
+
 const blurred = computed(
   () =>
     props.card.nsfw_image &&
@@ -68,7 +77,8 @@ const blurred = computed(
       <a
         :href="chubAddCardFullPathToUrl(card.fullPath)"
         @click="
-          !$event.ctrlKey && (emit('openInFullscreen'), $event.preventDefault())
+          !$event.ctrlKey &&
+            (emit('openInFullscreen', card.fullPath), $event.preventDefault())
         "
       >
         <img
@@ -127,6 +137,19 @@ const blurred = computed(
           "
         >
           {{ author }}
+        </a>
+      </div>
+      <div v-if="parent">
+        Forked from
+        <a
+          :href="chubAddCardFullPathToUrl(parent)"
+          class="button"
+          @click="
+            !$event.ctrlKey &&
+              (emit('openInFullscreen', parent), $event.preventDefault())
+          "
+        >
+          {{ parent.replace(/[/][\s\S]+/, "") }}
         </a>
       </div>
       <div class="chub-card-preview-metadata">
