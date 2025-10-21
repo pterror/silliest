@@ -76,242 +76,246 @@ import Navbar from "../components/Navbar.astro";
   </head>
   <body class="fullscreen-body">
     <Navbar />
-    <form id="keyForm">
-      <label>
-        Key
-        <input
-          id="keyInput"
-          size="1"
-          placeholder="Enter key here to save and use"
-        />
-        <button id="saveButton" type="submit">Save</button>
-      </label>
-    </form>
     <div>
-      <button id="uploadButton">Upload All!</button>
-    </div>
-    <input id="filesInput" type="file" multiple />
-    <div id="statusDisplay"></div>
-    <div id="fileCountDisplay"></div>
-    <div>
-      <button id="copyAllUrlsButton">Copy all URLs!</button>
-      <button id="clearUrlsButton">Clear URLs</button>
-    </div>
-    <div id="urlsDisplay" class="show-newlines">No URLs yet!</div>
-    <div id="dropTarget">Drop files here</div>
-    <script>
-      const files: File[] = [];
-      const urls: string[] = [];
+      <form id="keyForm">
+        <label>
+          Key
+          <input
+            id="keyInput"
+            size="1"
+            placeholder="Enter key here to save and use"
+          />
+          <button id="saveButton" type="submit">Save</button>
+        </label>
+      </form>
+      <div>
+        <button id="uploadButton">Upload All!</button>
+      </div>
+      <input id="filesInput" type="file" multiple />
+      <div id="statusDisplay"></div>
+      <div id="fileCountDisplay"></div>
+      <div>
+        <button id="copyAllUrlsButton">Copy all URLs!</button>
+        <button id="clearUrlsButton">Clear URLs</button>
+      </div>
+      <div id="urlsDisplay" class="show-newlines">No URLs yet!</div>
+      <div id="dropTarget">Drop files here</div>
+      <script>
+        const files: File[] = [];
+        const urls: string[] = [];
 
-      const htmlEscapeMap: Record<string, string> = {
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-      };
-      function escapeHTML(url: string) {
-        return url.replace(
-          /[&<>]/g,
-          (match) => htmlEscapeMap[match as keyof typeof htmlEscapeMap]!,
-        );
-      }
-
-      const statusDisplay = document.getElementById(
-        "statusDisplay",
-      ) as HTMLDivElement;
-
-      function makeShowFunction(className: string) {
-        return (message: string) => {
-          statusDisplay.innerText = message;
-          statusDisplay.className = className;
+        const htmlEscapeMap: Record<string, string> = {
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
         };
-      }
-      const showSuccess = makeShowFunction("status-success");
-      const showFailure = makeShowFunction("status-failure");
-      const showInfo = makeShowFunction("status-info");
-
-      const fileCountDisplay = document.getElementById(
-        "fileCountDisplay",
-      ) as HTMLDivElement;
-      const urlsDisplay = document.getElementById(
-        "urlsDisplay",
-      ) as HTMLDivElement;
-      function updateFileCount() {
-        fileCountDisplay.innerText = `${files.length} file(s) to be uploaded`;
-        showSuccess(
-          `${files.length} files ready for upload! Click 'Upload All' to upload.`,
-        );
-      }
-      function setFiles(newFiles: File[]) {
-        files.splice(0, files.length, ...newFiles);
-        updateFileCount();
-      }
-      setFiles([]);
-      function copyUrls(urls: readonly string[]) {
-        if (!urls.length) return;
-        navigator.clipboard.writeText(urls.join("\n"));
-        showSuccess(`Copied ${urls.length} URL(s) to clipboard!`);
-      }
-      function copyUrl(url: string) {
-        copyUrls([url]);
-      }
-      declare global {
-        interface Window {
-          copyUrl: (url: string) => void;
-        }
-      }
-      window.copyUrl = copyUrl; // make globally accessible for button onclick
-      function updateUrlsDisplay() {
-        if (!urls.length) {
-          urlsDisplay.innerText = "No URLs yet!";
-          return;
-        }
-        urlsDisplay.innerHTML = urls
-          .map(
-            (url) =>
-              `<button onclick="copyUrl('${url}')">Copy URL</button> <a href="${url}" target="_blank">${escapeHTML(url)}</a>`,
-          )
-          .join("<br>");
-      }
-      updateUrlsDisplay();
-      function pushUrl(url: string) {
-        urls.push(url);
-        updateUrlsDisplay();
-      }
-
-      const copyAllUrlsButton = document.getElementById(
-        "copyAllUrlsButton",
-      ) as HTMLButtonElement;
-      function copyAllUrls() {
-        copyUrls(urls);
-      }
-      copyAllUrlsButton.addEventListener("click", copyAllUrls);
-
-      const clearUrlsButton = document.getElementById(
-        "clearUrlsButton",
-      ) as HTMLButtonElement;
-      function clearUrls() {
-        urls.splice(0, urls.length);
-        updateUrlsDisplay();
-      }
-      clearUrlsButton.addEventListener("click", clearUrls);
-
-      const filesInput = document.getElementById(
-        "filesInput",
-      ) as HTMLInputElement;
-      function onFileInput() {
-        if (filesInput.files?.length) {
-          setFiles(Array.from(filesInput.files));
-        }
-      }
-      filesInput.addEventListener("input", onFileInput);
-
-      function getKey() {
-        return localStorage.getItem("files-key");
-      }
-      function setKey(key: string) {
-        localStorage.setItem("files-key", key);
-      }
-      function hasKey() {
-        return Boolean(getKey());
-      }
-      if (hasKey()) {
-        showInfo("Drag files (or click the file picker above) to upload!");
-      } else {
-        showFailure("You need a key to use this uploader!");
-      }
-
-      const keyInput = document.getElementById("keyInput") as HTMLInputElement;
-      function updateKeyInputPlaceholder() {
-        keyInput.placeholder = hasKey()
-          ? "Key found! You're all set!"
-          : "Enter key here to save and use";
-      }
-      updateKeyInputPlaceholder();
-
-      const keyForm = document.getElementById("keyForm") as HTMLFormElement;
-      function onKeyFormSubmit(event: SubmitEvent) {
-        event.preventDefault();
-        setKey(keyInput.value);
-        keyInput.value = "";
-        updateKeyInputPlaceholder();
-      }
-      keyForm.addEventListener("submit", onKeyFormSubmit);
-
-      async function uploadFile(file: File) {
-        const response = await fetch("https://api.sillie.st/files", {
-          method: "PUT",
-          body: file,
-          headers: [["authorization", `Bearer ${getKey()}`]],
-        });
-        if (!response.ok) {
-          throw new Error(await response.text());
-        }
-        return { url: await response.text() };
-      }
-
-      async function uploadFiles(files: readonly File[]) {
-        if (!hasKey()) {
-          showFailure("You need a key to use this uploader");
-          return;
-        }
-        const total = files.length;
-        let successes = 0;
-        let failures = 0;
-        const failedFiles: File[] = [];
-        await Promise.allSettled(
-          files.map((file) =>
-            uploadFile(file)
-              .then(
-                (result) => {
-                  successes += 1;
-                  pushUrl(result.url);
-                },
-                () => {
-                  failures += 1;
-                  failedFiles.push(file);
-                },
-              )
-              .finally(() => {
-                showInfo(
-                  `${successes} succeeded/${failures} failed/${total} total`,
-                );
-              }),
-          ),
-        );
-        setFiles(failedFiles);
-        if (failures === 0) {
-          showSuccess(`${successes} files uploaded`);
-        } else {
-          showFailure(
-            `Press 'upload' again to re-try ${failures} failed uploads (${successes}/${total} succeeded)`,
+        function escapeHTML(url: string) {
+          return url.replace(
+            /[&<>]/g,
+            (match) => htmlEscapeMap[match as keyof typeof htmlEscapeMap]!,
           );
         }
-        return { successes, failures, total, failedFiles };
-      }
 
-      const dropTarget = document.getElementById(
-        "dropTarget",
-      ) as HTMLDivElement;
-      function handleFilesDrag(event: DragEvent) {
-        event.preventDefault();
-      }
-      function handleFilesDrop(event: DragEvent) {
-        event.preventDefault();
-        if (event.dataTransfer?.files.length) {
-          setFiles(Array.from(event.dataTransfer.files));
+        const statusDisplay = document.getElementById(
+          "statusDisplay",
+        ) as HTMLDivElement;
+
+        function makeShowFunction(className: string) {
+          return (message: string) => {
+            statusDisplay.innerText = message;
+            statusDisplay.className = className;
+          };
         }
-      }
-      dropTarget.addEventListener("dragover", handleFilesDrag);
-      dropTarget.addEventListener("drop", handleFilesDrop);
+        const showSuccess = makeShowFunction("status-success");
+        const showFailure = makeShowFunction("status-failure");
+        const showInfo = makeShowFunction("status-info");
 
-      async function uploadSelectedFiles() {
-        return await uploadFiles(files);
-      }
+        const fileCountDisplay = document.getElementById(
+          "fileCountDisplay",
+        ) as HTMLDivElement;
+        const urlsDisplay = document.getElementById(
+          "urlsDisplay",
+        ) as HTMLDivElement;
+        function updateFileCount() {
+          fileCountDisplay.innerText = `${files.length} file(s) to be uploaded`;
+          showSuccess(
+            `${files.length} files ready for upload! Click 'Upload All' to upload.`,
+          );
+        }
+        function setFiles(newFiles: File[]) {
+          files.splice(0, files.length, ...newFiles);
+          updateFileCount();
+        }
+        setFiles([]);
+        function copyUrls(urls: readonly string[]) {
+          if (!urls.length) return;
+          navigator.clipboard.writeText(urls.join("\n"));
+          showSuccess(`Copied ${urls.length} URL(s) to clipboard!`);
+        }
+        function copyUrl(url: string) {
+          copyUrls([url]);
+        }
+        declare global {
+          interface Window {
+            copyUrl: (url: string) => void;
+          }
+        }
+        window.copyUrl = copyUrl; // make globally accessible for button onclick
+        function updateUrlsDisplay() {
+          if (!urls.length) {
+            urlsDisplay.innerText = "No URLs yet!";
+            return;
+          }
+          urlsDisplay.innerHTML = urls
+            .map(
+              (url) =>
+                `<button onclick="copyUrl('${url}')">Copy URL</button> <a href="${url}" target="_blank">${escapeHTML(url)}</a>`,
+            )
+            .join("<br>");
+        }
+        updateUrlsDisplay();
+        function pushUrl(url: string) {
+          urls.push(url);
+          updateUrlsDisplay();
+        }
 
-      const uploadButton = document.getElementById(
-        "uploadButton",
-      ) as HTMLButtonElement;
-      uploadButton.addEventListener("click", uploadSelectedFiles);
-    </script>
+        const copyAllUrlsButton = document.getElementById(
+          "copyAllUrlsButton",
+        ) as HTMLButtonElement;
+        function copyAllUrls() {
+          copyUrls(urls);
+        }
+        copyAllUrlsButton.addEventListener("click", copyAllUrls);
+
+        const clearUrlsButton = document.getElementById(
+          "clearUrlsButton",
+        ) as HTMLButtonElement;
+        function clearUrls() {
+          urls.splice(0, urls.length);
+          updateUrlsDisplay();
+        }
+        clearUrlsButton.addEventListener("click", clearUrls);
+
+        const filesInput = document.getElementById(
+          "filesInput",
+        ) as HTMLInputElement;
+        function onFileInput() {
+          if (filesInput.files?.length) {
+            setFiles(Array.from(filesInput.files));
+          }
+        }
+        filesInput.addEventListener("input", onFileInput);
+
+        function getKey() {
+          return localStorage.getItem("files-key");
+        }
+        function setKey(key: string) {
+          localStorage.setItem("files-key", key);
+        }
+        function hasKey() {
+          return Boolean(getKey());
+        }
+        if (hasKey()) {
+          showInfo("Drag files (or click the file picker above) to upload!");
+        } else {
+          showFailure("You need a key to use this uploader!");
+        }
+
+        const keyInput = document.getElementById(
+          "keyInput",
+        ) as HTMLInputElement;
+        function updateKeyInputPlaceholder() {
+          keyInput.placeholder = hasKey()
+            ? "Key found! You're all set!"
+            : "Enter key here to save and use";
+        }
+        updateKeyInputPlaceholder();
+
+        const keyForm = document.getElementById("keyForm") as HTMLFormElement;
+        function onKeyFormSubmit(event: SubmitEvent) {
+          event.preventDefault();
+          setKey(keyInput.value);
+          keyInput.value = "";
+          updateKeyInputPlaceholder();
+        }
+        keyForm.addEventListener("submit", onKeyFormSubmit);
+
+        async function uploadFile(file: File) {
+          const response = await fetch("https://api.sillie.st/files", {
+            method: "PUT",
+            body: file,
+            headers: [["authorization", `Bearer ${getKey()}`]],
+          });
+          if (!response.ok) {
+            throw new Error(await response.text());
+          }
+          return { url: await response.text() };
+        }
+
+        async function uploadFiles(files: readonly File[]) {
+          if (!hasKey()) {
+            showFailure("You need a key to use this uploader");
+            return;
+          }
+          const total = files.length;
+          let successes = 0;
+          let failures = 0;
+          const failedFiles: File[] = [];
+          await Promise.allSettled(
+            files.map((file) =>
+              uploadFile(file)
+                .then(
+                  (result) => {
+                    successes += 1;
+                    pushUrl(result.url);
+                  },
+                  () => {
+                    failures += 1;
+                    failedFiles.push(file);
+                  },
+                )
+                .finally(() => {
+                  showInfo(
+                    `${successes} succeeded/${failures} failed/${total} total`,
+                  );
+                }),
+            ),
+          );
+          setFiles(failedFiles);
+          if (failures === 0) {
+            showSuccess(`${successes} files uploaded`);
+          } else {
+            showFailure(
+              `Press 'upload' again to re-try ${failures} failed uploads (${successes}/${total} succeeded)`,
+            );
+          }
+          return { successes, failures, total, failedFiles };
+        }
+
+        const dropTarget = document.getElementById(
+          "dropTarget",
+        ) as HTMLDivElement;
+        function handleFilesDrag(event: DragEvent) {
+          event.preventDefault();
+        }
+        function handleFilesDrop(event: DragEvent) {
+          event.preventDefault();
+          if (event.dataTransfer?.files.length) {
+            setFiles(Array.from(event.dataTransfer.files));
+          }
+        }
+        dropTarget.addEventListener("dragover", handleFilesDrag);
+        dropTarget.addEventListener("drop", handleFilesDrop);
+
+        async function uploadSelectedFiles() {
+          return await uploadFiles(files);
+        }
+
+        const uploadButton = document.getElementById(
+          "uploadButton",
+        ) as HTMLButtonElement;
+        uploadButton.addEventListener("click", uploadSelectedFiles);
+      </script>
+    </div>
   </body>
 </html>
