@@ -28,7 +28,7 @@ import Navbar from "../components/Navbar.astro";
         }
       }
 
-      body {
+      .page-content {
         display: flex;
         flex-flow: column nowrap;
         gap: 0.5em;
@@ -76,7 +76,7 @@ import Navbar from "../components/Navbar.astro";
   </head>
   <body class="fullscreen-body">
     <Navbar />
-    <div>
+    <div class="page-content">
       <form id="keyForm">
         <label>
           Key
