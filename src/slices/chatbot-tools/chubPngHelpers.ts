@@ -8,8 +8,7 @@ export async function chubCardToTavernCardFile(
   tavernCard?: TavernCardV2,
 ): Promise<File> {
   tavernCard ??= chubCardToTavernCard(card);
-  const url = `https://avatars.charhub.io/avatars/${card.fullPath}/chara_card_v2.png`;
-  const imageResponse = await fetch(url);
+  const imageResponse = await fetch(card.max_res_url);
   const image = await imageResponse.arrayBuffer();
   const data = decode(image);
   data.text.chara = btoa(
