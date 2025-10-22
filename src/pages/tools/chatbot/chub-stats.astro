@@ -1,0 +1,25 @@
+---
+import Navbar from "../../../components/Navbar.astro";
+import ChubStatsComponent from "../../../slices/chatbot-tools/ChubStats.vue";
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/png" href="/3c.png" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta content="chub frontend" property="og:site_name" />
+    <meta
+      content="it's like chub.ai but it looks different"
+      property="og:description"
+    />
+    <link rel="shortcut icon" href="/3c.png" />
+    <title>chub</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body class="fullscreen-body">
+    <Navbar />
+    <ChubStatsComponent client:only />
+  </body>
+</html>

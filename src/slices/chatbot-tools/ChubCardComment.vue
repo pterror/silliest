@@ -13,36 +13,36 @@ defineProps<{
 </script>
 
 <template>
-  <div class="ChubCardRating">
-    <div class="chub-card-rating-comment-container">
-      <label class="chub-card-rating-comment-children-toggle">
+  <div class="ChubCardComment">
+    <div class="chub-card-comment-container">
+      <label class="chub-card-comment-children-toggle">
         <input class="invisible-checkbox" type="checkbox" checked />
         <div
           v-if="comment.children.length"
-          class="chub-card-rating-comment-children-toggle-open"
+          class="chub-card-comment-children-toggle-open"
         >
           +
         </div>
         <div
           v-if="comment.children.length"
-          class="chub-card-rating-comment-children-toggle-close"
+          class="chub-card-comment-children-toggle-close"
         >
           -
         </div>
         <div
           v-if="!comment.children.length"
-          class="chub-card-rating-comment-children-toggle-disabled"
+          class="chub-card-comment-children-toggle-disabled"
         ></div>
       </label>
       <div
-        class="chub-card-rating-comment"
+        class="chub-card-comment"
         :class="{
-          'chub-card-rating-comment-deleted': isChubDeletedRating(comment),
+          'chub-card-comment-deleted': isChubDeletedRating(comment),
         }"
       >
-        <div class="chub-card-rating-comment-header">
+        <div class="chub-card-comment-header">
           <a
-            class="chub-card-rating-comment-user"
+            class="chub-card-comment-user"
             :href="
               comment.username
                 ? `https://chub.ai/users/${encodeURIComponent(
@@ -53,44 +53,42 @@ defineProps<{
             target="_blank"
           >
             <img
-              class="chub-card-rating-comment-user-avatar"
+              class="chub-card-comment-user-avatar"
               v-if="comment.avatarUrl"
               :src="comment.avatarUrl"
             />
-            <div class="chub-card-rating-comment-user-avatar" v-else></div>
+            <div class="chub-card-comment-user-avatar" v-else></div>
             <span>{{ comment.username }}</span>
           </a>
-          <div class="chub-card-rating-comment-meta">
+          <div class="chub-card-comment-meta">
             <div
               v-if="
                 comment.updatedAt && comment.updatedAt !== comment.createdAt
               "
-              class="chub-card-rating-comment-date"
+              class="chub-card-comment-date"
               :title="new Date(comment.updatedAt).toLocaleString()"
             >
               (updated {{ useTimeAgo(comment.updatedAt) }})
             </div>
             <div
               v-if="comment.createdAt"
-              class="chub-card-rating-comment-date"
+              class="chub-card-comment-date"
               :title="new Date(comment.createdAt).toLocaleString()"
             >
               {{ useTimeAgo(comment.createdAt) }}
             </div>
             <div
-              class="chub-card-rating-comment-rating"
-              :class="
-                !comment.rating ? 'chub-card-rating-comment-rating-none' : ''
-              "
+              class="chub-card-comment-rating"
+              :class="!comment.rating ? 'chub-card-comment-rating-none' : ''"
             >
               <template v-for="i in 5" :key="i">
                 <span
-                  class="chub-card-rating-comment-rating-star chub-card-rating-comment-rating-star-filled"
+                  class="chub-card-comment-rating-star chub-card-comment-rating-star-filled"
                   v-if="i <= (comment.rating ?? 0)"
                   >★</span
                 >
                 <span
-                  class="chub-card-rating-comment-rating-star chub-card-rating-comment-rating-star-empty"
+                  class="chub-card-comment-rating-star chub-card-comment-rating-star-empty"
                   v-else
                   >☆</span
                 >
@@ -98,13 +96,13 @@ defineProps<{
             </div>
           </div>
         </div>
-        <div class="chub-card-rating-comment-body">
+        <div class="chub-card-comment-body">
           {{ comment.comment }}
         </div>
       </div>
     </div>
     <div
-      class="chub-card-rating-comment-children"
+      class="chub-card-comment-children"
       v-for="childId in comment.children"
       :key="childId"
     >
@@ -118,25 +116,25 @@ defineProps<{
 </template>
 
 <style scoped>
-.ChubCardRating {
+.ChubCardComment {
   display: flex;
   gap: 0.5em;
   flex-flow: column nowrap;
   align-items: stretch;
 }
 
-.ChubCardRating:has(
-    > .chub-card-rating-comment-container
-      > .chub-card-rating-comment-children-toggle
+.ChubCardComment:has(
+    > .chub-card-comment-container
+      > .chub-card-comment-children-toggle
       > input:not(:checked)
   )
-  > .chub-card-rating-comment-children {
+  > .chub-card-comment-children {
   display: none;
 }
 
-.chub-card-rating-comment-children-toggle-open,
-.chub-card-rating-comment-children-toggle-close,
-.chub-card-rating-comment-children-toggle-disabled {
+.chub-card-comment-children-toggle-open,
+.chub-card-comment-children-toggle-close,
+.chub-card-comment-children-toggle-disabled {
   display: inline-grid;
   place-items: center;
   font-size: 2em;
@@ -147,51 +145,51 @@ defineProps<{
 }
 
 :is(
-    .chub-card-rating-comment-children-toggle-open,
-    .chub-card-rating-comment-children-toggle-close
+    .chub-card-comment-children-toggle-open,
+    .chub-card-comment-children-toggle-close
   ):hover {
   background: var(--bg-secondary);
 }
 
-input:not(:checked) ~ .chub-card-rating-comment-children-toggle-close {
+input:not(:checked) ~ .chub-card-comment-children-toggle-close {
   display: none;
 }
 
-input:checked ~ .chub-card-rating-comment-children-toggle-open {
+input:checked ~ .chub-card-comment-children-toggle-open {
   display: none;
 }
 
-.chub-card-rating-comment-container {
+.chub-card-comment-container {
   display: flex;
   gap: 0.5em;
   flex-flow: row nowrap;
   align-items: center;
 }
 
-.chub-card-rating-comment {
+.chub-card-comment {
   background: var(--bg-secondary);
   padding: 1em;
   border-radius: var(--radius-default);
   flex: 1 0 0;
 }
 
-.chub-card-rating-comment-deleted {
+.chub-card-comment-deleted {
   font-style: italic;
   opacity: 70%;
 }
 
-.chub-card-rating-comment-header {
+.chub-card-comment-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.5em;
 }
 
-.chub-card-rating-comment-rating-none {
+.chub-card-comment-rating-none {
   opacity: 0;
 }
 
-.chub-card-rating-comment-meta {
+.chub-card-comment-meta {
   display: flex;
   gap: 1em;
   align-items: center;
@@ -199,7 +197,7 @@ input:checked ~ .chub-card-rating-comment-children-toggle-open {
   opacity: 70%;
 }
 
-.chub-card-rating-comment-user {
+.chub-card-comment-user {
   display: flex;
   align-items: center;
   gap: 0.5em;
@@ -212,21 +210,21 @@ input:checked ~ .chub-card-rating-comment-children-toggle-open {
   transition: background-color 150ms;
 }
 
-.chub-card-rating-comment-user:hover {
+.chub-card-comment-user:hover {
   background: var(--bg-secondary);
 }
 
-.chub-card-rating-comment-user::after {
+.chub-card-comment-user::after {
   display: none;
 }
 
-.chub-card-rating-comment-user-avatar {
+.chub-card-comment-user-avatar {
   width: 1.5em;
   height: 1.5em;
   border-radius: 50%;
 }
 
-.chub-card-rating-comment-children {
+.chub-card-comment-children {
   display: flex;
   gap: 0.5em;
   flex-flow: column nowrap;
