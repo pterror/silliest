@@ -28,7 +28,6 @@ import { getChubFilters } from "./chubFilters";
 import { formatDateTime } from "../../lib/dateTime";
 import ChubCardComment from "./ChubCardComment.vue";
 import { chubAddCardFullPathToUrl, chubAddTopicToUrl } from "./chubHelpers";
-import { escapeHTML } from "astro/runtime/server/escape.js";
 
 const props = defineProps<{
   card: ChubCard<true>;
@@ -581,8 +580,8 @@ watchEffect(() => {
           v-if="exampleDialogs.length"
           class="chub-card-conversations tab-contents"
         >
-          <div v-if="viewRawText">
-            {{ escapeHTML(card.definition.example_dialogs) }}
+          <div v-if="viewRawText" class="raw-text">
+            {{ card.definition.example_dialogs }}
           </div>
           <template v-else v-for="(conversation, i) in exampleDialogs" :key="i">
             <hr v-if="i > 0" />
