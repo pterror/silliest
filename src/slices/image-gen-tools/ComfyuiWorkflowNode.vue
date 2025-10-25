@@ -46,9 +46,15 @@ defineProps<{
             >
             {{ inputNodeOutputFromLink(links[input.link]!, nodes)?.name }}
           </a>
-          <span v-else class="comfyui-workflow-node-value">{{
-            node.widgets_values[i]
-          }}</span>
+        </div>
+      </div>
+      <!-- TODO: Add widget names from `prompt` -->
+      <div class="comfyui-workflow-node-widgets">
+        <h4>Widgets</h4>
+        <div v-for="(widget, i) in node.widgets_values" :key="i">
+          <span class="comfyui-workflow-node-widget-name">Widget {{ i }}</span
+          >:
+          <span class="comfyui-workflow-widget-value">{{ widget }}</span>
         </div>
       </div>
       <div class="comfyui-workflow-node-outputs">

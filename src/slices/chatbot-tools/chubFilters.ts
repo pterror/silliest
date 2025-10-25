@@ -28,7 +28,9 @@ function getChubFilterValues(card: ChubCard, tag: "NSFW" | "NSFL") {
           },
         },
       ],
-      { enabled: computed(() => !isExplicitFiltered.value) },
+      {
+        enabled: computed(() => !isExplicitFiltered.value && !card.is_unlisted),
+      },
     ),
   );
 
