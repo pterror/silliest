@@ -46,6 +46,8 @@ provide(chubProviderKey, {
   showWorkshopLink,
 });
 
+const showMoreControls = ref(false);
+
 const {
   searchParams,
   params: {
@@ -400,26 +402,19 @@ const removeExcludedTopic = (topic: string) => {
       <span>Loading...</span>
     </div>
     <div class="chub-content" v-else>
-      <div class="chub-controls">
-        <label>
-          Username (for chat placeholders)
-          <input
-            v-model="username"
-            type="text"
-            placeholder="Username"
-            class="chub-username-input"
-          />
-        </label>
-        <label>
-          Avatar (for chat placeholders)
-          <input
-            v-model="avatarUrl"
-            type="text"
-            placeholder="Avatar URL"
-            class="chub-avatar-input"
-          />
-        </label>
-      </div>
+      <label class="chub-search">
+        Search
+        <input
+          type="text"
+          placeholder="Search cards..."
+          class="chub-search-input"
+          :value="search"
+          @change="
+            // @ts-expect-error event targets are not well typed in vue
+            search = $event.target.value.trim()
+          "
+        />
+      </label>
       <div class="chub-page-controls buttons">
         <template v-if="'cursor' in searchParams">
           <button @click="cursor = ''">«</button>
@@ -458,140 +453,157 @@ const removeExcludedTopic = (topic: string) => {
           <button @click="cursor = ''">To cursor pagination</button>
         </template>
       </div>
-      <div class="chub-controls">
-        <label>
-          Search
-          <input
-            type="text"
-            placeholder="Search cards..."
-            class="chub-search-input"
-            :value="search"
-            @change="
-              // @ts-expect-error event targets are not well typed in vue
-              search = $event.target.value.trim()
-            "
-          />
-        </label>
-        <label>
-          Author
-          <input
-            type="text"
-            placeholder="Author username"
-            class="chub-author-input"
-            :value="author"
-            @change="
-              // @ts-expect-error event targets are not well typed in vue
-              author = $event.target.value.trim()
-            "
-          />
-        </label>
-        <label>
-          Name
-          <input
-            type="text"
-            placeholder="Character name"
-            class="chub-name-input"
-            :value="nameLike"
-            @change="
-              // @ts-expect-error event targets are not well typed in vue
-              nameLike = $event.target.value.trim()
-            "
-          />
-        </label>
-        <label>
-          Max days ago
-          <input
-            v-model="maxDaysAgo"
-            type="number"
-            min="0"
-            placeholder="Maximum days ago"
-            class="chub-max-days-ago-input"
-          />
-        </label>
-        <label>
-          Min tokens
-          <input
-            v-model="minTokens"
-            type="number"
-            min="0"
-            placeholder="Minimum tokens"
-            class="chub-min-tokens-input"
-          />
-        </label>
-        <label>
-          Max tokens
-          <input
-            v-model="maxTokens"
-            type="number"
-            min="0"
-            placeholder="Maximum tokens"
-            class="chub-max-tokens-input"
-          />
-        </label>
-      </div>
-      <div class="chub-checkboxes">
-        <label>
-          <input type="checkbox" v-model="excludeMine" />
-          <span>Exclude my cards</span>
-        </label>
-        <label>
-          <input type="checkbox" v-model="includeForks" />
-          <span>Include forks</span>
-        </label>
-        <label v-if="'nsfw' in searchParams || 'nsfl' in searchParams">
-          <input type="checkbox" v-model="nsfw" />
-          <span>Show NSFW</span>
-        </label>
-        <label v-if="'nsfl' in searchParams">
-          <input type="checkbox" v-model="nsfl" />
-          <span>Show NSFL</span>
-        </label>
-        <label v-if="'nsfw' in searchParams || 'nsfl' in searchParams">
-          <input type="checkbox" v-model="nsfwOnly" />
-          <span>NSFW only</span>
-        </label>
-        <label v-if="'nsfw' in searchParams || 'nsfl' in searchParams">
-          <input type="checkbox" v-model="blurNsfw" />
-          <span>Blur NSFW</span>
-        </label>
-        <label>
-          <input type="checkbox" v-model="showCustomCss" />
-          <span>Show custom CSS</span>
-        </label>
-      </div>
-      <div class="chub-require-checkboxes">
-        <label>
-          <input type="checkbox" v-model="requireCustomPrompt" />
-          Require custom prompt
-        </label>
-        <label>
-          <input type="checkbox" v-model="requireExampleDialogues" />
-          Require example dialogues
-        </label>
-        <label>
-          <input type="checkbox" v-model="requireImages" />
-          Require images
-        </label>
-        <label>
-          <input type="checkbox" v-model="requireExpressions" />
-          Require expressions
-        </label>
-        <label>
-          <input type="checkbox" v-model="requireLore" />
-          Require lore
-        </label>
-        <label>
-          <input type="checkbox" v-model="requireLoreEmbedded" />
-          Require embedded lorebook
-        </label>
-        <label>
-          <input type="checkbox" v-model="requireLoreLinked" />
-          Require linked lorebook(s)
-        </label>
-        <label>
-          <input type="checkbox" v-model="requireAlternateGreetings" />
-          Require alternate greetings
-        </label>
+      <div class="chub-more-controls-container">
+        <button
+          class="chub-show-more-controls"
+          @click="showMoreControls = !showMoreControls"
+        >
+          ⚙ Show more controls
+        </button>
+        <div class="chub-more-controls" :class="{ visible: showMoreControls }">
+          <div class="chub-controls">
+            <label>
+              Username (for chat placeholders)
+              <input
+                v-model="username"
+                type="text"
+                placeholder="Username"
+                class="chub-username-input"
+              />
+            </label>
+            <label>
+              Avatar (for chat placeholders)
+              <input
+                v-model="avatarUrl"
+                type="text"
+                placeholder="Avatar URL"
+                class="chub-avatar-input"
+              />
+            </label>
+          </div>
+          <div class="chub-controls">
+            <label>
+              Author
+              <input
+                type="text"
+                placeholder="Author username"
+                class="chub-author-input"
+                :value="author"
+                @change="
+                  // @ts-expect-error event targets are not well typed in vue
+                  author = $event.target.value.trim()
+                "
+              />
+            </label>
+            <label>
+              Name
+              <input
+                type="text"
+                placeholder="Character name"
+                class="chub-name-input"
+                :value="nameLike"
+                @change="
+                  // @ts-expect-error event targets are not well typed in vue
+                  nameLike = $event.target.value.trim()
+                "
+              />
+            </label>
+            <label>
+              Max days ago
+              <input
+                v-model="maxDaysAgo"
+                type="number"
+                min="0"
+                placeholder="Maximum days ago"
+                class="chub-max-days-ago-input"
+              />
+            </label>
+            <label>
+              Min tokens
+              <input
+                v-model="minTokens"
+                type="number"
+                min="0"
+                placeholder="Minimum tokens"
+                class="chub-min-tokens-input"
+              />
+            </label>
+            <label>
+              Max tokens
+              <input
+                v-model="maxTokens"
+                type="number"
+                min="0"
+                placeholder="Maximum tokens"
+                class="chub-max-tokens-input"
+              />
+            </label>
+          </div>
+          <div class="chub-checkboxes">
+            <label>
+              <input type="checkbox" v-model="excludeMine" />
+              <span>Exclude my cards</span>
+            </label>
+            <label>
+              <input type="checkbox" v-model="includeForks" />
+              <span>Include forks</span>
+            </label>
+            <label v-if="'nsfw' in searchParams || 'nsfl' in searchParams">
+              <input type="checkbox" v-model="nsfw" />
+              <span>Show NSFW</span>
+            </label>
+            <label v-if="'nsfl' in searchParams">
+              <input type="checkbox" v-model="nsfl" />
+              <span>Show NSFL</span>
+            </label>
+            <label v-if="'nsfw' in searchParams || 'nsfl' in searchParams">
+              <input type="checkbox" v-model="nsfwOnly" />
+              <span>NSFW only</span>
+            </label>
+            <label v-if="'nsfw' in searchParams || 'nsfl' in searchParams">
+              <input type="checkbox" v-model="blurNsfw" />
+              <span>Blur NSFW</span>
+            </label>
+            <label>
+              <input type="checkbox" v-model="showCustomCss" />
+              <span>Show custom CSS</span>
+            </label>
+          </div>
+          <div class="chub-require-checkboxes">
+            <label>
+              <input type="checkbox" v-model="requireCustomPrompt" />
+              Require custom prompt
+            </label>
+            <label>
+              <input type="checkbox" v-model="requireExampleDialogues" />
+              Require example dialogues
+            </label>
+            <label>
+              <input type="checkbox" v-model="requireImages" />
+              Require images
+            </label>
+            <label>
+              <input type="checkbox" v-model="requireExpressions" />
+              Require expressions
+            </label>
+            <label>
+              <input type="checkbox" v-model="requireLore" />
+              Require lore
+            </label>
+            <label>
+              <input type="checkbox" v-model="requireLoreEmbedded" />
+              Require embedded lorebook
+            </label>
+            <label>
+              <input type="checkbox" v-model="requireLoreLinked" />
+              Require linked lorebook(s)
+            </label>
+            <label>
+              <input type="checkbox" v-model="requireAlternateGreetings" />
+              Require alternate greetings
+            </label>
+          </div>
+        </div>
       </div>
       <div class="chub-sort-by">
         <label>
@@ -627,7 +639,7 @@ const removeExcludedTopic = (topic: string) => {
           </span>
           <button @click="removeTopic(topic)">&times;</button>
         </div>
-        <div>
+        <div class="chub-add-topic">
           <input
             v-model="newTopic"
             @keyup.enter="addNewTopic"
@@ -635,7 +647,7 @@ const removeExcludedTopic = (topic: string) => {
             :size="1"
             class="chub-topic-input"
           />
-          <button @click="addNewTopic">Add</button>
+          <button @click="addNewTopic">+</button>
         </div>
       </div>
       <div class="chub-excluded-topics">
@@ -646,7 +658,7 @@ const removeExcludedTopic = (topic: string) => {
           </span>
           <button @click="removeExcludedTopic(topic)">&times;</button>
         </div>
-        <div>
+        <div class="chub-add-excluded-topic">
           <input
             v-model="newExcludedTopic"
             @keyup.enter="addNewExcludedTopic"
@@ -654,7 +666,7 @@ const removeExcludedTopic = (topic: string) => {
             :size="1"
             class="chub-topic-input"
           />
-          <button @click="addNewExcludedTopic">Add</button>
+          <button @click="addNewExcludedTopic">+</button>
         </div>
       </div>
       <div v-if="cards.length === 0" class="chub-no-results">
@@ -780,7 +792,12 @@ body:has(.fullscreen) .Chub {
   flex-flow: row wrap;
   align-items: center;
   gap: 0.5em;
-  margin-bottom: 1em;
+}
+
+:is(.chub-add-topic, .chub-add-excluded-topic) {
+  display: flex;
+  align-items: center;
+  gap: 0.25em;
 }
 
 .chub-author {
@@ -840,5 +857,37 @@ body:has(.fullscreen) .Chub {
 .chub-sort-by label:has(> :checked) {
   font-weight: bold;
   background: var(--bg-tertiary);
+}
+
+.chub-search {
+  width: 100%;
+  display: flex;
+  gap: 0.5em;
+
+  > .chub-search-input {
+    flex: 1 0 auto;
+  }
+}
+
+.chub-show-more-controls {
+  align-self: flex-start;
+}
+
+.chub-more-controls-container {
+  position: relative;
+}
+
+.chub-more-controls {
+  position: absolute;
+  display: none;
+  flex-flow: column;
+  padding: 1em;
+  background: var(--bg-secondary-opaque);
+  border-radius: 0.5em;
+  margin-top: 0.5em;
+}
+
+.chub-more-controls.visible {
+  display: flex;
 }
 </style>

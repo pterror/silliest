@@ -229,7 +229,7 @@ a[target="_blank"]::after {
 
 .Navbar {
   display: flex;
-  flex-flow: row wrap;
+  flex-flow: row nowrap;
   gap: 1em;
   align-items: center;
   justify-content: space-between;
@@ -261,5 +261,6 @@ a[target="_blank"]::after {
 .Navbar__links {
   display: flex;
   flex-flow: row wrap;
+  justify-content: flex-end;
   gap: 0.5em;
 }
