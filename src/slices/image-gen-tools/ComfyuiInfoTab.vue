@@ -8,7 +8,7 @@ import {
   type ComfyuiWorkflow,
   type ComfyuiWorkflowLink,
   type ComfyuiWorkflowNodeData,
-} from "./comfyuiTypes";
+} from "./comfyui";
 import ComfyuiPromptNode from "./ComfyuiPromptNode.vue";
 import ComfyuiWorkflowNode from "./ComfyuiWorkflowNode.vue";
 import { hashString } from "../../lib/hash";

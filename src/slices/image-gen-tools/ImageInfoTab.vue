@@ -5,7 +5,7 @@ import { computedAsync } from "@vueuse/core";
 import { fileType } from "../../lib/filetype";
 import SdWebuiInfoTab from "./SdWebuiInfoTab.vue";
 import { onMounted, onUnmounted, ref } from "vue";
-import type { ComfyuiPromptNodeData, ComfyuiWorkflow } from "./comfyuiTypes";
+import type { ComfyuiPromptNodeData, ComfyuiWorkflow } from "./comfyui";
 import ComfyuiInfoTab from "./ComfyuiInfoTab.vue";
 
 const props = defineProps<{

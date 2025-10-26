@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ComfyuiPromptNodeData } from "./comfyuiTypes";
+import type { ComfyuiPromptNodeData } from "./comfyui";
 
 defineProps<{
   id: string;

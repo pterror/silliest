@@ -9,7 +9,7 @@ import {
   type ComfyuiWorkflowLink,
   type ComfyuiWorkflowNodeData,
   getWidgetType,
-} from "./comfyuiTypes";
+} from "./comfyui";
 
 defineProps<{
   node: ComfyuiWorkflowNodeData;
