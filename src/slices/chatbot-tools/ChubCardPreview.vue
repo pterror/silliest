@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
   CHUB_TAGS_TO_HIDE,
+  CHUB_TAGS_WITH_ICONS,
   chubGetCardByFullPath,
   type ChubCard,
   type ChubCardFullPath,
@@ -215,9 +216,26 @@ const blurred = computed(
       >
         {{ isShadowNsfl ? "(💀)" : "💀" }}
       </a>
+      <template v-for="{ tag, icon } in CHUB_TAGS_WITH_ICONS" :key="tag">
+        <a
+          v-if="
+            card.topics.some(
+              (topic) => topic.toLowerCase() === tag.toLowerCase(),
+            )
+          "
+          class="chub-card-preview-topic button"
+          :href="chubAddTopicToUrl(tag)"
+          @click="
+            !$event.ctrlKey && (emit('addTopic', tag), $event.preventDefault())
+          "
+          :title="tag"
+        >
+          {{ icon }}
+        </a>
+      </template>
       <template v-for="topic in card.topics" :key="topic">
         <a
-          v-if="!CHUB_TAGS_TO_HIDE.includes(topic)"
+          v-if="!CHUB_TAGS_TO_HIDE.has(topic)"
           class="chub-card-preview-topic button"
           :href="chubAddTopicToUrl(topic)"
           @click="
@@ -298,16 +316,16 @@ h2 {
   display: flex;
   flex-flow: row wrap;
   justify-content: center;
-  max-height: 5lh;
+  max-height: 5.3lh;
   overflow: auto;
-  gap: 0.5em;
+  gap: 0.25em;
   font-size: 85%;
 }
 
 .chub-card-preview-topic {
   cursor: pointer;
   background-color: var(--bg-secondary);
-  padding: 0.2em 0.5em;
+  padding: 0.1em 0.3em;
   border-radius: 4px;
 }
 

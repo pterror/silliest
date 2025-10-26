@@ -264,7 +264,7 @@ watchEffect(() => {
         </a>
         <template v-for="topic in card.topics" :key="topic">
           <a
-            v-if="!CHUB_TAGS_TO_HIDE.includes(topic)"
+            v-if="!CHUB_TAGS_TO_HIDE.has(topic)"
             class="chub-card-topic button"
             :href="chubAddTopicToUrl(topic)"
             @click="

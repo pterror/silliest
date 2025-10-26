@@ -7,16 +7,19 @@ const CHUB_PAGE_SIZE = 40;
 const BASE_URL = "https://gateway.chub.ai";
 const API_URL = `${BASE_URL}/api`;
 
+export const CHUB_TAGS_WITH_ICONS = [
+  { tag: "Female", icon: "♀️" },
+  { tag: "Male", icon: "♂️" },
+  { tag: "OC", icon: "OC" },
+];
+
 // TODO: Temporary workaround. Should be user configurable, however this should stay
 // to be able to revert to this as the default.
-export const CHUB_TAGS_TO_HIDE = [
-  "ROOT",
-  "TAVERN",
-  "OAI",
-  "GPT4",
+export const CHUB_TAGS_TO_HIDE = new Set([
   "NSFW",
   "NSFL",
-];
+  ...CHUB_TAGS_WITH_ICONS.map(({ tag }) => tag),
+]);
 
 export interface ChubPageRaw<T> {
   readonly count: number;
