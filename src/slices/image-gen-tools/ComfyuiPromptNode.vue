@@ -51,6 +51,13 @@ defineProps<{
 </template>
 
 <style scoped>
+.ComfyuiPromptNode {
+  align-self: flex-start;
+  padding: 0.5em 1em;
+  border-radius: var(--radius-default);
+  background-color: var(--bg-secondary);
+}
+
 .comfyui-prompt-node-inputs-table :is(th, td) {
   padding: 0 0.2em;
 }

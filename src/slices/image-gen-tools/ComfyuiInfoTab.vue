@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, ref, Teleport } from "vue";
 import {
-  promptContent,
+  extractIpAdapterName,
+  extractModelName,
+  extractPromptContent,
   type ComfyuiPromptNodeData,
   type ComfyuiWorkflow,
   type ComfyuiWorkflowLink,
@@ -29,12 +31,28 @@ const emit = defineEmits<{
   close: [];
 }>();
 
+const model = computed(() =>
+  extractModelName(
+    props.metadata.nodes,
+    props.metadata.links,
+    props.metadata.prompt,
+  ),
+);
+
+const ipadapter = computed(() =>
+  extractIpAdapterName(
+    props.metadata.nodes,
+    props.metadata.links,
+    props.metadata.prompt,
+  ),
+);
+
 const positivePrompt = computed(() =>
-  promptContent(props.metadata.nodes, props.metadata.links, "positive"),
+  extractPromptContent(props.metadata.nodes, props.metadata.links, "positive"),
 );
 
 const negativePrompt = computed(() =>
-  promptContent(props.metadata.nodes, props.metadata.links, "negative"),
+  extractPromptContent(props.metadata.nodes, props.metadata.links, "negative"),
 );
 
 const fullscreenPreviewVisible = ref(false);
@@ -44,12 +62,15 @@ const copy = (text: string) => {
 };
 
 const typeColors = computed(() => {
-  const allTypes = new Set(
-    props.metadata.workflow.nodes.flatMap((n) => [
+  const allTypes = new Set([
+    "text",
+    "number",
+    "lora",
+    ...(props.metadata.workflow.nodes.flatMap((n) => [
       ...n.inputs.map((i) => i.type),
       ...n.outputs.map((o) => o.type),
-    ]) ?? [],
-  );
+    ]) ?? []),
+  ]);
   let styles = "";
   for (const type of allTypes) {
     const typeName = String(type).toLowerCase();
@@ -92,9 +113,22 @@ const typeColors = computed(() => {
           value="prompts"
           checked
         />
-        Prompt (text)
+        Info
       </label>
       <div class="comfyui-info-prompts tab-contents">
+        <h3>Model</h3>
+        <div v-if="model" class="buttons">
+          <button @click="copy(model)">Copy</button>
+        </div>
+        <span v-if="model">{{ model }}</span>
+        <span v-else>No model found.</span>
+        <template v-if="ipadapter">
+          <h3>IP-Adapter</h3>
+          <div class="buttons">
+            <button @click="copy(ipadapter)">Copy</button>
+          </div>
+          <span>{{ ipadapter }}</span>
+        </template>
         <h3>Positive Prompt</h3>
         <div v-if="positivePrompt" class="buttons">
           <button @click="copy(positivePrompt)">Copy</button>

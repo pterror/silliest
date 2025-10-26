@@ -233,6 +233,7 @@ a[target="_blank"]::after {
   gap: 1em;
   align-items: center;
   justify-content: space-between;
+  margin-right: 1em;
 
   a {
     text-decoration: none;

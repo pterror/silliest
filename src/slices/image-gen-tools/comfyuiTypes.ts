@@ -1,3 +1,4 @@
+import { regexEscape } from "../../lib/regex";
 import type { UUID } from "../../lib/types";
 
 export type ComfyuiType = string & {
@@ -142,7 +143,175 @@ export function outputNodeInputFromLink(
   return nodes[nodeId]?.inputs[inputIndex];
 }
 
-export function promptContent(
+/** Top level arrays are ORed, nested arrays are ANDed. */
+export type Matchers = readonly (
+  | RegExp
+  | string
+  | readonly (RegExp | string)[]
+)[];
+
+export type NormalizedMatchers = readonly RegExp[][];
+
+function normalizeMatchers(matchers: Matchers): NormalizedMatchers {
+  const normalized: RegExp[][] = [];
+  for (const matcherGroup of matchers) {
+    const group: RegExp[] = [];
+    const items = Array.isArray(matcherGroup) ? matcherGroup : [matcherGroup];
+    for (const matcher of items) {
+      if (typeof matcher === "string") {
+        group.push(new RegExp(regexEscape(matcher), "i"));
+      } else {
+        group.push(matcher);
+      }
+    }
+    normalized.push(group);
+  }
+  return normalized;
+}
+
+export function extractNodeInputs(
+  nodes: Record<ComfyuiWorkflowNodeId, ComfyuiWorkflowNodeData>,
+  links: Record<ComfyuiWorkflowLinkId, ComfyuiWorkflowLink>,
+  prompt: Record<string, ComfyuiPromptNodeData>,
+  nodeTypeMatchers: Matchers,
+  inputMatchers: Matchers,
+  limit = Infinity,
+): readonly unknown[] {
+  const nodeTypeMatchersNormalized = normalizeMatchers(nodeTypeMatchers);
+  const inputMatchersNormalized = normalizeMatchers(inputMatchers);
+  let values: unknown[] = [];
+  for (const matchers of nodeTypeMatchersNormalized) {
+    let node: ComfyuiWorkflowNodeData | undefined;
+    for (const nodeCandidate of Object.values(nodes)) {
+      let allMatch = true;
+      for (const matcher of matchers) {
+        if (!matcher.test(nodeCandidate.type)) {
+          allMatch = false;
+          break;
+        }
+      }
+      if (allMatch) {
+        node = nodeCandidate;
+        break;
+      }
+    }
+    if (node) {
+      for (const matchers of inputMatchersNormalized) {
+        let input: ComfyuiWorkflowNodeInput | undefined;
+        const promptInputs = prompt[node.id]?.inputs;
+        if (promptInputs) {
+          for (const [inputName, inputCandidate] of Object.entries(
+            promptInputs,
+          )) {
+            let allMatch = true;
+            for (const matcher of matchers) {
+              if (!matcher.test(inputName)) {
+                allMatch = false;
+                break;
+              }
+            }
+            if (allMatch) {
+              values.push(inputCandidate);
+              if (values.length >= limit) return values;
+              break;
+            }
+          }
+        }
+        for (const inputCandidate of node.inputs) {
+          let allMatch = true;
+          for (const matcher of matchers) {
+            if (!matcher.test(inputCandidate.name)) {
+              allMatch = false;
+              break;
+            }
+          }
+          if (allMatch) {
+            input = inputCandidate;
+            break;
+          }
+        }
+        // If we found a valid input, we need to follow its link
+        if (!input?.link) continue;
+        const link = links[input.link];
+        if (!link) continue;
+        // Search through linked nodes to find the prompt string
+        const [, nodeId] = link;
+        let resultNode = nodes[nodeId];
+        if (!resultNode) continue;
+        // For now assume the workflow is simple and the prompt is directly connected
+        if (!/clip/i.test(resultNode.type)) continue;
+        const value = resultNode.widgets_values[0];
+        if (value !== undefined) {
+          values.push(value);
+          if (values.length >= limit) return values;
+          break;
+        }
+      }
+    }
+  }
+  return values;
+}
+
+export function extractNodeInput(
+  nodes: Record<ComfyuiWorkflowNodeId, ComfyuiWorkflowNodeData>,
+  links: Record<ComfyuiWorkflowLinkId, ComfyuiWorkflowLink>,
+  prompt: Record<string, ComfyuiPromptNodeData>,
+  nodeTypeMatchers: Matchers,
+  inputMatchers: Matchers,
+): unknown | undefined {
+  return extractNodeInputs(
+    nodes,
+    links,
+    prompt,
+    nodeTypeMatchers,
+    inputMatchers,
+    1,
+  )[0];
+}
+
+export function extractModelName(
+  nodes: Record<ComfyuiWorkflowNodeId, ComfyuiWorkflowNodeData>,
+  links: Record<ComfyuiWorkflowLinkId, ComfyuiWorkflowLink>,
+  prompt: Record<string, ComfyuiPromptNodeData>,
+): string | undefined {
+  return extractNodeInput(
+    nodes,
+    links,
+    prompt,
+    [["checkpoint", "load"], "checkpoint"],
+    ["name", "ckpt"],
+  ) as string | undefined;
+}
+
+export function extractIpAdapterName(
+  nodes: Record<ComfyuiWorkflowNodeId, ComfyuiWorkflowNodeData>,
+  links: Record<ComfyuiWorkflowLinkId, ComfyuiWorkflowLink>,
+  prompt: Record<string, ComfyuiPromptNodeData>,
+): string | undefined {
+  return extractNodeInput(
+    nodes,
+    links,
+    prompt,
+    [["ipadapter", "load"], "ipadapter"],
+    ["ipadapter", "file"],
+  ) as string | undefined;
+}
+
+export function extractImagePaths(
+  nodes: Record<ComfyuiWorkflowNodeId, ComfyuiWorkflowNodeData>,
+  links: Record<ComfyuiWorkflowLinkId, ComfyuiWorkflowLink>,
+  prompt: Record<string, ComfyuiPromptNodeData>,
+): string | undefined {
+  return extractNodeInput(
+    nodes,
+    links,
+    prompt,
+    [["load", "image"], "image"],
+    ["image", "path"],
+  ) as string | undefined;
+}
+
+export function extractPromptContent(
   nodes: Record<ComfyuiWorkflowNodeId, ComfyuiWorkflowNodeData>,
   links: Record<ComfyuiWorkflowLinkId, ComfyuiWorkflowLink>,
   promptType: "positive" | "negative",
@@ -184,4 +353,14 @@ export function promptContent(
   if (!/clip/i.test(node.type)) return;
   const value = node.widgets_values[0];
   if (typeof value === "string") return value;
+}
+
+export function getWidgetType(value: unknown) {
+  return typeof value === "string"
+    ? "TEXT"
+    : typeof value === "object" && value && "lora" in value
+    ? "LORA"
+    : typeof value === "object" && value && "type" in value
+    ? String(value.type)
+    : (typeof value).toUpperCase();
 }

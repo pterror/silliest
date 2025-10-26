@@ -8,6 +8,7 @@ import {
   type ComfyuiWorkflow,
   type ComfyuiWorkflowLink,
   type ComfyuiWorkflowNodeData,
+  getWidgetType,
 } from "./comfyuiTypes";
 
 defineProps<{
@@ -26,35 +27,47 @@ defineProps<{
     </h3>
     <h4>{{ node.type }}</h4>
     <div class="comfyui-workflow-node-values">
-      <div class="comfyui-workflow-node-inputs">
-        <h4>Inputs</h4>
-        <div v-for="(input, i) in node.inputs" :key="input.name">
-          <span
-            :class="`comfyui-workflow-node-type-${String(
-              input.type,
-            ).toLowerCase()}`"
-            :title="`Type: ${String(input.type)}`"
-          >
-            {{ input.name }}
-          </span>
-          <a
-            v-if="input.link"
-            class="comfyui-workflow-node-value"
-            :href="`#comfyui-workflow-node-${nodes[links[input.link]![1]]?.id!}`"
-          >
-            {{ inputNodeNameFromLink(links[input.link]!, nodes, prompt) }}
+      <div>
+        <div class="comfyui-workflow-node-inputs">
+          <h4>Inputs</h4>
+          <div v-for="input in node.inputs" :key="input.name">
+            <span
+              :class="`comfyui-workflow-node-type-${String(
+                input.type,
+              ).toLowerCase()}`"
+              :title="`Type: ${String(input.type)}`"
             >
-            {{ inputNodeOutputFromLink(links[input.link]!, nodes)?.name }}
-          </a>
+              {{ input.name }}
+            </span>
+            <a
+              v-if="input.link"
+              class="comfyui-workflow-node-value"
+              :href="`#comfyui-workflow-node-${nodes[links[input.link]![1]]?.id!}`"
+            >
+              {{ inputNodeNameFromLink(links[input.link]!, nodes, prompt) }}
+              >
+              {{ inputNodeOutputFromLink(links[input.link]!, nodes)?.name }}
+            </a>
+          </div>
         </div>
-      </div>
-      <!-- TODO: Add widget names from `prompt` -->
-      <div class="comfyui-workflow-node-widgets">
-        <h4>Widgets</h4>
-        <div v-for="(widget, i) in node.widgets_values" :key="i">
-          <span class="comfyui-workflow-node-widget-name">Widget {{ i }}</span
-          >:
-          <span class="comfyui-workflow-widget-value">{{ widget }}</span>
+        <div class="comfyui-workflow-node-widgets">
+          <h4>Widgets</h4>
+          <template
+            v-for="(widget, name) in prompt[node.id]?.inputs"
+            :key="name"
+          >
+            <div v-if="node.inputs.every((i) => i.name !== name)">
+              <span
+                class="comfyui-workflow-node-widget-name"
+                :class="`comfyui-workflow-node-type-${getWidgetType(
+                  widget,
+                ).toLowerCase()}`"
+                :title="`Type: ${getWidgetType(widget)}`"
+                >{{ name }}</span
+              >
+              <span class="comfyui-workflow-node-value">{{ widget }}</span>
+            </div>
+          </template>
         </div>
       </div>
       <div class="comfyui-workflow-node-outputs">
