@@ -19,6 +19,7 @@ import {
   chubAddCardFullPathToUrl,
   chubAddTopicToUrl,
 } from "./chubHelpers";
+import { formatNumberWithMagnitude } from "../../lib/number";
 
 const props = defineProps<{
   card: ChubCard;
@@ -93,26 +94,47 @@ const blurred = computed(
       <h2 :title="card.name">{{ card.name }}</h2>
     </div>
     <div class="chub-card-preview-stats">
-      <div>Messages: {{ card.nMessages }}</div>
-      <div>Chats: {{ card.nChats }}</div>
-      <div>Favorites: {{ card.n_favorites }}</div>
-      <div>Public Chats: {{ card.n_public_chats }}</div>
-      <div>Downloads: {{ card.starCount }}</div>
+      <div :title="`${card.nMessages} messages`">
+        💬{{ formatNumberWithMagnitude(card.nMessages) }}
+      </div>
+      <div :title="`${card.nChats} chats`">
+        📄{{ formatNumberWithMagnitude(card.nChats) }}
+      </div>
+      <div :title="`${card.n_favorites} favorites`">
+        ⭐{{ formatNumberWithMagnitude(card.n_favorites) }}
+      </div>
+      <div :title="`${card.n_public_chats} public chats`">
+        🌐{{ formatNumberWithMagnitude(card.n_public_chats) }}
+      </div>
+      <div :title="`${card.starCount} downloads`">
+        ⬇️{{ formatNumberWithMagnitude(card.starCount) }}
+      </div>
     </div>
-    <div v-if="tokenCounts" class="chub-card-preview-token-counts">
-      <span class="chub-card-preview-token-count-heading">Tokens:</span>
-      <div class="chub-card-preview-token-counts-details">
-        <div>
-          Perm:
-          {{
-            tokenCounts.description +
-            tokenCounts.personality +
-            tokenCounts.scenario +
-            tokenCounts.system_prompt +
-            tokenCounts.post_history_instructions
-          }}
-        </div>
-        <div>Temp: {{ tokenCounts.first_mes + tokenCounts.mes_example }}</div>
+    <div v-if="tokenCounts" class="chub-card-preview-token-counts-details">
+      <div
+        :title="`${
+          tokenCounts.description +
+          tokenCounts.personality +
+          tokenCounts.scenario +
+          tokenCounts.system_prompt +
+          tokenCounts.post_history_instructions
+        } permanent tokens`"
+      >
+        Perm:
+        {{
+          tokenCounts.description +
+          tokenCounts.personality +
+          tokenCounts.scenario +
+          tokenCounts.system_prompt +
+          tokenCounts.post_history_instructions
+        }}t
+      </div>
+      <div
+        :title="`${
+          tokenCounts.first_mes + tokenCounts.mes_example
+        } temporary tokens`"
+      >
+        Temp: {{ tokenCounts.first_mes + tokenCounts.mes_example }}t
       </div>
     </div>
     <div class="chub-card-preview-metadata-container">
@@ -213,7 +235,7 @@ const blurred = computed(
 <style scoped>
 .ChubCardPreview {
   display: flex;
-  gap: 0.5em;
+  gap: 0.3em;
   flex-flow: column nowrap;
   align-items: center;
 }
@@ -221,7 +243,7 @@ const blurred = computed(
 .chub-card-preview-title {
   display: grid;
   place-items: center;
-  font-size: 125%;
+  font-size: 110%;
   height: 3lh;
 }
 
@@ -263,8 +285,8 @@ h2 {
   max-width: 100%;
   overflow-wrap: break-word;
   text-align: center;
-  height: 10lh;
-  overflow: clip;
+  height: 5lh;
+  overflow: auto;
   text-overflow: ellipsis;
 }
 
@@ -276,9 +298,10 @@ h2 {
   display: flex;
   flex-flow: row wrap;
   justify-content: center;
-  max-height: 10lh;
-  overflow: clip;
+  max-height: 5lh;
+  overflow: auto;
   gap: 0.5em;
+  font-size: 85%;
 }
 
 .chub-card-preview-topic {
@@ -295,26 +318,13 @@ h2 {
   gap: 0.3em;
 }
 
-.chub-card-preview-metadata {
-  font-size: 0.9em;
-  opacity: 0.7;
-}
-
 .chub-card-preview-stats {
-  font-size: 0.9em;
-  opacity: 0.7;
   display: flex;
   flex-flow: row wrap;
-  gap: 0.25em 1em;
+  gap: 0.25em;
   justify-content: center;
-}
-
-.chub-card-preview-token-counts {
-  display: flex;
-  flex-flow: column nowrap;
-  align-items: center;
-  font-size: 0.9em;
-  opacity: 0.8;
+  font-size: 0.8em;
+  opacity: 0.7;
 }
 
 .chub-card-preview-metadata {
@@ -322,7 +332,7 @@ h2 {
   flex-flow: column nowrap;
   gap: 0.25em;
   align-items: center;
-  font-size: 0.9em;
+  font-size: 0.8em;
   opacity: 0.7;
 }
 
@@ -331,6 +341,8 @@ h2 {
   flex-flow: row wrap;
   gap: 1em;
   justify-content: center;
+  font-size: 0.8em;
+  opacity: 0.7;
 }
 
 .chub-card-preview-open-in-workshop img {
