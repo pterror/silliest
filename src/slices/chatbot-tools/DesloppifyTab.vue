@@ -219,7 +219,10 @@ const download = () => {
     {{ title }}
     <button class="transition-bg" @click="emit('close')">&times;</button>
   </label>
-  <div v-if="metadata" class="DesloppifyTabContents tab-contents">
+  <div v-if="!metadata" class="DesloppifyTabContents tab-contents">
+    Could not read metadata from this file.
+  </div>
+  <div v-else class="DesloppifyTabContents tab-contents">
     <img
       v-if="imageUrl"
       class="image transition-bg darken-on-hover"

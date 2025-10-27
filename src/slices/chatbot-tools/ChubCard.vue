@@ -1184,8 +1184,4 @@ watchEffect(() => {
 :deep(.chub-card-macro-user) {
   color: oklch(80% 30% 240);
 }
-
-:deep(q) {
-  color: oklch(80% 10% 240);
-}
 </style>

@@ -1,0 +1,22 @@
+---
+import Navbar from "../../../components/Navbar.astro";
+import ChatComponent from "../../../slices/chatbot-tools/Chat.vue";
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/png" href="/3c.png" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta content="file uploader" property="og:site_name" />
+    <meta content="view JSONL chatlogs" property="og:description" />
+    <link rel="shortcut icon" href="/3c.png" />
+    <title>chatlog viewer</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body class="fullscreen-body">
+    <Navbar />
+    <ChatComponent client:only />
+  </body>
+</html>
