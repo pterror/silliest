@@ -3,7 +3,6 @@ import rehypeStringify, {
   type Options as RehypeStringifyOptions,
 } from "rehype-stringify";
 import remarkBreaks from "remark-breaks";
-import remarkGfm from "remark-gfm";
 import remarkParse from "remark-parse";
 import remarkRehype, {
   type Options as RemarkRehypeOptions,
@@ -17,7 +16,11 @@ import {
   rehypeRemoveScripts,
   rehypeRemoveStyles,
 } from "../../lib/rehype";
-import { remarkUnindent, type RehypeRoot } from "../../lib/markdown";
+import {
+  remarkResizableImage,
+  remarkUnindent,
+  type RehypeRoot,
+} from "../../lib/markdown";
 import { escapeHTML } from "../../lib/html";
 
 function rehypeReplaceChubLinks() {
@@ -88,12 +91,17 @@ function rehypeReplaceMacros(macros: Record<string, string> | undefined) {
   };
 }
 
-const markdownToHtmlUnsafeProcessor = () =>
+const markdownToHtmlProcessor = () =>
   unified()
     .use(remarkParse)
     .use(remarkUnindent)
     .use(remarkBreaks)
-    .use(remarkGfm)
+    .use(remarkResizableImage)
+    .use(() => {
+      return (tree) => {
+        console.log(tree);
+      };
+    })
     .use(remarkRehype, {
       allowDangerousHtml: true,
     } satisfies RemarkRehypeOptions)
@@ -121,7 +129,7 @@ export function chubMarkdownToHtml(
   } = {},
 ): string {
   if (raw) return `<span class="raw-text">${escapeHTML(markdown)}</span>`;
-  const base = markdownToHtmlUnsafeProcessor();
+  const base = markdownToHtmlProcessor();
   const base2 = unsafe ? base : base.use(rehypeRemoveStyles);
   const base3 = disableAutoplay ? base2.use(rehypeRemoveAutoplay) : base2;
   return base3

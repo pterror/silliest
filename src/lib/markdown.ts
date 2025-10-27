@@ -1,4 +1,4 @@
-import { unified } from "unified";
+import { unified, type Processor } from "unified";
 import type { rehype } from "rehype";
 import remarkParse from "remark-parse";
 import rehypeStringify, {
@@ -13,11 +13,18 @@ import { rehypeRemoveScripts } from "./rehype";
 import rehypeRaw from "rehype-raw";
 import { visit } from "unist-util-visit";
 import type { remark } from "remark";
+import { gfmAutolinkLiteral } from "micromark-extension-gfm-autolink-literal";
+import {
+  gfmAutolinkLiteralFromMarkdown,
+  gfmAutolinkLiteralToMarkdown,
+} from "mdast-util-gfm-autolink-literal";
+import { findAndReplace as mdastFindAndReplace } from "mdast-util-find-and-replace";
 
 const markdownToHtmlProcessor = unified()
   .use(remarkParse)
   .use(remarkBreaks)
   .use(remarkGfm)
+  .use(remarkResizableImage)
   .use(remarkRehype)
   .use(rehypeRemoveScripts)
   .use(rehypeStringify);
@@ -26,6 +33,7 @@ const markdownToHtmlUnsafeProcessor = unified()
   .use(remarkParse)
   .use(remarkBreaks)
   .use(remarkGfm)
+  .use(remarkResizableImage)
   .use(remarkRehype, { allowDangerousHtml: true } satisfies RemarkRehypeOptions)
   .use(rehypeRaw)
   .use(rehypeRemoveScripts)
@@ -59,5 +67,46 @@ export function remarkUnindent() {
         }
       }
     });
+  };
+}
+
+export function remarkAutolink(this: unknown) {
+  const data = (this as Processor<RemarkRoot>).data();
+  (data.micromarkExtensions ??= []).push(gfmAutolinkLiteral());
+  (data.fromMarkdownExtensions ??= []).push(gfmAutolinkLiteralFromMarkdown());
+  (data.toMarkdownExtensions ??= []).push(gfmAutolinkLiteralToMarkdown());
+}
+
+// ![alt](url =widthxheight)
+const resizableImageRegex =
+  /!\[([^\]]*)\]\((.*?)\s*=\s*(\d+.+)\s*x\s*(\d+.+)\)/g;
+
+// This "replacer" function receives the match and returns a new node
+function replacer(
+  _match: string,
+  alt: string,
+  url: string,
+  width: string,
+  height: string,
+) {
+  console.log("D:");
+  return {
+    type: "image" as const,
+    url,
+    alt,
+    data: {
+      // hProperties will be turned into HTML attributes
+      hProperties: {
+        width,
+        height,
+      },
+    },
+  };
+}
+
+export function remarkResizableImage() {
+  return (tree: RemarkRoot) => {
+    console.log(":D");
+    mdastFindAndReplace(tree, [resizableImageRegex, replacer]);
   };
 }

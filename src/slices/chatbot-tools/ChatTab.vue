@@ -33,11 +33,14 @@ const title = computed(
 
 const markdownCache = new Map<string, string>();
 
-watch(props.file, () => {
-  swipeIndex.value = undefined;
-  swipeMessageIndex.value = undefined;
-  markdownCache.clear();
-});
+watch(
+  () => props.file,
+  () => {
+    swipeIndex.value = undefined;
+    swipeMessageIndex.value = undefined;
+    markdownCache.clear();
+  },
+);
 
 const cachedMarkdownToHtml = (markdown: string) => {
   const cached = markdownCache.get(markdown);
