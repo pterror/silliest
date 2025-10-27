@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computedAsync } from "@vueuse/core";
-import { computed } from "vue";
-import type { SillyTavernChatlog } from "./sillytavern";
-import { markdownToHtml } from "../../lib/markdown";
+import { computed, ref, watch } from "vue";
+import type {
+  SillyTavernChatlog,
+  SillyTavernChatlogEntry,
+} from "./sillytavern";
 import { chubMarkdownToHtml } from "./chubMarkdown";
 
 const props = defineProps<{
@@ -13,7 +15,10 @@ const emit = defineEmits<{
   close: [];
 }>();
 
-const metadata = computedAsync<SillyTavernChatlog | undefined>(() =>
+const swipeMessageIndex = ref<number>();
+const swipeIndex = ref<number>();
+
+const messages = computedAsync<SillyTavernChatlog | undefined>(() =>
   props.file
     .text()
     .then((text) => text.split("\n").map((line) => JSON.parse(line)))
@@ -22,9 +27,55 @@ const metadata = computedAsync<SillyTavernChatlog | undefined>(() =>
 
 const title = computed(
   () =>
-    metadata.value?.find((entry) => !entry.is_user && !entry.is_system)?.name ??
+    messages.value?.find((entry) => !entry.is_user && !entry.is_system)?.name ??
     props.file.name.replace(/[.]jsonl$/, ""),
 );
+
+const markdownCache = new Map<string, string>();
+
+watch(props.file, () => {
+  swipeIndex.value = undefined;
+  swipeMessageIndex.value = undefined;
+  markdownCache.clear();
+});
+
+const cachedMarkdownToHtml = (markdown: string) => {
+  const cached = markdownCache.get(markdown);
+  if (cached) return cached;
+  const html = chubMarkdownToHtml(markdown, { unsafe: true });
+  markdownCache.set(markdown, html);
+  return html;
+};
+
+const swipeLeft = (entry: SillyTavernChatlogEntry, i: number) => {
+  const newSwipeIndex = Math.max(
+    ((swipeMessageIndex.value === i ? swipeIndex.value : entry.swipe_id) ?? 0) -
+      1,
+    0,
+  );
+  if (newSwipeIndex === entry.swipe_id) {
+    swipeIndex.value = undefined;
+    swipeMessageIndex.value = undefined;
+    return;
+  }
+  swipeIndex.value = newSwipeIndex;
+  swipeMessageIndex.value = i;
+};
+
+const swipeRight = (entry: SillyTavernChatlogEntry, i: number) => {
+  const newSwipeIndex = Math.min(
+    ((swipeMessageIndex.value === i ? swipeIndex.value : entry.swipe_id) ?? 0) +
+      1,
+    (entry.swipes?.length ?? 1) - 1,
+  );
+  if (newSwipeIndex === entry.swipe_id) {
+    swipeIndex.value = undefined;
+    swipeMessageIndex.value = undefined;
+    return;
+  }
+  swipeIndex.value = newSwipeIndex;
+  swipeMessageIndex.value = i;
+};
 </script>
 
 <template>
@@ -38,13 +89,19 @@ const title = computed(
     {{ title }}
     <button class="transition-bg" @click="emit('close')">&times;</button>
   </label>
-  <div v-if="!metadata" class="ChatTabContents tab-contents">
+  <div v-if="!messages" class="ChatTabContents tab-contents">
     Could not read metadata from this file.
   </div>
   <div v-else class="ChatTabContents tab-contents">
     <div class="chat-tab-messages">
-      <template v-for="(entry, i) in metadata" :key="i">
-        <div v-if="entry.mes" class="chat-tab-message">
+      <template
+        v-for="(entry, i) in messages.slice(
+          0,
+          (swipeMessageIndex ?? messages.length) + 1,
+        )"
+        :key="i"
+      >
+        <div v-if="entry.mes || entry.swipes" class="chat-tab-message">
           <div class="chat-tab-message-author">
             <div class="chat-tab-message-author-name">{{ entry.name }}</div>
             <div
@@ -65,14 +122,47 @@ const title = computed(
                   : "Character"
               }}
             </div>
+            <div class="chat-tab-message-message-id">#{{ i }}</div>
             <div class="chat-tab-message-send-date">
               {{ entry.send_date }}
             </div>
           </div>
           <div
             class="chat-tab-message-contents"
-            v-html="chubMarkdownToHtml(entry.mes, { unsafe: true })"
+            v-html="
+              cachedMarkdownToHtml(
+                i === swipeMessageIndex
+                  ? entry.swipes?.[swipeIndex ?? 0] ?? entry.mes
+                  : entry.mes,
+              )
+            "
           ></div>
+          <div
+            v-if="(entry.swipes?.length ?? 1) > 1"
+            class="chat-tab-message-swipe-info"
+          >
+            <button
+              class="chat-tab-message-swipe-left"
+              @click="swipeLeft(entry, i)"
+            >
+              &lt;
+            </button>
+            <div class="chat-tab-message-swipe-counts">
+              <span class="chat-tab-message-swipe-counts-current">{{
+                ((i === swipeMessageIndex ? swipeIndex : entry.swipe_id) ?? 0) +
+                1
+              }}</span
+              >/<span class="chat-tab-message-swipe-counts-total">{{
+                entry.swipes?.length ?? 1
+              }}</span>
+            </div>
+            <button
+              class="chat-tab-message-swipe-right"
+              @click="swipeRight(entry, i)"
+            >
+              &gt;
+            </button>
+          </div>
         </div>
       </template>
     </div>
@@ -112,10 +202,24 @@ const title = computed(
   padding: 0.1em 0.4em;
 }
 
+.chat-tab-message-message-id {
+  font-size: 0.75em;
+  opacity: 0.6;
+}
+
 .chat-tab-message-send-date {
   margin-left: auto;
   font-size: 0.75em;
   opacity: 0.6;
+}
+
+.chat-tab-message-swipe-info {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5em;
+  font-size: 0.8em;
+  opacity: 0.7;
 }
 
 .chat-tab-message-author-role-user {
@@ -128,5 +232,9 @@ const title = computed(
 
 .chat-tab-message-author-role-character {
   color: oklch(90% 40% 330);
+}
+
+.chat-tab-message-contents :deep(img) {
+  max-width: 100%;
 }
 </style>

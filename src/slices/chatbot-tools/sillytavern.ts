@@ -10,6 +10,8 @@ export interface SillyTavernChatlogBaseEntry {
   readonly force_avatar?: string;
   readonly original_avatar?: string;
   readonly is_group?: boolean;
+  readonly swipe_id?: number;
+  readonly swipes?: readonly string[];
 }
 
 export interface SillyTavernChapterizerData {
@@ -46,8 +48,6 @@ export interface SillyTavernChatlogModelEntry
     readonly gen_finished?: string;
     readonly extra?: SillyTavernChatlogModelExtras;
   }[];
-  readonly swipe_id?: number;
-  readonly swipes?: readonly string[];
 }
 
 export interface SillyTavernChatlogUserExtras {
@@ -59,6 +59,8 @@ export interface SillyTavernChatlogUserExtras {
     readonly lagging?: boolean;
     readonly include?: unknown;
   };
+  readonly swipe_id?: never;
+  readonly swipes?: never;
   readonly [key: string]: unknown;
 }
 
