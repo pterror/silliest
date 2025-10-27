@@ -81,7 +81,6 @@ export function remarkAutolink(this: unknown) {
 const resizableImageRegex =
   /!\[([^\]]*)\]\((.*?)\s*=\s*(\d+.+)\s*x\s*(\d+.+)\)/g;
 
-// This "replacer" function receives the match and returns a new node
 function replacer(
   _match: string,
   alt: string,
@@ -89,7 +88,6 @@ function replacer(
   width: string,
   height: string,
 ) {
-  console.log("D:");
   return {
     type: "image" as const,
     url,
@@ -106,7 +104,6 @@ function replacer(
 
 export function remarkResizableImage() {
   return (tree: RemarkRoot) => {
-    console.log(":D");
     mdastFindAndReplace(tree, [resizableImageRegex, replacer]);
   };
 }

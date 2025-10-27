@@ -97,11 +97,6 @@ const markdownToHtmlProcessor = () =>
     .use(remarkUnindent)
     .use(remarkBreaks)
     .use(remarkResizableImage)
-    .use(() => {
-      return (tree) => {
-        console.log(tree);
-      };
-    })
     .use(remarkRehype, {
       allowDangerousHtml: true,
     } satisfies RemarkRehypeOptions)
