@@ -45,7 +45,7 @@ const configQuery = useQuery(chubQueryOptions("chubFetchEntireConfig", []));
 const config = configQuery.data;
 const { username, avatarUrl, blurNsfw, showCustomCss, showWorkshopLink } =
   inject(chubProviderKey)!;
-const fullscreenPreviewImage = ref<string | null>(null);
+const fullscreenPreviewImage = ref<string>();
 const chatPreview = ref(true);
 const viewRawText = ref(false);
 
@@ -852,7 +852,7 @@ watchEffect(() => {
   <div
     v-if="fullscreenPreviewImage"
     class="fullscreen-preview transition-bg"
-    @click="fullscreenPreviewImage = null"
+    @click="fullscreenPreviewImage = undefined"
   >
     <img
       :src="fullscreenPreviewImage"

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computedAsync } from "@vueuse/core";
+import { computedAsync, useEventListener } from "@vueuse/core";
 import { computed, ref, watch } from "vue";
 import type {
   SillyTavernChatlog,
@@ -17,6 +17,7 @@ const emit = defineEmits<{
 
 const swipeMessageIndex = ref<number>();
 const swipeIndex = ref<number>();
+const fullscreenPreviewImage = ref<string>();
 
 const messages = computedAsync<SillyTavernChatlog | undefined>(() =>
   props.file
@@ -79,6 +80,11 @@ const swipeRight = (entry: SillyTavernChatlogEntry, i: number) => {
   swipeIndex.value = newSwipeIndex;
   swipeMessageIndex.value = i;
 };
+
+useEventListener("chub-image-click" as never, (event) => {
+  const customEvent = event as CustomEvent<string>;
+  fullscreenPreviewImage.value = customEvent.detail;
+});
 </script>
 
 <template>
@@ -170,6 +176,17 @@ const swipeRight = (entry: SillyTavernChatlogEntry, i: number) => {
       </template>
     </div>
   </div>
+  <div
+    v-if="fullscreenPreviewImage"
+    class="fullscreen-preview transition-bg"
+    @click="fullscreenPreviewImage = undefined"
+  >
+    <img
+      :src="fullscreenPreviewImage"
+      @click.stop
+      class="fullscreen-preview-image"
+    />
+  </div>
 </template>
 
 <style scoped>
@@ -239,5 +256,16 @@ const swipeRight = (entry: SillyTavernChatlogEntry, i: number) => {
 
 .chat-tab-message-contents :deep(img) {
   max-width: 100%;
+}
+
+:deep(img:not(:is(.fullscreen-preview-image))) {
+  cursor: pointer;
+  border-radius: var(--radius-default);
+}
+
+:deep(img:not(:is(.fullscreen-preview-image))):hover {
+  filter: brightness(0.8);
+  transition-property: filter;
+  transition-duration: 150ms;
 }
 </style>
