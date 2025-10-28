@@ -58,6 +58,7 @@ const {
     name_like: nameLike,
     query_type: queryType,
     sort,
+    asc,
     max_days_ago: maxDaysAgo,
     min_tokens: minTokens,
     max_tokens: maxTokens,
@@ -96,6 +97,7 @@ const {
       sanitize: (value) =>
         narrowingIncludes(CHUB_SORT_TYPES, value) ? value : "created_at",
     },
+    asc: { type: "boolean" },
     max_days_ago: { type: "number" },
     min_tokens: { type: "number", defaultValue: 200 },
     max_tokens: { type: "number", defaultValue: 100_000 },
@@ -606,6 +608,10 @@ const removeExcludedTopic = (topic: string) => {
         </div>
       </div>
       <div class="chub-sort-by">
+        <label>
+          <input type="checkbox" v-model="asc" />
+          Sort ascending
+        </label>
         <label>
           <input
             class="invisible-radio"
