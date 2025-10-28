@@ -632,7 +632,7 @@ const removeExcludedTopic = (topic: string) => {
         </label>
       </div>
       <div class="chub-topics">
-        <label>Topics</label>
+        <label>Tags</label>
         <div v-for="topic in topics" class="chub-topic">
           <span>
             {{ topic }}
@@ -651,7 +651,7 @@ const removeExcludedTopic = (topic: string) => {
         </div>
       </div>
       <div class="chub-excluded-topics">
-        <label>Excluded topics</label>
+        <label>Tags to exclude</label>
         <div v-for="topic in excludedTopics" class="chub-topic">
           <span>
             {{ topic }}
