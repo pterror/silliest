@@ -98,17 +98,14 @@ const blurred = computed(
       <div :title="`${card.nMessages} messages`">
         💬{{ formatNumberWithMagnitude(card.nMessages) }}
       </div>
+      <div :title="`${card.starCount} downloads`">
+        ⬇️{{ formatNumberWithMagnitude(card.starCount) }}
+      </div>
       <div :title="`${card.nChats} chats`">
         📄{{ formatNumberWithMagnitude(card.nChats) }}
       </div>
       <div :title="`${card.n_favorites} favorites`">
         ⭐{{ formatNumberWithMagnitude(card.n_favorites) }}
-      </div>
-      <div :title="`${card.n_public_chats} public chats`">
-        🌐{{ formatNumberWithMagnitude(card.n_public_chats) }}
-      </div>
-      <div :title="`${card.starCount} downloads`">
-        ⬇️{{ formatNumberWithMagnitude(card.starCount) }}
       </div>
     </div>
     <div v-if="tokenCounts" class="chub-card-preview-token-counts-details">

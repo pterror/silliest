@@ -28,6 +28,7 @@ import { getChubFilters } from "./chubFilters";
 import { formatDateTime } from "../../lib/dateTime";
 import ChubCardComment from "./ChubCardComment.vue";
 import { chubAddCardFullPathToUrl, chubAddTopicToUrl } from "./chubHelpers";
+import { formatNumberWithMagnitude } from "../../lib/number";
 
 const props = defineProps<{
   card: ChubCard<true>;
@@ -303,11 +304,21 @@ watchEffect(() => {
         </span>
       </div>
       <div class="chub-card-stats">
-        <div>Messages: {{ card.nMessages }}</div>
-        <div>Chats: {{ card.nChats }}</div>
-        <div>Favorites: {{ card.n_favorites }}</div>
-        <div>Public Chats: {{ card.n_public_chats }}</div>
-        <div>Downloads: {{ card.starCount }}</div>
+        <div :title="`${card.nMessages} messages`">
+          💬{{ formatNumberWithMagnitude(card.nMessages) }}
+        </div>
+        <div :title="`${card.starCount} downloads`">
+          ⬇️{{ formatNumberWithMagnitude(card.starCount) }}
+        </div>
+        <div :title="`${card.nChats} chats`">
+          📄{{ formatNumberWithMagnitude(card.nChats) }}
+        </div>
+        <div :title="`${card.n_favorites} favorites`">
+          ⭐{{ formatNumberWithMagnitude(card.n_favorites) }}
+        </div>
+        <div :title="`${card.n_public_chats} public chats`">
+          🌐{{ formatNumberWithMagnitude(card.n_public_chats) }}
+        </div>
       </div>
       <div v-if="tokenCounts" class="chub-card-token-counts">
         <span class="chub-card-token-count-heading">Tokens:</span>
