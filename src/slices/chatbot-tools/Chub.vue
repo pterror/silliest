@@ -314,7 +314,7 @@ const withoutNsfwQuery = computed((): ChubCardQuery => {
   if (needsCursor && !("cursor" in params)) return query.value;
   return {
     type: "search",
-    params: { ...params, nsfw: false, nsfl: true },
+    params: { ...params, nsfw: false, nsfl: nsfl.value },
   };
 });
 
@@ -329,7 +329,7 @@ const withoutNsflQuery = computed((): ChubCardQuery => {
   if (needsCursor && !("cursor" in params)) return query.value;
   return {
     type: "search",
-    params: { ...params, nsfw: true, nsfl: false },
+    params: { ...params, nsfw: nsfw.value, nsfl: false },
   };
 });
 
