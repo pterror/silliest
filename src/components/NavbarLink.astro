@@ -4,7 +4,6 @@ interface Props {
 }
 
 const { href } = Astro.props;
-console.log(Astro.routePattern, href);
 ---
 
 <a href={Astro.routePattern === href ? undefined : href}><slot /></a>

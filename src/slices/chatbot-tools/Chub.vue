@@ -605,6 +605,75 @@ const removeExcludedTopic = (topic: string) => {
               Require alternate greetings
             </label>
           </div>
+          <div class="chub-sort-by">
+            <label>
+              <input type="checkbox" v-model="asc" />
+              Sort ascending
+            </label>
+            <label>
+              <input
+                class="invisible-radio"
+                type="radio"
+                name="chub-sort-type"
+                value="timeline"
+                :checked="isTimeline"
+                @change="isTimeline = true"
+              />
+              Timeline
+            </label>
+            <label v-for="sortName in CHUB_SORT_NAMES.slice(1)" :key="sortName">
+              <input
+                class="invisible-radio"
+                type="radio"
+                name="chub-sort-type"
+                :value="CHUB_SORT_NAME_TO_TYPE[sortName]"
+                :checked="sort === CHUB_SORT_NAME_TO_TYPE[sortName]"
+                @change="
+                  (isTimeline = false),
+                    (sort = CHUB_SORT_NAME_TO_TYPE[sortName])
+                "
+              />
+              {{ sortName }}
+            </label>
+          </div>
+          <div class="chub-topics">
+            <label>Tags</label>
+            <div v-for="topic in topics" class="chub-topic">
+              <span>
+                {{ topic }}
+              </span>
+              <button @click="removeTopic(topic)">&times;</button>
+            </div>
+            <div class="chub-add-topic">
+              <input
+                v-model="newTopic"
+                @keyup.enter="addNewTopic"
+                placeholder="Add topic"
+                :size="1"
+                class="chub-topic-input"
+              />
+              <button @click="addNewTopic">+</button>
+            </div>
+          </div>
+          <div class="chub-excluded-topics">
+            <label>Tags to exclude</label>
+            <div v-for="topic in excludedTopics" class="chub-topic">
+              <span>
+                {{ topic }}
+              </span>
+              <button @click="removeExcludedTopic(topic)">&times;</button>
+            </div>
+            <div class="chub-add-excluded-topic">
+              <input
+                v-model="newExcludedTopic"
+                @keyup.enter="addNewExcludedTopic"
+                placeholder="Add topic"
+                :size="1"
+                class="chub-topic-input"
+              />
+              <button @click="addNewExcludedTopic">+</button>
+            </div>
+          </div>
         </div>
       </div>
       <div class="chub-sort-by">
@@ -891,6 +960,7 @@ body:has(.fullscreen) .Chub {
   background: var(--bg-secondary-opaque);
   border-radius: 0.5em;
   margin-top: 0.5em;
+  z-index: 1;
 }
 
 .chub-more-controls.visible {
