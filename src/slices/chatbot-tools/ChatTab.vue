@@ -8,8 +8,8 @@ import type {
 import { chubMarkdownToHtml } from "./chubMarkdown";
 
 const props = defineProps<{
-  readonly file: File;
-  readonly defaultChecked: boolean;
+  file: File;
+  defaultChecked: boolean;
 }>();
 const emit = defineEmits<{
   close: [];

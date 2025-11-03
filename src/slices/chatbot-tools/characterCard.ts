@@ -1,5 +1,6 @@
 import moment from "moment";
 import { regexEscape } from "../../lib/regex";
+import type { CharacterBook, CharacterBookEntry } from "./types";
 
 const dateLocale = "en-US";
 
@@ -115,4 +116,40 @@ export const parseExampleMessages = (
           })
         : [];
     });
+};
+
+export const mergeCharacterBooks = (
+  lorebooks: readonly CharacterBook[],
+): CharacterBook => {
+  // Best-effort merge: combine all extensions
+  const mergedExtensions = lorebooks.reduce(
+    (acc, book) => ({
+      ...acc,
+      ...book.extensions,
+    }),
+    {},
+  );
+  const mergedEntries: CharacterBookEntry[] = [];
+  const seen = new Set<string>();
+  const seenIds = new Set<number>();
+  let maxSeenId = 0;
+  for (const lorebook of lorebooks) {
+    for (const entry of lorebook.entries) {
+      const serialized = JSON.stringify(entry);
+      if (seen.has(serialized)) continue;
+      seen.add(serialized);
+      const newEntry =
+        "id" in entry && entry.id != null && seenIds.has(entry.id)
+          ? { ...entry, id: maxSeenId + 1 }
+          : entry;
+      if (newEntry.id) {
+        seenIds.add(newEntry.id);
+        if (newEntry.id > maxSeenId) {
+          maxSeenId = newEntry.id;
+        }
+      }
+      mergedEntries.push(newEntry);
+    }
+  }
+  return { extensions: mergedExtensions, entries: mergedEntries };
 };

@@ -78,37 +78,42 @@ export const TavernCardV1 = z.object({
   mes_example: z.string(),
 });
 
+export type CharacterBookEntry = z.infer<typeof CharacterBookEntry>;
+export const CharacterBookEntry = z
+  .object({
+    keys: z.array(z.string()).readonly(),
+    content: z.string(),
+    extensions: z.record(z.string(), z.unknown()).readonly(),
+    enabled: z.boolean(),
+    insertion_order: z.number(), // if two entries inserted, lower "insertion order" = inserted higher
+    case_sensitive: z.optional(z.boolean()),
+
+    // FIELDS WITH NO CURRENT EQUIVALENT IN SILLY
+    name: z.optional(z.string()), // not used in prompt engineering
+    priority: z.optional(z.number()), // if token budget reached, lower priority value = discarded first
+
+    // FIELDS WITH NO CURRENT EQUIVALENT IN AGNAI
+    id: z.optional(z.number()), // not used in prompt engineering
+    comment: z.optional(z.string()), // not used in prompt engineering
+    selective: z.optional(z.boolean()), // if `true`, require a key from both `keys` and `secondary_keys` to trigger the entry
+    secondary_keys: z.optional(z.array(z.string()).readonly()), // see field `selective`. ignored if selective == false
+    constant: z.optional(z.boolean()), // if true, always inserted in the prompt (within budget limit)
+    position: z.optional(z.literal(["", "before_char", "after_char"])), // whether the entry is placed before or after the character defs
+  })
+  .readonly();
+
 export type CharacterBook = z.infer<typeof CharacterBook>;
-export const CharacterBook = z.object({
-  name: z.optional(z.string()),
-  description: z.optional(z.string()),
-  scan_depth: z.optional(z.number()), // agnai: "Memory: Chat History Depth"
-  token_budget: z.optional(z.number()), // agnai: "Memory: Context Limit"
-  recursive_scanning: z.optional(z.boolean()), // no agnai equivalent. whether entry content can trigger other entries
-  extensions: z.record(z.string(), z.unknown()),
-  entries: z.array(
-    z.object({
-      keys: z.array(z.string()),
-      content: z.string(),
-      extensions: z.record(z.string(), z.unknown()),
-      enabled: z.boolean(),
-      insertion_order: z.number(), // if two entries inserted, lower "insertion order" = inserted higher
-      case_sensitive: z.optional(z.boolean()),
-
-      // FIELDS WITH NO CURRENT EQUIVALENT IN SILLY
-      name: z.optional(z.string()), // not used in prompt engineering
-      priority: z.optional(z.number()), // if token budget reached, lower priority value = discarded first
-
-      // FIELDS WITH NO CURRENT EQUIVALENT IN AGNAI
-      id: z.optional(z.number()), // not used in prompt engineering
-      comment: z.optional(z.string()), // not used in prompt engineering
-      selective: z.optional(z.boolean()), // if `true`, require a key from both `keys` and `secondary_keys` to trigger the entry
-      secondary_keys: z.optional(z.array(z.string())), // see field `selective`. ignored if selective == false
-      constant: z.optional(z.boolean()), // if true, always inserted in the prompt (within budget limit)
-      position: z.optional(z.literal(["", "before_char", "after_char"])), // whether the entry is placed before or after the character defs
-    }),
-  ),
-});
+export const CharacterBook = z
+  .object({
+    name: z.optional(z.string()),
+    description: z.optional(z.string()),
+    scan_depth: z.optional(z.number()), // agnai: "Memory: Chat History Depth"
+    token_budget: z.optional(z.number()), // agnai: "Memory: Context Limit"
+    recursive_scanning: z.optional(z.boolean()), // no agnai equivalent. whether entry content can trigger other entries
+    extensions: z.record(z.string(), z.unknown()),
+    entries: z.array(CharacterBookEntry).readonly(),
+  })
+  .readonly();
 
 export type TavernCardV2Extensions = z.infer<typeof TavernCardV2Extensions>;
 export const TavernCardV2Extensions = z
@@ -118,11 +123,9 @@ export const TavernCardV2Extensions = z
   })
   .and(z.record(z.string(), z.unknown()));
 
-export type TavernCardV2 = z.infer<typeof TavernCardV2>;
-export const TavernCardV2 = z.object({
-  spec: z.literal("chara_card_v2"),
-  spec_version: z.literal("2.0"), // May 8th addition
-  data: z.object({
+export type TavernCardV2Data = z.infer<typeof TavernCardV2Data>;
+export const TavernCardV2Data = z
+  .object({
     name: z.string(),
     description: z.string(),
     personality: z.string(),
@@ -142,8 +145,17 @@ export const TavernCardV2 = z.object({
     creator: z.string(),
     character_version: z.string(),
     extensions: TavernCardV2Extensions,
-  }),
-});
+  })
+  .readonly();
+
+export type TavernCardV2 = z.infer<typeof TavernCardV2>;
+export const TavernCardV2 = z
+  .object({
+    spec: z.literal("chara_card_v2"),
+    spec_version: z.literal("2.0"), // May 8th addition
+    data: TavernCardV2Data,
+  })
+  .readonly();
 
 export type TavernCard = z.infer<typeof TavernCard>;
 export const TavernCard = z.union([TavernCardV1, TavernCardV2]);
