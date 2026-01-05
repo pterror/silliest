@@ -1388,3 +1388,68 @@ export async function chubListGalleryImages(
 }
 
 // TODO: 'upload image' endpoint
+
+export interface ChubAuthenticationTokenSuccessResponse {
+  readonly status: "success";
+  readonly csrf_token: string;
+}
+
+// Unverified
+export interface ChubAuthenticationTokenErrorResponse {
+  readonly status: "error";
+  readonly error: unknown;
+}
+
+export type ChubAuthenticationTokenResponse =
+  | ChubAuthenticationTokenSuccessResponse
+  | ChubAuthenticationTokenErrorResponse;
+
+export async function chubFetchAuthenticationToken(): Promise<string> {
+  const response = await fetch(`${BASE_URL}/authentication/token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({}),
+  });
+  if (!response.ok) {
+    throw new Error("Failed to fetch authentication token");
+  }
+  const data: ChubAuthenticationTokenResponse = await response.json();
+  if (data.status !== "success") {
+    throw new Error(`Failed to fetch authentication token: ${data.error}`);
+  }
+  return data.csrf_token;
+}
+
+export interface ChubLoginRequest {
+  readonly csrf_token: string;
+  readonly email_or_username: string;
+  // for google oauth, password is the jwt returned by oauth
+  readonly password: string;
+  // TODO: check login methods to confirm these values
+  readonly oauth: "google" | "github" | "none";
+  readonly state: string;
+  // defaults to `https://chub.ai/login`, but i think is unused as the page does not seem to redirect after login
+  readonly redirect_url: string;
+  readonly is_mobile: `${boolean}`;
+}
+
+export interface ChubLoginResponse {
+  readonly git_id: number;
+  readonly username: ChubUsername;
+  readonly samwise: UUID;
+  readonly subscription: number;
+}
+
+export async function chubLogin(
+  request: ChubLoginRequest,
+): Promise<ChubLoginResponse> {
+  const response = await fetch(`${BASE_URL}/authentication/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  if (!response.ok) {
+    throw new Error("Failed to login");
+  }
+  return await response.json();
+}
