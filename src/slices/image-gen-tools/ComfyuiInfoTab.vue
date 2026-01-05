@@ -17,11 +17,11 @@ const props = defineProps<{
   fileName: string;
   metadata: {
     prompt: Record<string, ComfyuiPromptNodeData>;
-    workflow: ComfyuiWorkflow;
+    workflow: ComfyuiWorkflow | undefined;
     nodes: Record<string, ComfyuiWorkflowNodeData>;
     links: Record<string, ComfyuiWorkflowLink>;
     promptJson: string;
-    workflowJson: string;
+    workflowJson: string | undefined;
     value?: never;
   };
   imageUrl: string | undefined;
@@ -66,7 +66,7 @@ const typeColors = computed(() => {
     "text",
     "number",
     "lora",
-    ...(props.metadata.workflow.nodes.flatMap((n) => [
+    ...(props.metadata.workflow?.nodes.flatMap((n) => [
       ...n.inputs.map((i) => i.type),
       ...n.outputs.map((o) => o.type),
     ]) ?? []),
@@ -168,7 +168,10 @@ const typeColors = computed(() => {
         />
         Workflow (nodes)
       </label>
-      <div class="comfyui-info-workflow-nodes tab-contents">
+      <div
+        v-if="metadata.workflow"
+        class="comfyui-info-workflow-nodes tab-contents"
+      >
         <ComfyuiWorkflowNode
           v-for="node in metadata.workflow.nodes"
           :key="node.id"
@@ -203,7 +206,10 @@ const typeColors = computed(() => {
         />
         Workflow (raw)
       </label>
-      <div class="comfyui-info-workflow-raw tab-contents">
+      <div
+        v-if="metadata.workflowJson"
+        class="comfyui-info-workflow-raw tab-contents"
+      >
         <div class="buttons">
           <button @click="copy(metadata.workflowJson)">Copy</button>
         </div>

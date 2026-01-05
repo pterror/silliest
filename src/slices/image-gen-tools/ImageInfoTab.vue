@@ -40,19 +40,25 @@ const metadata = computedAsync(() =>
           }
           if (png.text.prompt || png.text.workflow) {
             const promptJson = png.text.prompt ?? "{}";
-            const workflowJson = png.text.workflow ?? "{}";
+            const workflowJson = png.text.workflow;
             const prompt = JSON.parse(
               promptJson.replace(/\bNaN\b/g, "null"),
             ) as Record<string, ComfyuiPromptNodeData>;
-            const workflow = JSON.parse(
-              workflowJson.replace(/\bNaN\b/g, "null"),
-            ) as ComfyuiWorkflow;
-            const nodes = Object.fromEntries(
-              workflow.nodes.map((node) => [node.id, node]),
-            );
-            const links = Object.fromEntries(
-              workflow.links.map((link) => [link[0], link]),
-            );
+            const workflow = workflowJson
+              ? (JSON.parse(
+                  workflowJson.replace(/\bNaN\b/g, "null"),
+                ) as ComfyuiWorkflow)
+              : undefined;
+            const nodes = workflow
+              ? Object.fromEntries(
+                  workflow.nodes.map((node) => [node.id, node]),
+                )
+              : {};
+            const links = workflow
+              ? Object.fromEntries(
+                  workflow.links.map((link) => [link[0], link]),
+                )
+              : {};
             return {
               type: "comfyui" as const,
               value: {
