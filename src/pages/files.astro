@@ -95,14 +95,22 @@ import Navbar from "../components/Navbar.astro";
       <div id="statusDisplay"></div>
       <div id="fileCountDisplay"></div>
       <div>
-        <button id="copyAllUrlsButton">Copy all URLs!</button>
-        <button id="clearUrlsButton">Clear URLs</button>
+        <button id="copyAllButton">Copy all!</button>
+        <button id="clearButton">Clear</button>
+        <label>
+          <input id="includeFileNamesCheckbox" type="checkbox" checked />
+          Include file names in copied URLs
+        </label>
       </div>
-      <div id="urlsDisplay" class="show-newlines">No URLs yet!</div>
+      <div id="filesDisplay" class="show-newlines">No files yet!</div>
       <div id="dropTarget">Drop files here</div>
       <script>
+        interface UploadedFile {
+          readonly name: string;
+          readonly url: string;
+        }
         const files: File[] = [];
-        const urls: string[] = [];
+        const urls: UploadedFile[] = [];
 
         const htmlEscapeMap: Record<string, string> = {
           "&": "&amp;",
@@ -133,8 +141,8 @@ import Navbar from "../components/Navbar.astro";
         const fileCountDisplay = document.getElementById(
           "fileCountDisplay",
         ) as HTMLDivElement;
-        const urlsDisplay = document.getElementById(
-          "urlsDisplay",
+        const filesDisplay = document.getElementById(
+          "filesDisplay",
         ) as HTMLDivElement;
         function updateFileCount() {
           fileCountDisplay.innerText = `${files.length} file(s) to be uploaded`;
@@ -147,54 +155,74 @@ import Navbar from "../components/Navbar.astro";
           updateFileCount();
         }
         setFiles([]);
-        function copyUrls(urls: readonly string[]) {
+        const includeFileNamesCheckbox = document.getElementById(
+          "includeFileNamesCheckbox",
+        ) as HTMLInputElement;
+        const savedIncludeFileNames =
+          (localStorage.getItem("silliest-include-file-names") ?? "true") ===
+          "true";
+        includeFileNamesCheckbox.checked = savedIncludeFileNames;
+        includeFileNamesCheckbox.addEventListener("change", () => {
+          localStorage.setItem(
+            "silliest-include-file-names",
+            includeFileNamesCheckbox.checked.toString(),
+          );
+        });
+        function copyUploadedFiles(urls: readonly UploadedFile[]) {
           if (!urls.length) return;
-          navigator.clipboard.writeText(urls.join("\n"));
+          const includeFileNames = includeFileNamesCheckbox.checked;
+          navigator.clipboard.writeText(
+            urls
+              .map(({ name, url }) =>
+                includeFileNames ? `![${name}](${url})` : url,
+              )
+              .join("\n"),
+          );
           showSuccess(`Copied ${urls.length} URL(s) to clipboard!`);
         }
-        function copyUrl(url: string) {
-          copyUrls([url]);
+        function copyUploadedFile(file: UploadedFile) {
+          copyUploadedFiles([file]);
         }
         declare global {
           interface Window {
-            copyUrl: (url: string) => void;
+            copyUploadedFile: (file: UploadedFile) => void;
           }
         }
-        window.copyUrl = copyUrl; // make globally accessible for button onclick
+        window.copyUploadedFile = copyUploadedFile; // make globally accessible for button onclick
         function updateUrlsDisplay() {
           if (!urls.length) {
-            urlsDisplay.innerText = "No URLs yet!";
+            filesDisplay.innerText = "No URLs yet!";
             return;
           }
-          urlsDisplay.innerHTML = urls
+          filesDisplay.innerHTML = urls
             .map(
-              (url) =>
-                `<button onclick="copyUrl('${url}')">Copy URL</button> <a href="${url}" target="_blank">${escapeHTML(url)}</a>`,
+              ({ name, url }) =>
+                `<button onclick="copyUploadedFile({ name: '${name}', url: '${url}' })">Copy URL</button> ${escapeHTML(name)} <a href="${url}" target="_blank">${escapeHTML(url)}</a>`,
             )
             .join("<br>");
         }
         updateUrlsDisplay();
-        function pushUrl(url: string) {
-          urls.push(url);
+        function pushUploadedFile(file: UploadedFile) {
+          urls.push(file);
           updateUrlsDisplay();
         }
 
-        const copyAllUrlsButton = document.getElementById(
-          "copyAllUrlsButton",
+        const copyAllButton = document.getElementById(
+          "copyAllButton",
         ) as HTMLButtonElement;
-        function copyAllUrls() {
-          copyUrls(urls);
+        function copyAllUploadedFiles() {
+          copyUploadedFiles(urls);
         }
-        copyAllUrlsButton.addEventListener("click", copyAllUrls);
+        copyAllButton.addEventListener("click", copyAllUploadedFiles);
 
-        const clearUrlsButton = document.getElementById(
-          "clearUrlsButton",
+        const clearButton = document.getElementById(
+          "clearButton",
         ) as HTMLButtonElement;
         function clearUrls() {
           urls.splice(0, urls.length);
           updateUrlsDisplay();
         }
-        clearUrlsButton.addEventListener("click", clearUrls);
+        clearButton.addEventListener("click", clearUrls);
 
         const filesInput = document.getElementById(
           "filesInput",
@@ -267,7 +295,7 @@ import Navbar from "../components/Navbar.astro";
                 .then(
                   (result) => {
                     successes += 1;
-                    pushUrl(result.url);
+                    pushUploadedFile({ name: file.name, url: result.url });
                   },
                   () => {
                     failures += 1;
