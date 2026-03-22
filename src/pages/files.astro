@@ -197,7 +197,7 @@ import Navbar from "../components/Navbar.astro";
           filesDisplay.innerHTML = urls
             .map(
               ({ name, url }) =>
-                `<button onclick="copyUploadedFile({ name: '${name}', url: '${url}' })">Copy URL</button> ${escapeHTML(name)} <a href="${url}" target="_blank">${escapeHTML(url)}</a>`,
+                `<button onclick="copyUploadedFile({ name: '${name}', url: '${url}' })">Copy</button> ${escapeHTML(name)} <a href="${url}" target="_blank">${escapeHTML(url)}</a>`,
             )
             .join("<br>");
         }
