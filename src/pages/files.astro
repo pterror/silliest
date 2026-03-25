@@ -102,6 +102,10 @@ import Navbar from "../components/Navbar.astro";
           Include file names in copied URLs
         </label>
       </div>
+      <div id="progressBar">
+        <div id="progressBarSuccesses"></div>
+        <div id="progressBarFailures"></div>
+      </div>
       <div id="filesDisplay" class="show-newlines">No files yet!</div>
       <div id="dropTarget">Drop files here</div>
       <script>
@@ -280,6 +284,26 @@ import Navbar from "../components/Navbar.astro";
           return { url: await response.text() };
         }
 
+        const progressBarSuccesses = document.getElementById(
+          "progressBarSuccesses",
+        ) as HTMLDivElement;
+        const progressBarFailures = document.getElementById(
+          "progressBarFailures",
+        ) as HTMLDivElement;
+
+        function updateProgress({
+          successes,
+          failures,
+          total,
+        }: {
+          successes: number;
+          failures: number;
+          total: number;
+        }) {
+          progressBarSuccesses.style.width = `${(successes / total) * 100}%`;
+          progressBarFailures.style.width = `${(failures / total) * 100}%`;
+        }
+
         async function uploadFiles(files: readonly File[]) {
           if (!hasKey()) {
             showFailure("You need a key to use this uploader");
@@ -288,6 +312,7 @@ import Navbar from "../components/Navbar.astro";
           const total = files.length;
           let successes = 0;
           let failures = 0;
+          updateProgress({ successes, failures, total });
           const failedFiles: File[] = [];
           await Promise.allSettled(
             files.map((file) =>
@@ -303,6 +328,7 @@ import Navbar from "../components/Navbar.astro";
                   },
                 )
                 .finally(() => {
+                  updateProgress({ successes, failures, total });
                   showInfo(
                     `${successes} succeeded/${failures} failed/${total} total`,
                   );
