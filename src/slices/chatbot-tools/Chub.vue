@@ -714,7 +714,7 @@ const removeExcludedTopic = (topic: string) => {
           To get your API key:
           <ol>
             <li>
-              Go to <a href="https://chub.ai/">Chub.ai</a> and log in to your
+              Go to <a href="https://chub.ai/">chub.ai</a> and log in to your
               account.
             </li>
             <li>
@@ -728,8 +728,9 @@ const removeExcludedTopic = (topic: string) => {
                 </pre
               >
               <button @click="copyChubKeySnippet">Copy</button>
-              This will copy your API key to your clipboard, and you can paste
-              it into the input below.
+              This will copy the code to your clipboard. Then paste it at
+              <a href="https://chub.ai/">chub.ai</a> to get your API key, which
+              is a long string of letters and numbers.
             </li>
           </ol>
           <input
