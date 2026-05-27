@@ -54,6 +54,7 @@ provide(chubProviderKey, {
 });
 
 const showMoreControls = ref(false);
+const showApiKeyInput = ref(false);
 
 const {
   searchParams,
@@ -467,7 +468,7 @@ const removeExcludedTopic = (topic: string) => {
           class="chub-show-more-controls"
           @click="showMoreControls = !showMoreControls"
         >
-          ⚙ Show more controls
+          ⚙ Show API Key Input
         </button>
         <div class="chub-more-controls" :class="{ visible: showMoreControls }">
           <div class="chub-controls">
@@ -489,57 +490,6 @@ const removeExcludedTopic = (topic: string) => {
                 class="chub-avatar-input"
               />
             </label>
-          </div>
-          <div>
-            API Key (⚠️ this is stored in local storage and sent to the API on
-            every request)
-            <p>This is required to view NSFL content.</p>
-            <p>Risks:</p>
-            <ul>
-              <li>
-                ⚠️ Your API key could be exposed if someone gains access to your
-                local storage.
-              </li>
-              <li>
-                ⚠️ If you share your API key with someone else or post it
-                online, they could use it to access your Chub account, data, and
-                LLM subscription. This could lead to an account ban due to
-                multiple people using the same key, or loss of data.
-              </li>
-              <li>
-                ⚠️ This site could potentially be compromised, letting attackers
-                change the code to steal your API key when you enter it or use
-                the site with it stored (although the same applies to chub.ai
-                itself).
-              </li>
-            </ul>
-            To get your API key:
-            <ol>
-              <li>
-                Go to <a href="https://chub.ai/">Chub.ai</a> and log in to your
-                account.
-              </li>
-              <li>
-                Open the developer console in your browser (usually F12 or
-                Ctrl+Shift+I or right-click -> Inspect) and go to the Console
-                tab.
-              </li>
-              <li>
-                Paste the following code and press Enter:
-                <pre>
-                  <code>navigator.clipboard.writeText(localStorage.getItem('URQL_TOKEN'))</code>
-                </pre>
-                <button @click="copyChubKeySnippet">Copy</button>
-                This will copy your API key to your clipboard, and you can paste
-                it into the input below.
-              </li>
-            </ol>
-            <input
-              v-model="apiKey"
-              type="text"
-              placeholder="API Key"
-              class="chub-api-key-input"
-            />
           </div>
           <div class="chub-controls">
             <label>
@@ -732,6 +682,62 @@ const removeExcludedTopic = (topic: string) => {
               <button @click="addNewExcludedTopic">+</button>
             </div>
           </div>
+        </div>
+        <button
+          class="chub-show-api-key-input"
+          @click="showApiKeyInput = !showApiKeyInput"
+        >
+          🔑️ API key
+        </button>
+        <div class="chub-api-key-input" :class="{ visible: showApiKeyInput }">
+          API Key (⚠️ this is stored in local storage and sent to the API on
+          every request)
+          <p>This is required to view NSFL content.</p>
+          <p>Risks:</p>
+          <ul>
+            <li>
+              ⚠️ Your API key could be exposed if someone gains access to your
+              local storage.
+            </li>
+            <li>
+              ⚠️ If you share your API key with someone else or post it online,
+              they could use it to access your Chub account, data, and LLM
+              subscription. This could lead to an account ban due to multiple
+              people using the same key, or loss of data.
+            </li>
+            <li>
+              ⚠️ This site could potentially be compromised, letting attackers
+              change the code to steal your API key when you enter it or use the
+              site with it stored (although the same applies to chub.ai itself).
+            </li>
+          </ul>
+          To get your API key:
+          <ol>
+            <li>
+              Go to <a href="https://chub.ai/">Chub.ai</a> and log in to your
+              account.
+            </li>
+            <li>
+              Open the developer console in your browser (usually F12 or
+              Ctrl+Shift+I or right-click -> Inspect) and go to the Console tab.
+            </li>
+            <li>
+              Paste the following code and press Enter:
+              <pre>
+                  <code>navigator.clipboard.writeText(localStorage.getItem('URQL_TOKEN'))</code>
+                </pre
+              >
+              <button @click="copyChubKeySnippet">Copy</button>
+              This will copy your API key to your clipboard, and you can paste
+              it into the input below.
+            </li>
+          </ol>
+          <input
+            v-model="apiKey"
+            type="text"
+            placeholder="API Key"
+            class="chub-api-key-input"
+          />
         </div>
       </div>
       <div class="chub-sort-by">
@@ -1002,7 +1008,8 @@ body:has(.fullscreen) .Chub {
   }
 }
 
-.chub-show-more-controls {
+.chub-show-more-controls,
+.chub-show-api-key-input {
   align-self: flex-start;
 }
 
@@ -1010,7 +1017,8 @@ body:has(.fullscreen) .Chub {
   position: relative;
 }
 
-.chub-more-controls {
+.chub-more-controls,
+.chub-api-key-input {
   position: absolute;
   display: none;
   flex-flow: column;
@@ -1021,7 +1029,8 @@ body:has(.fullscreen) .Chub {
   z-index: 1;
 }
 
-.chub-more-controls.visible {
+.chub-more-controls.visible,
+.chub-api-key-input.visible {
   display: flex;
 }
 </style>
