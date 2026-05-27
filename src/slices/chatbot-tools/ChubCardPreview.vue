@@ -80,7 +80,7 @@ const blurred = computed(
         :href="chubAddCardFullPathToUrl(card.fullPath)"
         @click="
           !$event.ctrlKey &&
-            (emit('openInFullscreen', card.fullPath), $event.preventDefault())
+          (emit('openInFullscreen', card.fullPath), $event.preventDefault())
         "
       >
         <img
@@ -108,32 +108,9 @@ const blurred = computed(
         ⭐{{ formatNumberWithMagnitude(card.n_favorites) }}
       </div>
     </div>
+    <!-- For optimization purposes, only the total token count is now returned from the backend -->
     <div v-if="tokenCounts" class="chub-card-preview-token-counts-details">
-      <div
-        :title="`${
-          tokenCounts.description +
-          tokenCounts.personality +
-          tokenCounts.scenario +
-          tokenCounts.system_prompt +
-          tokenCounts.post_history_instructions
-        } permanent tokens`"
-      >
-        Perm:
-        {{
-          tokenCounts.description +
-          tokenCounts.personality +
-          tokenCounts.scenario +
-          tokenCounts.system_prompt +
-          tokenCounts.post_history_instructions
-        }}t
-      </div>
-      <div
-        :title="`${
-          tokenCounts.first_mes + tokenCounts.mes_example
-        } temporary tokens`"
-      >
-        Temp: {{ tokenCounts.first_mes + tokenCounts.mes_example }}t
-      </div>
+      Tokens: {{ tokenCounts.total }}
     </div>
     <div class="chub-card-preview-metadata-container">
       <div class="buttons">
@@ -162,7 +139,7 @@ const blurred = computed(
           class="button"
           @click="
             !$event.ctrlKey &&
-              (emit('searchByAuthor', author), $event.preventDefault())
+            (emit('searchByAuthor', author), $event.preventDefault())
           "
         >
           {{ author }}
@@ -175,7 +152,7 @@ const blurred = computed(
           class="button"
           @click="
             !$event.ctrlKey &&
-              (emit('openInFullscreen', parent), $event.preventDefault())
+            (emit('openInFullscreen', parent), $event.preventDefault())
           "
         >
           {{ parent.replace(/[/][\s\S]+/, "") }}
@@ -237,7 +214,7 @@ const blurred = computed(
           :href="chubAddTopicToUrl(topic)"
           @click="
             !$event.ctrlKey &&
-              (emit('addTopic', topic), $event.preventDefault())
+            (emit('addTopic', topic), $event.preventDefault())
           "
         >
           {{ topic }}
