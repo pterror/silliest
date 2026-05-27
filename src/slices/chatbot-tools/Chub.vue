@@ -28,6 +28,7 @@ import {
 // TODO: local-only list of topics to hide (e.g. spammy topics like SillyTavern and TAVERN and V2 Alternate greetings)
 
 const username = useLocalStorage("chub-placeholder-username", "User");
+const apiKey = useLocalStorage("chub-api-key", "", { writeDefaults: false });
 const avatarUrl = useLocalStorage(
   "chub-placeholder-avatar",
   "https://sillie.st/3c.png",
@@ -37,6 +38,12 @@ const showCustomCss = useLocalStorage("chub-show-custom-css", true);
 const showWorkshopLink = useLocalStorage("chub-show-workshop-link", false, {
   writeDefaults: false,
 });
+
+const copyChubKeySnippet = () => {
+  navigator.clipboard.writeText(
+    `navigator.clipboard.writeText(localStorage.getItem('URQL_TOKEN'))`,
+  );
+};
 
 provide(chubProviderKey, {
   username,
@@ -483,6 +490,57 @@ const removeExcludedTopic = (topic: string) => {
               />
             </label>
           </div>
+          <div>
+            API Key (⚠️ this is stored in local storage and sent to the API on
+            every request)
+            <p>This is required to view NSFL content.</p>
+            <p>Risks:</p>
+            <ul>
+              <li>
+                ⚠️ Your API key could be exposed if someone gains access to your
+                local storage.
+              </li>
+              <li>
+                ⚠️ If you share your API key with someone else or post it
+                online, they could use it to access your Chub account, data, and
+                LLM subscription. This could lead to an account ban due to
+                multiple people using the same key, or loss of data.
+              </li>
+              <li>
+                ⚠️ This site could potentially be compromised, letting attackers
+                change the code to steal your API key when you enter it or use
+                the site with it stored (although the same applies to chub.ai
+                itself).
+              </li>
+            </ul>
+            To get your API key:
+            <ol>
+              <li>
+                Go to <a href="https://chub.ai/">Chub.ai</a> and log in to your
+                account.
+              </li>
+              <li>
+                Open the developer console in your browser (usually F12 or
+                Ctrl+Shift+I or right-click -> Inspect) and go to the Console
+                tab.
+              </li>
+              <li>
+                Paste the following code and press Enter:
+                <pre>
+                  <code>navigator.clipboard.writeText(localStorage.getItem('URQL_TOKEN'))</code>
+                </pre>
+                <button @click="copyChubKeySnippet">Copy</button>
+                This will copy your API key to your clipboard, and you can paste
+                it into the input below.
+              </li>
+            </ol>
+            <input
+              v-model="apiKey"
+              type="text"
+              placeholder="API Key"
+              class="chub-api-key-input"
+            />
+          </div>
           <div class="chub-controls">
             <label>
               Author
@@ -629,8 +687,8 @@ const removeExcludedTopic = (topic: string) => {
                 :value="CHUB_SORT_NAME_TO_TYPE[sortName]"
                 :checked="sort === CHUB_SORT_NAME_TO_TYPE[sortName]"
                 @change="
-                  (isTimeline = false),
-                    (sort = CHUB_SORT_NAME_TO_TYPE[sortName])
+                  ((isTimeline = false),
+                  (sort = CHUB_SORT_NAME_TO_TYPE[sortName]))
                 "
               />
               {{ sortName }}
@@ -700,7 +758,7 @@ const removeExcludedTopic = (topic: string) => {
             :value="CHUB_SORT_NAME_TO_TYPE[sortName]"
             :checked="sort === CHUB_SORT_NAME_TO_TYPE[sortName]"
             @change="
-              (isTimeline = false), (sort = CHUB_SORT_NAME_TO_TYPE[sortName])
+              ((isTimeline = false), (sort = CHUB_SORT_NAME_TO_TYPE[sortName]))
             "
           />
           {{ sortName }}
@@ -813,8 +871,8 @@ const removeExcludedTopic = (topic: string) => {
         :card="fullscreenCard"
         @close="fullscreenCardId = undefined"
         @openInFullscreen="fullscreenCardId = $event"
-        @searchByAuthor="(fullscreenCardId = undefined), (author = $event)"
-        @addTopic="addTopic($event), (fullscreenCardId = undefined)"
+        @searchByAuthor="((fullscreenCardId = undefined), (author = $event))"
+        @addTopic="(addTopic($event), (fullscreenCardId = undefined))"
       />
     </div>
   </Teleport>

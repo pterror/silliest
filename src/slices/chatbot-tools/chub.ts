@@ -7,6 +7,17 @@ const CHUB_PAGE_SIZE = 40;
 const BASE_URL = "https://gateway.chub.ai";
 const API_URL = `${BASE_URL}/api`;
 
+function chubFetch(input: RequestInfo, init?: RequestInit) {
+  const apiKey = localStorage.getItem("chub-api-key");
+  return fetch(input, {
+    ...init,
+    headers: {
+      ...init?.headers,
+      ...(apiKey && { samwise: apiKey }),
+    },
+  });
+}
+
 export const CHUB_TAGS_WITH_ICONS = [
   { tag: "Female", icon: "♀️" },
   { tag: "Male", icon: "♂️" },
@@ -223,8 +234,10 @@ export interface ChubCard<Full extends boolean = boolean> {
   readonly badges: readonly string[];
 }
 
-interface ChubCardRaw<Full extends boolean = boolean>
-  extends Omit<ChubCard<Full>, "lastActivityAt" | "createdAt"> {
+interface ChubCardRaw<Full extends boolean = boolean> extends Omit<
+  ChubCard<Full>,
+  "lastActivityAt" | "createdAt"
+> {
   readonly lastActivityAt: string;
   readonly createdAt: string;
 }
@@ -244,7 +257,9 @@ export function chubPageRawToChubPage<T>(page: ChubPageRaw<T>): ChubPage<T> {
 export async function chubListSimilarCards(
   id: number,
 ): Promise<readonly ChubCard[]> {
-  const response = await fetch(`${API_URL}/projects/similar/${id}/true/true`);
+  const response = await chubFetch(
+    `${API_URL}/projects/similar/${id}/true/true`,
+  );
   const data: ChubPageRaw<ChubCardRaw> = await response.json();
   return data.nodes.map(chubCardRawToChubCard);
 }
@@ -266,7 +281,7 @@ export async function chubListForks(
       nsfl: options.nsfl ? "true" : undefined,
     }) as Record<string, string>,
   ).toString();
-  const response = await fetch(`${BASE_URL}/forks/project/${id}?${params}`);
+  const response = await chubFetch(`${BASE_URL}/forks/project/${id}?${params}`);
   const data: ChubPageRaw<ChubCardRaw> = await response.json();
   return data.nodes.map(chubCardRawToChubCard);
 }
@@ -294,7 +309,9 @@ export async function chubGetCardByFullPath<Full extends boolean = false>(
       full: options.full ? "true" : undefined,
     }) as Record<string, string>,
   ).toString();
-  const response = await fetch(`${API_URL}/characters/${fullPath}?${params}`);
+  const response = await chubFetch(
+    `${API_URL}/characters/${fullPath}?${params}`,
+  );
   const data: ChubGetCardResponse = await response.json();
   return chubCardRawToChubCard(data.node);
 }
@@ -312,7 +329,7 @@ export async function chubGetCardById<Full extends boolean = false>(
       full: options.full ? "true" : undefined,
     }) as Record<string, string>,
   ).toString();
-  const response = await fetch(`${API_URL}/characters/${id}?${params}`);
+  const response = await chubFetch(`${API_URL}/characters/${id}?${params}`);
   const data: ChubGetCardResponse = await response.json();
   return chubCardRawToChubCard(data.node);
 }
@@ -462,7 +479,7 @@ export async function chubSearchCards(
   const query = new URLSearchParams(
     params as Record<string, string>,
   ).toString();
-  const response = await fetch(`${BASE_URL}/search?${query}`);
+  const response = await chubFetch(`${BASE_URL}/search?${query}`);
   const data: { readonly data: ChubPageRaw<ChubCardRaw> } =
     await response.json();
   return { ...data.data, nodes: data.data.nodes.map(chubCardRawToChubCard) };
@@ -480,19 +497,19 @@ export async function chubGetTimelinePage(
   const query = new URLSearchParams(
     filterOutUndefined(params) as Record<string, string>,
   ).toString();
-  const response = await fetch(`${API_URL}/timeline/v1?${query}`);
+  const response = await chubFetch(`${API_URL}/timeline/v1?${query}`);
   const { data }: { readonly data: ChubPageRaw<ChubCardRaw> } =
     await response.json();
   return { ...data, nodes: data.nodes.map(chubCardRawToChubCard) };
 }
 
 export async function chubGetSelfUser(): Promise<ChubSelfUser> {
-  const response = await fetch(`${API_URL}/self`);
+  const response = await chubFetch(`${API_URL}/self`);
   return await response.json();
 }
 
 export async function chubGetUserById(username: string): Promise<ChubUser> {
-  const response = await fetch(`${API_URL}/users/${username}`);
+  const response = await chubFetch(`${API_URL}/users/${username}`);
   return await response.json();
 }
 
@@ -778,7 +795,7 @@ export async function chubGetFollowsByUsername(
     page: "1",
     ...params,
   } as Record<string, string>).toString();
-  const response = await fetch(`${API_URL}/follows/${username}?${query}`);
+  const response = await chubFetch(`${API_URL}/follows/${username}?${query}`);
   return await response.json();
 }
 
@@ -837,7 +854,7 @@ export interface ChubConfigUpdateRequest {
 export async function chubUpdateConfig(
   request: ChubConfigUpdateRequest,
 ): Promise<void> {
-  const response = await fetch(`${API_URL}/config`, {
+  const response = await chubFetch(`${API_URL}/config`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(request),
@@ -890,7 +907,7 @@ export type ChubConfigFetchResponse<
 export async function chubFetchConfig(
   request: ChubConfigFetchRequest,
 ): Promise<ChubConfigFetchResponse> {
-  const response = await fetch(`${BASE_URL}/config/fetch`, {
+  const response = await chubFetch(`${BASE_URL}/config/fetch`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(request),
@@ -1018,7 +1035,7 @@ export interface ChubApiConfig {
 }
 
 export async function chubGetAccount(): Promise<ChubAccount> {
-  const response = await fetch(`${API_URL}/account`);
+  const response = await chubFetch(`${API_URL}/account`);
   return await response.json();
 }
 
@@ -1077,7 +1094,9 @@ export async function chubGetChat(
       ...params,
     }) as unknown as Record<string, string>,
   ).toString();
-  const response = await fetch(`${API_URL}/core/chats/v2/${chatId}?${query}`);
+  const response = await chubFetch(
+    `${API_URL}/core/chats/v2/${chatId}?${query}`,
+  );
   return await response.json();
 }
 
@@ -1145,7 +1164,7 @@ export async function chubPostAtomicMessage(
   chatId: ChubChatId,
   message: ChubChatMessageRequest,
 ): Promise<ChubChatAtomicMessageResponse> {
-  const response = await fetch(
+  const response = await chubFetch(
     `${API_URL}/core/chats/v2/${chatId}/messages/atomic`,
     {
       method: "POST",
@@ -1173,7 +1192,7 @@ export interface ChubPrompt {
 }
 
 export async function chubSetPrompt(prompt: ChubPrompt): Promise<void> {
-  await fetch(`${API_URL}/prompt`, {
+  await chubFetch(`${API_URL}/prompt`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(prompt),
@@ -1205,7 +1224,7 @@ export async function chubListCommits(
     path: filePath,
     nocache: Math.random().toString(),
   }).toString();
-  const response = await fetch(
+  const response = await chubFetch(
     `${API_URL}/v4/projects/${projectId}/repository/commits?${params}`,
   );
   return await response.json();
@@ -1219,7 +1238,7 @@ export async function chubGetTavernCardAtCommit(
     ref: commitId,
     response_type: "blob",
   }).toString();
-  const response = await fetch(
+  const response = await chubFetch(
     `${API_URL}/v4/projects/${projectId}/repository/files/${encodeURIComponent(
       encodeURIComponent(CHUB_TAVERN_FILE_PATH),
     )}/raw?${params}`,
@@ -1286,7 +1305,7 @@ export async function chubGetRatings(
   const params = new URLSearchParams({
     nocache: Math.random().toString(),
   });
-  const response = await fetch(
+  const response = await chubFetch(
     `${API_URL}/project/${projectId}/ratings?${params.toString()}`,
   );
   return await response.json();
@@ -1317,7 +1336,7 @@ export async function chubPostRating(
   comment: string,
   parentId: number | null = null,
 ): Promise<ChubPostRatingResponse | ChubPostRatingError> {
-  const response = await fetch(`${API_URL}/project/${projectId}/rate`, {
+  const response = await chubFetch(`${API_URL}/project/${projectId}/rate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ rating, comment, parentId }),
@@ -1380,7 +1399,7 @@ export async function chubListGalleryImages(
     time: Math.random().toString(),
     page: page.toString(),
   }).toString();
-  const response = await fetch(
+  const response = await chubFetch(
     `${API_URL}/gallery/project/${projectId}?${params}`,
   );
   const result: ChubPageRaw<ChubGalleryImage> = await response.json();
@@ -1405,7 +1424,7 @@ export type ChubAuthenticationTokenResponse =
   | ChubAuthenticationTokenErrorResponse;
 
 export async function chubFetchAuthenticationToken(): Promise<string> {
-  const response = await fetch(`${BASE_URL}/authentication/token`, {
+  const response = await chubFetch(`${BASE_URL}/authentication/token`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({}),
@@ -1443,7 +1462,7 @@ export interface ChubLoginResponse {
 export async function chubLogin(
   request: ChubLoginRequest,
 ): Promise<ChubLoginResponse> {
-  const response = await fetch(`${BASE_URL}/authentication/login`, {
+  const response = await chubFetch(`${BASE_URL}/authentication/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(request),
