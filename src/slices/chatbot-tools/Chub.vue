@@ -1,5 +1,13 @@
 <script setup lang="ts">
-import { computed, provide, ref, Teleport, toRaw, watchEffect } from "vue";
+import {
+  computed,
+  provide,
+  ref,
+  Teleport,
+  toRaw,
+  watch,
+  watchEffect,
+} from "vue";
 import {
   chubGetCard,
   CHUB_SORT_TYPES,
@@ -16,7 +24,7 @@ import {
 import { useLocalStorage } from "@vueuse/core";
 import ChubCardPreview from "./ChubCardPreview.vue";
 import { narrowingIncludes, unwrapPossibleSingleton } from "../../lib/array";
-import { useQuery } from "@tanstack/vue-query";
+import { useQuery, useQueryClient } from "@tanstack/vue-query";
 import { chubQueryOptions } from "./chubQuery";
 import ChubCard from "./ChubCard.vue";
 import { chubProviderKey } from "./chubProvider";
@@ -39,11 +47,11 @@ const showWorkshopLink = useLocalStorage("chub-show-workshop-link", false, {
   writeDefaults: false,
 });
 
-const copyChubKeySnippet = () => {
-  navigator.clipboard.writeText(
-    `navigator.clipboard.writeText(localStorage.getItem('URQL_TOKEN'))`,
-  );
-};
+const queryClient = useQueryClient();
+
+watch(apiKey, () => {
+  queryClient.invalidateQueries();
+});
 
 provide(chubProviderKey, {
   username,
@@ -403,6 +411,12 @@ const removeExcludedTopic = (topic: string) => {
   if (index === -1) return;
   excludedTopics.value.splice(index, 1);
   excludedTopics.value = [...excludedTopics.value];
+};
+
+const copyChubKeySnippet = () => {
+  navigator.clipboard.writeText(
+    `navigator.clipboard.writeText(localStorage.getItem('URQL_TOKEN'))`,
+  );
 };
 </script>
 
