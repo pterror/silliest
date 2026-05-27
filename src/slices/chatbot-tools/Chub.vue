@@ -54,7 +54,7 @@ provide(chubProviderKey, {
 });
 
 const showMoreControls = ref(false);
-const showApiKeyInput = ref(false);
+const showApiKeyControls = ref(false);
 
 const {
   searchParams,
@@ -468,7 +468,7 @@ const removeExcludedTopic = (topic: string) => {
           class="chub-show-more-controls"
           @click="showMoreControls = !showMoreControls"
         >
-          ⚙ Show API Key Input
+          ⚙ More controls
         </button>
         <div class="chub-more-controls" :class="{ visible: showMoreControls }">
           <div class="chub-controls">
@@ -684,12 +684,15 @@ const removeExcludedTopic = (topic: string) => {
           </div>
         </div>
         <button
-          class="chub-show-api-key-input"
-          @click="showApiKeyInput = !showApiKeyInput"
+          class="chub-show-api-key-controls"
+          @click="showApiKeyControls = !showApiKeyControls"
         >
           🔑️ API key
         </button>
-        <div class="chub-api-key-input" :class="{ visible: showApiKeyInput }">
+        <div
+          class="chub-api-key-controls"
+          :class="{ visible: showApiKeyControls }"
+        >
           API Key (⚠️ this is stored in local storage and sent to the API on
           every request)
           <p>This is required to view NSFL content.</p>
@@ -1010,7 +1013,7 @@ body:has(.fullscreen) .Chub {
 }
 
 .chub-show-more-controls,
-.chub-show-api-key-input {
+.chub-show-api-key-controls {
   align-self: flex-start;
 }
 
@@ -1019,7 +1022,7 @@ body:has(.fullscreen) .Chub {
 }
 
 .chub-more-controls,
-.chub-api-key-input {
+.chub-api-key-controls {
   position: absolute;
   display: none;
   flex-flow: column;
@@ -1031,7 +1034,7 @@ body:has(.fullscreen) .Chub {
 }
 
 .chub-more-controls.visible,
-.chub-api-key-input.visible {
+.chub-api-key-controls.visible {
   display: flex;
 }
 </style>
