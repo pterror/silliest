@@ -136,6 +136,16 @@ export type ChubLabel =
       readonly description: ChubCardFullPath;
     };
 
+export interface ChubExtensionRelatedLorebook {
+  readonly id: ChubCardId;
+  /** Never observed populated (always null in samples so far) - the lorebook content is
+   * fetched separately via `path` (through the V4 git API), not inlined here. */
+  readonly book: unknown | null;
+  readonly path: ChubCardFullPath;
+  readonly version: string;
+  readonly commit_ref: string;
+}
+
 export interface ChubExtension {
   readonly id: ChubCardId;
   readonly preset: string | null;
@@ -144,7 +154,7 @@ export interface ChubExtension {
   readonly expressions: unknown | null;
   readonly alt_expressions: Record<string, unknown>;
   readonly background_image: string;
-  readonly related_lorebooks: unknown[];
+  readonly related_lorebooks: readonly ChubExtensionRelatedLorebook[];
 }
 
 export interface DepthPrompt {

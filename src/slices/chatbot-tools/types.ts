@@ -53,6 +53,20 @@ export const TavernCardExtensionChubExpressions = z.object({
   expressions: z.record(z.string(), z.string()),
 });
 
+export type TavernCardExtensionChubRelatedLorebook = z.infer<
+  typeof TavernCardExtensionChubRelatedLorebook
+>;
+export const TavernCardExtensionChubRelatedLorebook = z.object({
+  id: z.number(),
+  // Never observed populated (always null in samples so far) - the actual lorebook content is
+  // fetched separately via `path` (through the V4 git API), not inlined here. Left permissive
+  // rather than asserting null in case Chub does inline it in some cases.
+  book: z.unknown().nullable(),
+  path: z.string(),
+  version: z.string(),
+  commit_ref: z.string(),
+});
+
 export type TavernCardExtensionChub = z.infer<typeof TavernCardExtensionChub>;
 export const TavernCardExtensionChub = z.object({
   background_image: z.union([z.string(), z.null()]).optional(),
@@ -65,7 +79,7 @@ export const TavernCardExtensionChub = z.object({
   full_path: z.string(),
   id: z.number(),
   preset: z.unknown().optional(),
-  related_lorebooks: z.array(z.unknown()).optional(),
+  related_lorebooks: z.array(TavernCardExtensionChubRelatedLorebook).optional(),
 });
 
 export type TavernCardV1 = z.infer<typeof TavernCardV1>;
