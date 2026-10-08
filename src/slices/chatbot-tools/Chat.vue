@@ -17,14 +17,18 @@ watch(filesUrls, (value, oldValue) => {
   files.value = files.value.filter((file) =>
     oldValue.includes(file.name) ? !value.includes(file.name) : true,
   );
-  files.value.push(
-    ...Array.from(value).map(
-      (url) =>
-        new File([], url.replace(/^.+[/]/, ""), {
-          type: "application/octet-stream",
-        }),
-    ),
-  );
+  for (const url of value) {
+    if (oldValue.includes(url)) {
+      continue;
+    }
+    fetch(url).then(async (response) => {
+      const blob = await response.blob();
+      const f = new File([blob], url.replace(/^.+[/]/, ""), {
+        type: blob.type,
+      });
+      files.value.push(f);
+    });
+  }
 });
 
 const onFileInput = (event: Event) => {
