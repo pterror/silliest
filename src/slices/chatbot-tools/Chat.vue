@@ -5,7 +5,9 @@ import { useEventListener } from "@vueuse/core";
 import { extractUrls } from "../../lib/url";
 import { useComputedSearchParams } from "../../lib/composables/vueUse.ts";
 
-const files = ref<File[]>([]);
+type ChatFile = { file: File; url?: string };
+
+const files = ref<ChatFile[]>([]);
 
 const {
   params: { "file[]": filesUrls },
@@ -15,21 +17,37 @@ const {
 
 watch(
   filesUrls,
-  (value, oldValue = []) => {
-    files.value = files.value.filter((file) =>
-      oldValue.includes(file.name) ? !value.includes(file.name) : true,
+  (urls, _oldUrls, onCleanup) => {
+    const activeUrls = new Set(urls);
+    const controller = new AbortController();
+    onCleanup(() => controller.abort());
+
+    files.value = files.value.filter(
+      ({ url }) => url === undefined || activeUrls.has(url),
     );
-    for (const url of value) {
-      if (oldValue.includes(url)) {
-        continue;
-      }
-      fetch(url).then(async (response) => {
-        const blob = await response.blob();
-        const f = new File([blob], url.replace(/^.+[/]/, ""), {
-          type: blob.type,
+
+    for (const url of activeUrls) {
+      if (files.value.some((entry) => entry.url === url)) continue;
+      fetch(url, { signal: controller.signal })
+        .then(async (response) => {
+          if (!response.ok) throw new Error(`Failed to fetch ${url}`);
+          const blob = await response.blob();
+          return new File([blob], url.replace(/^.+[/]/, ""), {
+            type: blob.type,
+          });
+        })
+        .then((file) => {
+          if (
+            !controller.signal.aborted &&
+            filesUrls.value.includes(url) &&
+            !files.value.some((entry) => entry.url === url)
+          ) {
+            files.value.push({ file, url });
+          }
+        })
+        .catch((error: unknown) => {
+          if (!controller.signal.aborted) console.error(error);
         });
-        files.value.push(f);
-      });
     }
   },
   { immediate: true },
@@ -38,11 +56,13 @@ watch(
 const onFileInput = (event: Event) => {
   if (!(event.currentTarget instanceof HTMLInputElement)) return;
   if (!event.currentTarget.files) return;
-  files.value.push(...Array.from(event.currentTarget.files));
+  files.value.push(
+    ...Array.from(event.currentTarget.files, (file) => ({ file })),
+  );
 };
 
 const processDataTransfer = (dataTransfer: DataTransfer) => {
-  files.value.push(...Array.from(dataTransfer.files));
+  files.value.push(...Array.from(dataTransfer.files, (file) => ({ file })));
   const seenUrls = new Set<string>();
   for (const item of Array.from(dataTransfer.items)) {
     if (item.kind !== "string") continue;
@@ -55,7 +75,7 @@ const processDataTransfer = (dataTransfer: DataTransfer) => {
           const f = new File([blob], url.replace(/^.+[/]/, ""), {
             type: blob.type,
           });
-          files.value.push(f);
+          files.value.push({ file: f });
         });
       }
     });
@@ -84,11 +104,11 @@ useEventListener(window, "paste", onPaste);
       </div>
     </div>
     <div class="tab-container">
-      <template v-for="file in files" :key="file.name">
+      <template v-for="entry in files" :key="entry.file.name">
         <ChatTab
-          :file="file"
-          :default-checked="file === files[0]"
-          @close="files.splice(files.indexOf(file), 1)"
+          :file="entry.file"
+          :default-checked="entry === files[0]"
+          @close="files.splice(files.indexOf(entry), 1)"
         />
       </template>
     </div>
