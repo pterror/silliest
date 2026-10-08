@@ -1,10 +1,31 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import ChatTab from "./ChatTab.vue";
 import { useEventListener } from "@vueuse/core";
 import { extractUrls } from "../../lib/url";
+import { useComputedSearchParams } from "../../lib/composables/vueUse.ts";
 
 const files = ref<File[]>([]);
+
+const {
+  params: { "file[]": filesUrls },
+} = useComputedSearchParams({
+  "file[]": { type: "string[]" },
+});
+
+watch(filesUrls, (value, oldValue) => {
+  files.value = files.value.filter((file) =>
+    oldValue.includes(file.name) ? !value.includes(file.name) : true,
+  );
+  files.value.push(
+    ...Array.from(value).map(
+      (url) =>
+        new File([], url.replace(/^.+[/]/, ""), {
+          type: "application/octet-stream",
+        }),
+    ),
+  );
+});
 
 const onFileInput = (event: Event) => {
   if (!(event.currentTarget instanceof HTMLInputElement)) return;
