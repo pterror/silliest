@@ -13,23 +13,27 @@ const {
   "file[]": { type: "string[]" },
 });
 
-watch(filesUrls, (value, oldValue) => {
-  files.value = files.value.filter((file) =>
-    oldValue.includes(file.name) ? !value.includes(file.name) : true,
-  );
-  for (const url of value) {
-    if (oldValue.includes(url)) {
-      continue;
-    }
-    fetch(url).then(async (response) => {
-      const blob = await response.blob();
-      const f = new File([blob], url.replace(/^.+[/]/, ""), {
-        type: blob.type,
+watch(
+  filesUrls,
+  (value, oldValue = []) => {
+    files.value = files.value.filter((file) =>
+      oldValue.includes(file.name) ? !value.includes(file.name) : true,
+    );
+    for (const url of value) {
+      if (oldValue.includes(url)) {
+        continue;
+      }
+      fetch(url).then(async (response) => {
+        const blob = await response.blob();
+        const f = new File([blob], url.replace(/^.+[/]/, ""), {
+          type: blob.type,
+        });
+        files.value.push(f);
       });
-      files.value.push(f);
-    });
-  }
-});
+    }
+  },
+  { immediate: true },
+);
 
 const onFileInput = (event: Event) => {
   if (!(event.currentTarget instanceof HTMLInputElement)) return;
